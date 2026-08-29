@@ -60,6 +60,39 @@ still build as directory URLs and every canonical is explicit, so no SEO is lost
 Bindings on Pages are set in the dashboard (Settings -> Functions), not read from
 `wrangler.jsonc`: add `DB` (D1), `MEDIA` (R2) and the two secrets there.
 
+## Language and type checking
+
+TypeScript is the only language you write logic in — API routes, schema builders,
+validation, site data and the `.astro` frontmatter are all TypeScript. By line count the repo
+is mostly markup and CSS, which is what a content site should be:
+
+| | lines | share |
+|---|---|---|
+| HTML / Astro markup | 2,459 | 46.0% |
+| CSS | 1,711 | 32.0% |
+| **TypeScript** (`.ts` + `.astro` frontmatter) | **608** | **11.4%** |
+| JavaScript (inline `<script>`) | 297 | 5.6% |
+| Config, SQL, Markdown | 271 | 5.1% |
+
+**The 297 lines of inline `<script>` are plain JavaScript, not TypeScript** — the popup, chat
+widget and lead-form handler. Astro ships `is:inline` scripts to the browser untouched, so they
+are never type-checked or bundled. That is deliberate (it keeps the shipped JS at ~1 KB gzipped
+with no build step), but it is the one part of the codebase with no type safety, so it is also
+the part to be careful editing.
+
+```bash
+npm run types    # regenerate Cloudflare binding types from wrangler.jsonc
+npm run check    # astro check — TypeScript across .ts and .astro
+```
+
+`npm run check` currently reports **0 errors**. It was not being run before, and when first
+executed it found 8 real ones: three API routes could not resolve `cloudflare:workers`, and the
+blog post route had `post` typed as `unknown`, meaning every `post.data.*` access was unchecked.
+Both are fixed — bindings now come from `wrangler types`, and the route declares its props.
+
+TypeScript is pinned to **6.x**: `astro check` needs the programmatic compiler API, which
+TypeScript 7's native compiler does not ship yet. Unpinning to 7 silently disables type checking.
+
 ## Local development
 
 ```bash
