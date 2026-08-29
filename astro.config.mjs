@@ -4,6 +4,7 @@ import cloudflare from '@astrojs/cloudflare';
 import sitemap from '@astrojs/sitemap';
 import { writeFile } from 'node:fs/promises';
 
+
 /**
  * Emits the two files Cloudflare Pages needs in "advanced mode":
  *   _worker.js/index.js  – Pages looks for `index.js` inside a _worker.js

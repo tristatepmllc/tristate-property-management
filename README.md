@@ -339,7 +339,11 @@ that get quoted are cheap to add:
   in the first two sentences.
 - **Hard numbers with sources.** Specific figures rather than ranges-of-ranges, and legal facts
   linked to the primary source (portal.ct.gov, C.G.S. 47a-21) rather than to a competitor blog.
-- **Tables.** Extractable structure that AI systems parse cleanly.
+- **Tables.** Extractable structure that AI systems parse cleanly. Markdown tables are styled in
+  `additions.css` (`.prose table`) with a navy header row, zebra striping and a bold label
+  column; below 560px they scroll sideways rather than squeezing. Astro 7's default Markdown
+  processor does not run rehype plugins without `@astrojs/markdown-remark`, so this is done in
+  CSS rather than by wrapping the table in a container.
 - **FAQPage schema.** Add `faqs` to the frontmatter and the post renders an accordion and emits
   FAQPage JSON-LD. Q&A pairs mapped to schema are the highest-impact single change for citation
   rates, because they match the shape of the queries being asked.
