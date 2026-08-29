@@ -324,11 +324,13 @@ img{height:auto}
 .prose--left{margin-left:0;margin-right:0}
 
 /* Careers "Apply" block. The section head caps at 720px and its paragraph at
-   62ch, while the form card was 640px - three different measures, all centred,
-   so nothing lined up. Pin the head and the card to the same 640px column. */
+   62ch, while the form card was 640px - three different measures, so nothing
+   lined up. Pin the head and the card to the same 640px column, anchored left
+   so the block sits under the breadcrumb and H1 rather than floating mid-page
+   on a wide screen. */
 .sec-head--form,
-.sec-head--form p{max-width:640px;margin-left:auto;margin-right:auto}
-.form-card--narrow{max-width:640px;margin-left:auto;margin-right:auto}
+.sec-head--form p{max-width:640px;margin-left:0;margin-right:0}
+.form-card--narrow{max-width:640px;margin-left:0;margin-right:0}
 
 /* Policy pages: the body section carried the full 84px section padding AND
    the first h2's 2.2em top margin, stacking into a large empty band under the
