@@ -71,7 +71,7 @@ const jsonLd = graph([breadcrumbs([{ name: 'Home', path: '/' }, { name: 'Careers
 
   <section class="section">
     <div class="wrap">
-      <div class="sec-head center">
+      <div class="sec-head center sec-head--form">
         <p class="eyebrow">Apply</p>
         <h2>Tell us what you do</h2>
         <p>
@@ -80,7 +80,7 @@ const jsonLd = graph([breadcrumbs([{ name: 'Home', path: '/' }, { name: 'Careers
         </p>
       </div>
 
-      <div class="form-card" style="max-width:640px;margin:0 auto">
+      <div class="form-card form-card--narrow">
         <form action="/api/leads" method="post" data-lead-form data-source="careers" novalidate>
           <input type="hidden" name="service" value="Careers enquiry" />
 
