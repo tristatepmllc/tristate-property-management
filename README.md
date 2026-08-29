@@ -179,11 +179,12 @@ the navy footer.
 | File | Use |
 |---|---|
 | `/images/logo-tristate.{avif,webp,png}` | header — dark ink, for the white background |
-| `/images/logo-tristate-light.{avif,webp,png}` | footer — ink lifted to white, red brightened to `--red` for contrast on navy |
+| `/images/logo-tristate-light.{avif,webp,png}` | footer — supplied as a separate white-ink artwork, used as-is (no algorithmic recolouring) |
 | `/favicon-32.png`, `/icon-192.png`, `/icon-512.png` | favicons — house mark only, the full lockup is unreadable at 32px |
 | `/apple-touch-icon.png` | 180x180 on white (iOS does not respect transparency here) |
 
-Served through `<picture>`: AVIF (18 KB) → WebP (31 KB) → PNG (33 KB) fallback. The header copy
+Served through `<picture>`: header AVIF 18 KB / WebP 31 KB / PNG 33 KB, footer AVIF 28 KB /
+WebP 38 KB / PNG 49 KB. The header copy
 carries `fetchpriority="high"`; the footer copy is lazy. `icon-512.png` is also the
 `Organization.logo` in the JSON-LD.
 
@@ -193,8 +194,8 @@ header steps down to 82px below 900px wide and shrinks further on phones.
 
 To regenerate after an artwork change, re-run the cutout against the new source and re-emit at
 460px wide — roughly 2.5x the largest rendered size (68px tall), so anything bigger is wasted
-bytes. Update the `width`/`height` attributes in Header.astro and Footer.astro if the aspect
-ratio changes, or CLS returns.
+bytes. The two files have slightly different aspect ratios (header 2.63, footer 2.67), so their
+`width`/`height` attributes differ — update them whenever the artwork changes, or CLS returns.
 
 ## Quote popup
 
