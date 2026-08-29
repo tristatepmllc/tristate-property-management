@@ -4,7 +4,6 @@ import { SITE } from '../data/site';
 import { graph, breadcrumbs } from '../lib/schema';
 
 const jsonLd = graph([breadcrumbs([{ name: 'Home', path: '/' }, { name: 'Accessibility', path: '/accessibility/' }])]);
-const updated = 'August 2026';
 ---
 <BaseLayout
   title="Accessibility Statement | Tristate Property Management LLC"
@@ -22,10 +21,9 @@ const updated = 'August 2026';
     </div>
   </section>
 
-  <section class="section section--paper">
+  <section class="section section--paper section--policy">
     <div class="wrap">
       <article class="prose prose--left">
-        <p class="post-meta">Last updated {updated}</p>
 
         <h2>What we aim for</h2>
         <p>

@@ -329,3 +329,11 @@ img{height:auto}
 .sec-head--form,
 .sec-head--form p{max-width:640px;margin-left:auto;margin-right:auto}
 .form-card--narrow{max-width:640px;margin-left:auto;margin-right:auto}
+
+/* Policy pages: the body section carried the full 84px section padding AND
+   the first h2's 2.2em top margin, stacking into a large empty band under the
+   hero. Tighten the top padding and drop the leading margin on the first
+   heading so the content starts where it looks like it should. */
+.prose > :first-child{margin-top:0}
+.section--policy{padding-top:48px}
+@media (max-width:720px){ .section--policy{padding-top:34px} }

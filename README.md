@@ -240,6 +240,10 @@ To regenerate after an artwork change, re-run the cutout against the new source 
 bytes. The two files have slightly different aspect ratios (header 2.63, footer 2.67), so their
 `width`/`height` attributes differ — update them whenever the artwork changes, or CLS returns.
 
+Policy pages carry no "last updated" date. If you materially change one, say so in the page
+text itself rather than reintroducing a date stamp that nobody remembers to bump - a stale
+"Last updated August 2026" is worse than none.
+
 ## Quote popup
 
 `src/components/QuotePopup.astro`. Offer: a free building walk-through with a written
