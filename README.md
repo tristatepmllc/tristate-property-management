@@ -32,6 +32,34 @@ approved file. `src/styles/global.css` is the original stylesheet; anything the 
 needed (skip link, form status, `img{height:auto}`, reduced-motion) lives separately in
 `src/styles/additions.css` so the approved sheet stays clean.
 
+## Build output layout (why the 404 happened)
+
+By default the Cloudflare adapter emits `dist/client` + `dist/server`, so a Pages project whose
+output directory is `dist` finds no `index.html` at the root and every URL returns 404.
+`astro.config.mjs` now flattens it with `outDir: './dist'` and
+`build: { client: './', server: './_worker.js' }`, producing:
+
+```
+dist/
+|- index.html            <- root document (this is what was missing)
+|- services/index.html   contact/  industries/  why-bedrock/
+|- _astro/  images/  robots.txt  sitemap-index.xml
+|- _headers  _routes.json  .assetsignore
+`- _worker.js/           entry.mjs + index.js (server routes)
+```
+
+Cloudflare Pages settings: build command `npm run build`, output directory `dist`, Node 22.
+A build hook writes `_worker.js/index.js` (Pages looks for `index.js` inside a `_worker.js`
+directory; the adapter names its entry `entry.mjs`) plus a `_routes.json` that sends only
+`/api/*` to the Worker, so static pages come straight from the CDN.
+
+`trailingSlash` is `'ignore'`, not `'always'` - `'always'` 301-redirects `POST /api/leads` to
+`/api/leads/` and drops the request body, breaking the form and the future mobile app. Pages
+still build as directory URLs and every canonical is explicit, so no SEO is lost.
+
+Bindings on Pages are set in the dashboard (Settings -> Functions), not read from
+`wrangler.jsonc`: add `DB` (D1), `MEDIA` (R2) and the two secrets there.
+
 ## Local development
 
 ```bash
@@ -41,7 +69,12 @@ cp .dev.vars.example .dev.vars    # then: npm run build && npm run preview  (ful
 ```
 
 `npm run preview` runs `wrangler dev`, which is the only way to exercise `/api/*`, D1 and
-Turnstile locally.
+Turnstile locally. Seed the local DB first with `npm run db:local`.
+
+Verified against `wrangler dev`: the five pages, `robots.txt` and `sitemap-index.xml` return 200;
+an unknown path returns 404; `GET /api/health` returns `{"ok":true,"db":"ok"}`; `GET /api/offers`
+returns `{"offers":[]}`; `POST /api/leads` returns 201 with the row present in D1; a filled
+honeypot returns 200 and writes nothing; bad input returns 422 with the failing field list.
 
 ## First deploy
 

@@ -1,4 +1,5 @@
 import type { APIRoute } from 'astro';
+import { env } from 'cloudflare:workers';
 import { validateLead } from '../../lib/validate';
 import { verifyTurnstile } from '../../lib/turnstile';
 import { sendEmail, escapeHtml } from '../../lib/email';
@@ -12,8 +13,8 @@ export const prerender = false;
  * Order matters: validate -> anti-spam -> WRITE TO D1 -> notify.
  * The DB write happens before the email so a Resend failure never loses a lead.
  */
-export const POST: APIRoute = async ({ request, locals, clientAddress }) => {
-  const env = locals.runtime.env;
+export const POST: APIRoute = async ({ request }) => {
+  const ip = request.headers.get('cf-connecting-ip') ?? undefined;
 
   let raw: Record<string, unknown>;
   const ctype = request.headers.get('content-type') ?? '';
@@ -37,7 +38,7 @@ export const POST: APIRoute = async ({ request, locals, clientAddress }) => {
 
   const token = typeof raw['cf-turnstile-response'] === 'string' ? raw['cf-turnstile-response'] : undefined;
   if (env.TURNSTILE_SECRET_KEY) {
-    const passed = await verifyTurnstile(token, env.TURNSTILE_SECRET_KEY, clientAddress);
+    const passed = await verifyTurnstile(token, env.TURNSTILE_SECRET_KEY, ip);
     if (!passed) return json({ error: 'challenge_failed' }, 403);
   }
 
