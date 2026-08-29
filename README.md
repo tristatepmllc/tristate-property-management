@@ -86,6 +86,9 @@ npm run types    # regenerate Cloudflare binding types from wrangler.jsonc
 npm run check    # astro check — TypeScript across .ts and .astro
 ```
 
+CI (`.github/workflows/ci.yml`) runs `check` then `build` on every push to main and on every
+pull request, so a type error cannot reach production silently again.
+
 `npm run check` currently reports **0 errors, 0 warnings, 0 hints** across 43 files. It was not being run before, and when first
 executed it found 8 real ones: three API routes could not resolve `cloudflare:workers`, and the
 blog post route had `post` typed as `unknown`, meaning every `post.data.*` access was unchecked.
