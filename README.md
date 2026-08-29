@@ -282,17 +282,17 @@ on the table.
 
 ## Share card (Open Graph)
 
-`/images/og-tristate.jpg`, 1200x630, referenced from `SITE.defaultOgImage`. Blog posts override
-it with their own cover and `coverAlt`.
+`/images/og-tristate.jpg`, **1200x1200 square**, referenced from `SITE.defaultOgImage`. Blog
+posts override it with their own cover and `coverAlt`.
 
-The supplied artwork is 1536x1024 (1.5:1) and Facebook and LinkedIn crop link previews to 1.91:1.
-A centre crop looked fine but cut off the phone number bar, which is the whole point of the card
-for a service business. The image is therefore fitted whole into 1200x630 on a cream field
-sampled from its own left panel (#F4F0EC), with 102px bars each side, after trimming the 52px of
-empty canvas above the logo. Nothing is lost on any platform.
+Square is a deliberate choice: WhatsApp and the other messaging apps render the card close to
+square, and a 1.91:1 image was being cropped there. The trade-off is that X crops
+`summary_large_image` to 1.91:1, so it will trim the top and bottom on that platform. A padded
+1.91 variant was tried and rejected - it left 286px bars each side and shrank the card to a
+small square in the middle, which looked worse everywhere than the crop looks on one platform.
 
-`og:image:width`, `og:image:height` and `og:image:alt` are all declared - without the dimensions
-some scrapers fetch the image before rendering the card, which delays or drops the preview.
+`og:image:width` and `og:image:height` must stay in step with the file; a wrong pair is worse
+than none, because scrapers lay out the card before the image loads.
 
 Test with Facebook's Sharing Debugger and X's Card Validator after the domain is live; both cache
 aggressively, so scrape once the real content is in place rather than now.

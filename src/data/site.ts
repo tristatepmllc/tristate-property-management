@@ -34,7 +34,7 @@ export const SITE = {
   // 1200x630 branded share card. Blog posts override this with their cover.
   defaultOgImage: '/images/og-tristate.jpg',
   defaultOgAlt:
-    'Tristate Property Management LLC - property management made easy. Professional, reliable, committed.',
+    'Tristate Property Management LLC - property management made easy. Property protection, tenant management, maintenance and repairs, maximise your ROI.',
 } as const;
 
 export const NAV = [
