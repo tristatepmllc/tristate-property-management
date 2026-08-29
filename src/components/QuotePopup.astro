@@ -1,0 +1,204 @@
+---
+import { SITE } from '../data/site';
+const siteKey = import.meta.env.PUBLIC_TURNSTILE_SITE_KEY ?? '1x00000000000000000000AA';
+---
+<!--
+  Quote popup.
+  Desktop : centre modal, 15s delay, exit-intent as a second chance.
+  Mobile  : slim sticky bar (~11% of viewport, well under Google's ~30% ceiling
+            for intrusive interstitials); tapping it opens the same modal, which
+            makes the mobile modal click-triggered and therefore outside the
+            interstitial guideline entirely.
+  Hidden on /contact/ (the page already is the form) and after conversion.
+-->
+<div class="qp" data-quote-popup hidden>
+  <!-- mobile teaser -->
+  <div class="qp-bar" role="region" aria-label="Free building walk-through offer">
+    <div class="qp-bar-text">
+      <strong>Free building walk-through</strong>
+      <span>Written maintenance plan, no obligation</span>
+    </div>
+    <button type="button" class="qp-bar-open">See details</button>
+    <button type="button" class="qp-bar-close" aria-label="Dismiss offer">&times;</button>
+  </div>
+
+  <!-- modal -->
+  <div class="qp-backdrop" data-qp-backdrop hidden>
+    <div class="qp-modal" role="dialog" aria-modal="true" aria-labelledby="qp-title" aria-describedby="qp-desc">
+      <button type="button" class="qp-close" aria-label="Close">&times;</button>
+
+      <div class="qp-media" style="background-image:url('/images/home-site-supervisor-reviewing-building-plans-on-.webp')" aria-hidden="true"></div>
+
+      <div class="qp-body">
+        <p class="eyebrow">No cost, no obligation</p>
+        <h2 id="qp-title">Free walk-through of your building</h2>
+        <p id="qp-desc" class="qp-lede">
+          A licensed technician walks your property, documents what needs attention now
+          versus what can wait, and sends you a written maintenance plan with pricing.
+          Takes about an hour. The plan is yours to keep either way.
+        </p>
+
+        <ul class="qp-points">
+          <li>A written plan, not a sales pitch</li>
+          <li>Usually scheduled within 3 business days</li>
+          <li>Licensed, bonded &amp; insured</li>
+        </ul>
+
+        <form action="/api/leads" method="post" data-lead-form data-source="popup-walkthrough" novalidate>
+          <input type="hidden" name="source" value="popup-walkthrough" />
+          <input type="hidden" name="service" value="Free building walk-through" />
+          <div aria-hidden="true" style="position:absolute;left:-9999px;width:1px;height:1px;overflow:hidden">
+            <label>Company website<input type="text" name="company_website" tabindex="-1" autocomplete="off" /></label>
+          </div>
+
+          <div class="field">
+            <label for="qp-name">Your name <span class="req">*</span></label>
+            <input type="text" id="qp-name" name="name" autocomplete="name" placeholder="Jane Whitfield" required />
+          </div>
+          <div class="field-row">
+            <div class="field">
+              <label for="qp-phone">Phone <span class="req">*</span></label>
+              <input type="tel" id="qp-phone" name="phone" autocomplete="tel" placeholder="(904) 000-0000" required />
+            </div>
+            <div class="field">
+              <label for="qp-email">Email <span class="req">*</span></label>
+              <input type="email" id="qp-email" name="email" autocomplete="email" placeholder="jane@company.com" required />
+            </div>
+          </div>
+
+          <div class="cf-turnstile" data-sitekey={siteKey} data-theme="light" data-appearance="interaction-only"></div>
+
+          <button type="submit" class="btn btn--red btn--wide">Book my free walk-through</button>
+          <p class="form-status" role="status" aria-live="polite" hidden></p>
+
+          <p class="qp-fine">
+            We use this only to arrange the visit. No newsletters, no passing your details on.
+          </p>
+        </form>
+
+        <p class="qp-alt">
+          Something broken today? Call <a href={SITE.telHref}>{SITE.phone}</a> — answered 24/7.
+        </p>
+
+        <button type="button" class="qp-decline">No thanks</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script is:inline>
+(function () {
+  var root = document.querySelector('[data-quote-popup]');
+  if (!root) return;
+
+  var DELAY_MS      = 15000;   // 15s, inside the 6-15s band where timed popups peak
+  var DISMISS_DAYS  = 30;
+  var KEY_DISMISS   = 'tpm_qp_dismissed_until';
+  var KEY_CONVERTED = 'tpm_qp_converted';
+  var SESSION_SHOWN = 'tpm_qp_shown';
+
+  // never on the contact page — it is already one big lead form
+  if (location.pathname.indexOf('/contact') === 0) return;
+
+  function store(get, key, value) {
+    try { return get ? localStorage.getItem(key) : localStorage.setItem(key, value); }
+    catch (e) { return null; }
+  }
+  function session(get, key, value) {
+    try { return get ? sessionStorage.getItem(key) : sessionStorage.setItem(key, value); }
+    catch (e) { return null; }
+  }
+
+  if (store(true, KEY_CONVERTED)) return;
+  var until = parseInt(store(true, KEY_DISMISS) || '0', 10);
+  if (until && Date.now() < until) return;
+  if (session(true, SESSION_SHOWN)) return;
+
+  var bar       = root.querySelector('.qp-bar');
+  var backdrop  = root.querySelector('[data-qp-backdrop]');
+  var modal     = root.querySelector('.qp-modal');
+  var form      = root.querySelector('form');
+  var isMobile  = window.matchMedia('(max-width: 720px)');
+  var lastFocus = null;
+  var armed     = true;
+
+  function remember(days) {
+    store(false, KEY_DISMISS, String(Date.now() + days * 864e5));
+  }
+
+  function showEntry() {
+    if (!armed) return;
+    armed = false;
+    session(false, SESSION_SHOWN, '1');
+    root.hidden = false;
+    // mobile gets the slim bar; desktop goes straight to the modal
+    if (isMobile.matches) {
+      root.classList.add('is-bar');
+    } else {
+      openModal();
+    }
+    window.dispatchEvent(new CustomEvent('popup:shown'));
+  }
+
+  function openModal() {
+    lastFocus = document.activeElement;
+    root.hidden = false;
+    root.classList.remove('is-bar');
+    backdrop.hidden = false;
+    document.body.style.overflow = 'hidden';
+    requestAnimationFrame(function () {
+      root.classList.add('is-open');
+      var first = modal.querySelector('input:not([type=hidden]):not([tabindex="-1"])');
+      if (first) first.focus({ preventScroll: true });
+    });
+  }
+
+  function closeAll(persist) {
+    root.classList.remove('is-open', 'is-bar');
+    document.body.style.overflow = '';
+    if (persist) remember(DISMISS_DAYS);
+    setTimeout(function () { backdrop.hidden = true; root.hidden = true; }, 200);
+    if (lastFocus && lastFocus.focus) lastFocus.focus({ preventScroll: true });
+  }
+
+  // ---- triggers ----------------------------------------------------------
+  var timer = setTimeout(showEntry, DELAY_MS);
+
+  // desktop second chance: cursor leaves toward the browser chrome
+  document.addEventListener('mouseout', function (e) {
+    if (isMobile.matches || !armed) return;
+    if (e.relatedTarget || e.clientY > 24) return;
+    clearTimeout(timer);
+    showEntry();
+  });
+
+  // ---- wiring ------------------------------------------------------------
+  root.querySelector('.qp-bar-open').addEventListener('click', openModal);
+  root.querySelector('.qp-bar-close').addEventListener('click', function () { closeAll(true); });
+  root.querySelector('.qp-close').addEventListener('click', function () { closeAll(true); });
+  root.querySelector('.qp-decline').addEventListener('click', function () { closeAll(true); });
+
+  backdrop.addEventListener('click', function (e) {
+    if (e.target === backdrop) closeAll(true);
+  });
+
+  document.addEventListener('keydown', function (e) {
+    if (backdrop.hidden) return;
+    if (e.key === 'Escape') { closeAll(true); return; }
+    if (e.key !== 'Tab') return;
+    // focus trap
+    var f = modal.querySelectorAll('a[href], button:not([disabled]), input:not([type=hidden]), textarea, select, [tabindex]:not([tabindex="-1"])');
+    var list = Array.prototype.filter.call(f, function (el) { return el.offsetParent !== null; });
+    if (!list.length) return;
+    var first = list[0], last = list[list.length - 1];
+    if (e.shiftKey && document.activeElement === first) { e.preventDefault(); last.focus(); }
+    else if (!e.shiftKey && document.activeElement === last) { e.preventDefault(); first.focus(); }
+  });
+
+  // the shared lead-form script handles submission; we just react to success
+  form.addEventListener('lead:sent', function () {
+    store(false, KEY_CONVERTED, '1');
+    setTimeout(function () { closeAll(false); }, 2600);
+  });
+})();
+</script>

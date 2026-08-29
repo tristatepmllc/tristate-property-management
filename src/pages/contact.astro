@@ -1,7 +1,6 @@
 ---
 import BaseLayout from '../layouts/BaseLayout.astro';
 import LeadFormExtras from '../components/LeadFormExtras.astro';
-import LeadFormScript from '../components/LeadFormScript.astro';
 import { SITE } from '../data/site';
 import { graph, breadcrumbs } from '../lib/schema';
 
@@ -13,6 +12,7 @@ const jsonLd = graph([breadcrumbs([{ name: 'Home', path: '/' }, { name: 'Contact
   path="/contact/"
   active="/contact/"
   jsonLd={jsonLd}
+  showPopup={false}
 >
 <section class="page-hero">
   <div class="page-hero-bg" style="background-image:url('/images/industries-automotive.webp')"></div>
@@ -234,5 +234,4 @@ const jsonLd = graph([breadcrumbs([{ name: 'Home', path: '/' }, { name: 'Contact
     </div>
   </div>
 </section>
-<LeadFormScript />
 </BaseLayout>

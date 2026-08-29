@@ -1,7 +1,6 @@
 ---
 import BaseLayout from '../layouts/BaseLayout.astro';
 import LeadFormExtras from '../components/LeadFormExtras.astro';
-import LeadFormScript from '../components/LeadFormScript.astro';
 import { SITE } from '../data/site';
 import { graph, localBusiness, organisation, website, serviceList } from '../lib/schema';
 
@@ -568,5 +567,4 @@ const jsonLd = graph([localBusiness(), organisation(), website(), ...serviceList
 </section>
 
 <!-- ================= FOOTER ================= -->
-<LeadFormScript />
 </BaseLayout>

@@ -162,6 +162,37 @@ and the LCP preload. The listing and hero reuse the approved `.page-hero` / `.ca
 components, so the blog inherits the design rather than introducing new UI; only the article body
 (`.prose`) needed new rules, since the prototype had no long-form page to copy.
 
+## Quote popup
+
+`src/components/QuotePopup.astro`. Offer: a free building walk-through with a written
+maintenance plan — not a newsletter. Facility buyers do not subscribe to vendors, they ask what
+it costs and how fast you can get there.
+
+| | Desktop | Mobile (<=720px) |
+|---|---|---|
+| Trigger | 15s timer, plus exit-intent as a second chance | 15s timer shows a slim bottom bar |
+| Format | centre modal (880px) | bar ~69px = **8.2% of a 390x844 viewport**; tapping it opens the modal |
+| Interstitial risk | none (desktop is not covered by the guideline) | none — the modal is click-triggered, and the bar is far under the ~30% ceiling |
+
+15 seconds sits inside the 6-15s band where timed popups peak in every published dataset;
+past ~16s conversion drops off sharply.
+
+Rules: once per session; dismissing hides it for 30 days; converting hides it permanently;
+never rendered on `/contact/` (that page is already the form). Pass `showPopup={false}` to
+`BaseLayout` to suppress it anywhere else. Everything is `position: fixed`, so CLS stays at 0.
+Keyboard: Esc closes, focus is trapped, focus returns to where it was.
+
+Leads land in the same `leads` table with `source = "popup-walkthrough"` and
+`service = "Free building walk-through"`, so popup performance is measurable with one query:
+
+```sql
+SELECT source, COUNT(*) FROM leads GROUP BY source;
+```
+
+**Lead submissions are sent as JSON, not FormData.** Astro's CSRF protection
+(`security.checkOrigin`) rejects cross-site *form-encoded* POSTs, which would 403 the future
+mobile app on this same endpoint. JSON is exempt, so one contract serves the website and the app.
+
 ## What is deliberately NOT here
 
 - No `AggregateRating` markup. Self-serving review schema on your own domain is discounted or
