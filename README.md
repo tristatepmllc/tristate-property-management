@@ -320,14 +320,27 @@ Posts target **owner intent**, not tenant intent. Tenant queries ("apartments fo
 "tenant portal") inflate traffic reports and produce no owner leads, so they are deliberately
 not targeted.
 
-The four owner-decision posts map to the questions that actually precede hiring:
+Ten long-form posts map to the questions that precede hiring, and cross-link into each other so
+a reader arriving on any one has somewhere to go next:
 
-| Post | Primary query |
-|---|---|
-| How much do property managers charge | "how much do property managers charge" |
-| Is a property manager worth it | "should I hire a property manager" |
-| Connecticut security deposit rules | "connecticut security deposit law" |
-| How to screen tenants | "how to screen tenants" / fair housing |
+| Post | Primary query | Stage |
+|---|---|---|
+| How much do property managers charge | "how much do property managers charge" | Research |
+| Is a property manager worth it | "should I hire a property manager" | Decision |
+| 14 questions to ask before hiring | "questions to ask a property manager" | Comparison |
+| How much should I charge for rent | "how much should I rent my house for" | Operating |
+| What should I budget for maintenance | "rental maintenance budget" | Operating |
+| How to reduce tenant turnover | "reduce tenant turnover" | Operating |
+| How to screen tenants | "how to screen tenants" / fair housing | Operating |
+| Move-in and move-out inspections | "move in inspection checklist" | Operating |
+| Connecticut security deposit rules | "connecticut security deposit law" | Local / legal |
+| How to evict a tenant in Connecticut | "how to evict a tenant in connecticut" | Local / legal |
+| Tenant stopped paying rent | "tenant not paying rent what to do" | Local / legal |
+
+The Connecticut legal posts are the ones most likely to earn citations and links, because precise
+statutory facts are what AI systems and other sites quote. They are also the ones that go stale -
+the deposit interest rate changes annually and statutes are amended, so re-verify before each
+year turns.
 
 Each is 1,300-1,500 words and built for AI citation as well as ranking, because the structures
 that get quoted are cheap to add:
