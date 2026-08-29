@@ -316,3 +316,9 @@ img{height:auto}
    With the heading left-aligned, the list has to start on the same line —
    keeping the 860px reading width, just anchored left instead of centred. */
 #faq .faq{margin-left:0;margin-right:0}
+
+/* `.prose` is centred (`margin:0 auto`) because a blog post reads better as a
+   centred column. Policy pages are reference documents, not reading columns —
+   they line up with the breadcrumb and heading above them instead. The 72ch
+   measure is kept; only the anchor changes. */
+.prose--left{margin-left:0;margin-right:0}
