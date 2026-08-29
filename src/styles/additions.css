@@ -407,3 +407,29 @@ img{height:auto}
 @media (prefers-reduced-motion:reduce){
   .quotes-track{scroll-behavior:auto}
 }
+
+/* ── Vertical rhythm ─────────────────────────────────────────────────────
+   The prototype was built at 84px section padding with a 44px gap under every
+   section head, which reads as dead space on a real screen - especially the
+   band between a hero and the first line of content. Tightened roughly a third
+   across the site. The hero and page-hero bands are untouched. */
+
+.section{padding:46px 0}
+.section--tight{padding:36px 0}
+.sec-head{margin-bottom:28px}
+.sec-head p{margin-top:10px}
+
+/* policy pages keep their own, slightly tighter, top */
+.section--policy{padding-top:40px}
+
+@media (max-width:940px){
+  .section{padding:40px 0}
+  .section--tight{padding:32px 0}
+  .sec-head{margin-bottom:24px}
+}
+@media (max-width:720px){
+  .section{padding:34px 0}
+  .section--tight{padding:28px 0}
+  .sec-head{margin-bottom:20px}
+  .section--policy{padding-top:26px}
+}
