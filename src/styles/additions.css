@@ -433,3 +433,10 @@ img{height:auto}
   .sec-head{margin-bottom:20px}
   .section--policy{padding-top:26px}
 }
+
+/* Blog post body: left-aligned and full wrap width.
+   `.prose` is centred at 72ch, which suits a narrow reading column; these posts
+   run the width of the container instead and start on the same left edge as the
+   breadcrumb and H1 above them. */
+.prose--full,
+.prose-cta--full{max-width:none;margin-left:0;margin-right:0}
