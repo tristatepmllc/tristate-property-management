@@ -2,6 +2,7 @@
 import BaseLayout from '../layouts/BaseLayout.astro';
 import LeadFormExtras from '../components/LeadFormExtras.astro';
 import { SITE } from '../data/site';
+import { TESTIMONIALS } from '../data/testimonials';
 import { graph, localBusiness, organisation, website, serviceList } from '../lib/schema';
 
 const jsonLd = graph([localBusiness(), organisation(), website(), ...serviceList()]);
@@ -354,30 +355,30 @@ const jsonLd = graph([localBusiness(), organisation(), website(), ...serviceList
       <h2>What property managers say</h2>
     </div>
 
-    <div class="quotes">
-      <div class="quote">
-        <div class="quote-stars">&#9733;&#9733;&#9733;&#9733;&#9733;</div>
-        <p>We used to run five separate contracts across the portfolio. Consolidating everything with one team cut about 22% off our maintenance spend in the first year, and the response time halved.</p>
-        <div class="quote-by">
-          <span class="avatar">DR</span>
-          <span><strong>Dana Reyes</strong><span>Property Manager, 14-building portfolio</span></span>
-        </div>
+    <div class="quotes-carousel" data-carousel>
+      <div class="quotes-track">
+        {TESTIMONIALS.map((t) => (
+          <article class="quote">
+            <div class="quote-stars" aria-label={`${t.stars ?? 5} out of 5`}>
+              {'\u2605'.repeat(t.stars ?? 5)}
+            </div>
+            <p>{t.quote}</p>
+            <div class="quote-by">
+              <span class="avatar" aria-hidden="true">{t.initials}</span>
+              <span><strong>{t.name}</strong><span>{t.role}</span></span>
+            </div>
+          </article>
+        ))}
       </div>
-      <div class="quote">
-        <div class="quote-stars">&#9733;&#9733;&#9733;&#9733;&#9733;</div>
-        <p>A ceiling tile fell in the lobby an hour before an inspection. They had somebody there in forty minutes and charged us for forty minutes. That is the whole relationship in one story.</p>
-        <div class="quote-by">
-          <span class="avatar">MT</span>
-          <span><strong>Marcus Tan</strong><span>Operations Lead, retail chain</span></span>
-        </div>
-      </div>
-      <div class="quote">
-        <div class="quote-stars">&#9733;&#9733;&#9733;&#9733;&#9733;</div>
-        <p>One invoice instead of nine vendors. My accounts team noticed before I did. And the crew is the same three faces every week, so they know the building better than I do now.</p>
-        <div class="quote-by">
-          <span class="avatar">SK</span>
-          <span><strong>Sarah Kowalski</strong><span>Facilities Director, medical group</span></span>
-        </div>
+
+      <div class="carousel-controls">
+        <button type="button" class="carousel-btn" data-carousel-prev aria-label="Previous reviews">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M15 18 9 12l6-6"/></svg>
+        </button>
+        <div class="carousel-dots" data-carousel-dots></div>
+        <button type="button" class="carousel-btn" data-carousel-next aria-label="Next reviews">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m9 18 6-6-6-6"/></svg>
+        </button>
       </div>
     </div>
   </div>
@@ -567,4 +568,7 @@ const jsonLd = graph([localBusiness(), organisation(), website(), ...serviceList
 </section>
 
 <!-- ================= FOOTER ================= -->
+<script>
+  import '../scripts/testimonials';
+</script>
 </BaseLayout>

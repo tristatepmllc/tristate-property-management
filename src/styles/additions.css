@@ -337,3 +337,71 @@ img{height:auto}
 .prose > :first-child{margin-top:0}
 .section--policy{padding-top:48px}
 @media (max-width:720px){ .section--policy{padding-top:34px} }
+
+/* ── Testimonial carousel ────────────────────────────────────────────────
+   Native scroll-snap instead of a transform track: touch swipe, keyboard
+   scrolling and the scrollbar all work without extra code, and with JS off the
+   section degrades to a scrollable row rather than disappearing. */
+
+.quotes-carousel{position:relative}
+
+.quotes-track{
+  display:flex;
+  gap:22px;
+  overflow-x:auto;
+  scroll-snap-type:x mandatory;
+  scroll-behavior:smooth;
+  scrollbar-width:none;
+  /* room for the card's top border and shadow, and for focus rings */
+  padding:4px 4px 6px;
+  margin:-4px -4px -6px;
+}
+.quotes-track::-webkit-scrollbar{display:none}
+
+.quotes-track .quote{
+  flex:0 0 calc((100% - 44px) / 3);
+  scroll-snap-align:start;
+}
+
+.carousel-controls{
+  display:flex;align-items:center;justify-content:center;gap:16px;
+  margin-top:28px;
+}
+.carousel-controls[hidden]{display:none}
+
+.carousel-btn{
+  width:44px;height:44px;
+  display:grid;place-items:center;
+  border:1px solid var(--line);
+  border-radius:50%;
+  background:var(--white);
+  color:var(--navy-800);
+  cursor:pointer;
+  transition:.15s;
+}
+.carousel-btn svg{width:20px;height:20px}
+.carousel-btn:hover{background:var(--navy-800);border-color:var(--navy-800);color:#fff}
+.carousel-btn:focus-visible{outline:2px solid var(--red);outline-offset:2px}
+
+.carousel-dots{display:flex;align-items:center;gap:8px}
+.carousel-dot{
+  width:9px;height:9px;padding:0;
+  border:none;border-radius:50%;
+  background:var(--line);
+  cursor:pointer;
+  transition:.2s;
+}
+.carousel-dot:hover{background:var(--steel-light)}
+.carousel-dot.is-active{background:var(--red);width:24px;border-radius:999px}
+.carousel-dot:focus-visible{outline:2px solid var(--red);outline-offset:2px}
+
+@media (max-width:980px){
+  .quotes-track .quote{flex-basis:calc((100% - 22px) / 2)}
+}
+@media (max-width:720px){
+  .quotes-track{gap:16px}
+  .quotes-track .quote{flex-basis:100%}
+}
+@media (prefers-reduced-motion:reduce){
+  .quotes-track{scroll-behavior:auto}
+}

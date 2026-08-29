@@ -244,6 +244,23 @@ Policy pages carry no "last updated" date. If you materially change one, say so 
 text itself rather than reintroducing a date stamp that nobody remembers to bump - a stale
 "Last updated August 2026" is worse than none.
 
+## Testimonials
+
+`src/data/testimonials.ts` - add an entry and the carousel picks it up, no markup changes.
+
+Built on native scroll-snap rather than a transform track, so touch swipe, keyboard scrolling
+and the scrollbar work without extra code, and with JavaScript disabled the section degrades to
+a scrollable row instead of showing one card. Three cards per view on desktop, two under 980px,
+one under 720px; dots are rebuilt on resize to match.
+
+Autoplay advances one card every 6s and stops on hover, on focus, when the section scrolls out
+of view, and entirely for `prefers-reduced-motion`.
+
+**The six entries currently in the file are prototype copy with invented names.** Publishing a
+testimonial nobody gave is a deceptive practice under the FTC's endorsement rules, and there is
+no SEO upside either since Google discounts self-hosted review markup - which is why this site
+emits no `AggregateRating`. Replace them with real quotes, with permission, before launch.
+
 ## Quote popup
 
 `src/components/QuotePopup.astro`. Offer: a free building walk-through with a written
