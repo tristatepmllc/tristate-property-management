@@ -1,11 +1,11 @@
 {
   "name": "Tristate Property Management LLC",
   "short_name": "Tristate",
-  "description": "Commercial facility services \u2014 one crew, every trade, one phone call.",
+  "description": "Commercial facility services - one crew, every trade, one phone call.",
   "start_url": "/",
   "scope": "/",
   "display": "standalone",
-  "background_color": "#FFFFFF",
+  "background_color": "#08152E",
   "theme_color": "#08152E",
   "icons": [
     {
