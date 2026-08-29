@@ -89,6 +89,12 @@ npm run check    # astro check — TypeScript across .ts and .astro
 CI (`.github/workflows/ci.yml`) runs `check` then `build` on every push to main and on every
 pull request, so a type error cannot reach production silently again.
 
+**Keep `package-lock.json` in sync with `package.json`.** Cloudflare Pages installs with a plain
+`npm ci`, which hard-fails if the lock file is missing anything the manifest implies — the build
+never even starts, and the dashboard just shows "No deployment available". If you ever install
+with `--legacy-peer-deps`, re-run a clean `rm -rf node_modules package-lock.json && npm install`
+before committing, and check `npm ci` succeeds from a fresh clone.
+
 `npm run check` currently reports **0 errors, 0 warnings, 0 hints** across 43 files. It was not being run before, and when first
 executed it found 8 real ones: three API routes could not resolve `cloudflare:workers`, and the
 blog post route had `post` typed as `unknown`, meaning every `post.data.*` access was unchecked.
