@@ -223,8 +223,17 @@ the navy footer.
 |---|---|
 | `/images/logo-tristate.{avif,webp,png}` | header — dark ink, for the white background |
 | `/images/logo-tristate-light.{avif,webp,png}` | footer — supplied as a separate white-ink artwork, used as-is (no algorithmic recolouring) |
-| `/favicon-32.png`, `/icon-192.png`, `/icon-512.png` | favicons — house mark only, the full lockup is unreadable at 32px |
-| `/apple-touch-icon.png` | 180x180 on white (iOS does not respect transparency here) |
+| `/favicon.ico`, `/favicon-32.png`, `/icon-192.png`, `/icon-512.png` | favicons, from the circular T-and-roof mark |
+| `/icon-maskable-512.png` | Android maskable - mark at 72% on white, inside the circle safe zone |
+| `/apple-touch-icon.png` | 180x180 opaque white plate (iOS flattens transparency to black) |
+
+The favicon uses the circular mark, not the horizontal lockup. Aspect ratio decides how large a
+mark can render inside a square icon: the lockup is 3.5:1 and shrank to a thin band, the disc is
+0.99:1 and fills the tile completely. It is also self-contained - it carries its own white disc
+and red ring, so it reads on light, dark and grey tab bars with no background plate behind it.
+
+Regenerate from the source disc if the artwork changes. `apple-touch-icon.png` and the maskable
+icon need opaque backgrounds; the rest keep their transparency.
 
 Served through `<picture>`: header AVIF 18 KB / WebP 31 KB / PNG 33 KB, footer AVIF 28 KB /
 WebP 38 KB / PNG 49 KB. The header copy
