@@ -305,3 +305,14 @@ img{height:auto}
       the photo ~40px on each side so it sat narrower than the emergency card
       below it. Clear the rest of the margin so it fills the column. */
 .photo-card{margin:0 0 18px}
+
+/* `.sec-head` caps itself at 720px and its paragraph at 62ch. This modifier
+   lets a section head run the full width of the wrap — used where the copy is
+   the whole section rather than an intro above a grid. */
+.sec-head--wide,
+.sec-head--wide p{max-width:none}
+
+/* The FAQ list was centred (`.faq{margin:0 auto}`) under a centred heading.
+   With the heading left-aligned, the list has to start on the same line —
+   keeping the 860px reading width, just anchored left instead of centred. */
+#faq .faq{margin-left:0;margin-right:0}
