@@ -1,6 +1,6 @@
 ---
 title: "A Commercial HVAC Preventive Maintenance Checklist"
-description: "What a facility manager should have done to rooftop units, split systems and coolers each quarter, and the failures that catch buildings out when the season turns."
+description: "What a facility manager should have done to rooftop units, split systems and coolers each quarter, and the failures that catch buildings out every season."
 publishedAt: 2026-08-12
 author: "Tristate Property Management"
 category: "HVAC"

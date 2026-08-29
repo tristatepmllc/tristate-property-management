@@ -3,7 +3,7 @@ import { getCollection, render } from 'astro:content';
 import type { CollectionEntry } from 'astro:content';
 import type { GetStaticPaths } from 'astro';
 import BaseLayout from '../../layouts/BaseLayout.astro';
-import { graph, breadcrumbs, blogPosting } from '../../lib/schema';
+import { graph, breadcrumbs, blogPosting, faqPage } from '../../lib/schema';
 
 export const getStaticPaths: GetStaticPaths = async () => {
   const posts = await getCollection('blog', ({ data }) => !data.draft);
@@ -22,6 +22,7 @@ const jsonLd = graph([
     { name: d.title, path: `/blog/${post.id}/` },
   ]),
   blogPosting({ ...d, slug: post.id }),
+  ...(d.faqs?.length ? [faqPage(d.faqs)] : []),
 ]);
 
 const fmt = (date: Date) =>
@@ -56,6 +57,20 @@ const fmt = (date: Date) =>
     <div class="wrap">
       <article class="prose prose--full">
         <Content />
+
+        {d.faqs?.length ? (
+          <section class="post-faq">
+            <h2>Frequently asked questions</h2>
+            <div class="faq">
+              {d.faqs.map((item) => (
+                <details>
+                  <summary>{item.q}</summary>
+                  <div class="answer">{item.a}</div>
+                </details>
+              ))}
+            </div>
+          </section>
+        ) : null}
       </article>
 
       <div class="prose-cta prose-cta--full">

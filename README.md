@@ -314,6 +314,39 @@ testimonial nobody gave is a deceptive practice under the FTC's endorsement rule
 no SEO upside either since Google discounts self-hosted review markup - which is why this site
 emits no `AggregateRating`. Replace them with real quotes, with permission, before launch.
 
+## Blog content strategy
+
+Posts target **owner intent**, not tenant intent. Tenant queries ("apartments for rent",
+"tenant portal") inflate traffic reports and produce no owner leads, so they are deliberately
+not targeted.
+
+The four owner-decision posts map to the questions that actually precede hiring:
+
+| Post | Primary query |
+|---|---|
+| How much do property managers charge | "how much do property managers charge" |
+| Is a property manager worth it | "should I hire a property manager" |
+| Connecticut security deposit rules | "connecticut security deposit law" |
+| How to screen tenants | "how to screen tenants" / fair housing |
+
+Each is 1,300-1,500 words and built for AI citation as well as ranking, because the structures
+that get quoted are cheap to add:
+
+- **Answer capsule first.** The opening paragraph answers the title question with a specific
+  number in bold, before any preamble. Engines extract the first sentences of a section to
+  decide whether it answers a query.
+- **Question-shaped H2s.** Each section heading is the query it answers, with a direct answer
+  in the first two sentences.
+- **Hard numbers with sources.** Specific figures rather than ranges-of-ranges, and legal facts
+  linked to the primary source (portal.ct.gov, C.G.S. 47a-21) rather than to a competitor blog.
+- **Tables.** Extractable structure that AI systems parse cleanly.
+- **FAQPage schema.** Add `faqs` to the frontmatter and the post renders an accordion and emits
+  FAQPage JSON-LD. Q&A pairs mapped to schema are the highest-impact single change for citation
+  rates, because they match the shape of the queries being asked.
+
+Do not add legal specifics without a primary source, and keep the dated disclaimer at the foot of
+any post that states law - rates and statutes change annually.
+
 ## Quote popup
 
 `src/components/QuotePopup.astro`. Offer: a free building walk-through with a written

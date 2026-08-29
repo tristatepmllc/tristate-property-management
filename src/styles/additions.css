@@ -315,7 +315,7 @@ img{height:auto}
 /* The FAQ list was centred (`.faq{margin:0 auto}`) under a centred heading.
    With the heading left-aligned, the list has to start on the same line -
    keeping the 860px reading width, just anchored left instead of centred. */
-#faq .faq{margin-left:0;margin-right:0}
+#faq .faq, .post-faq .faq{margin-left:0;margin-right:0}
 
 /* `.prose` is centred (`margin:0 auto`) because a blog post reads better as a
    centred column. Policy pages are reference documents, not reading columns -
@@ -444,3 +444,8 @@ img{height:auto}
 /* Coverage grid falls back to a single statewide chip while SITE.areaServed is
    empty; let that one span the row instead of sitting in a narrow column. */
 .area--wide{grid-column:1 / -1}
+
+/* Post FAQ block - reuses the accordion from the Why Tristate page. */
+.post-faq{margin-top:2.6em}
+.post-faq .faq{margin-top:1.2em}
+.post-faq h2{margin-top:0}
