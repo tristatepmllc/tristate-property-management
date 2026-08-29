@@ -68,24 +68,25 @@ is mostly markup and CSS, which is what a content site should be:
 
 | | lines | share |
 |---|---|---|
-| HTML / Astro markup | 2,459 | 46.0% |
-| CSS | 1,711 | 32.0% |
-| **TypeScript** (`.ts` + `.astro` frontmatter) | **608** | **11.4%** |
-| JavaScript (inline `<script>`) | 297 | 5.6% |
-| Config, SQL, Markdown | 271 | 5.1% |
+| HTML / Astro markup | ~2,460 | 46% |
+| CSS | ~1,760 | 32% |
+| **TypeScript** (`.ts` + `.astro` frontmatter) | **~940** | **17%** |
+| Config, SQL, Markdown | ~280 | 5% |
 
-**The 297 lines of inline `<script>` are plain JavaScript, not TypeScript** — the popup, chat
-widget and lead-form handler. Astro ships `is:inline` scripts to the browser untouched, so they
-are never type-checked or bundled. That is deliberate (it keeps the shipped JS at ~1 KB gzipped
-with no build step), but it is the one part of the codebase with no type safety, so it is also
-the part to be careful editing.
+Client-side behaviour lives in `src/scripts/*.ts` — `lead-form.ts`, `quote-popup.ts` and
+`chat-widget.ts` — imported from their components with a plain `<script>`, so Astro bundles,
+minifies and type-checks them. They were previously `is:inline`, which Astro ships untouched and
+never checks; that was the only part of the codebase without type safety.
+
+The one remaining inline script is the Turnstile loader, which is a remote URL, not our code.
+The JSON-LD block is `is:inline` too, but it is data rather than script.
 
 ```bash
 npm run types    # regenerate Cloudflare binding types from wrangler.jsonc
 npm run check    # astro check — TypeScript across .ts and .astro
 ```
 
-`npm run check` currently reports **0 errors**. It was not being run before, and when first
+`npm run check` currently reports **0 errors, 0 warnings, 0 hints** across 43 files. It was not being run before, and when first
 executed it found 8 real ones: three API routes could not resolve `cloudflare:workers`, and the
 blog post route had `post` typed as `unknown`, meaning every `post.data.*` access was unchecked.
 Both are fixed — bindings now come from `wrangler types`, and the route declares its props.

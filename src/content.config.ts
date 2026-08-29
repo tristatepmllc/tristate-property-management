@@ -1,10 +1,10 @@
-import { defineCollection, z } from 'astro:content';
+import { defineCollection } from 'astro:content';
+import { z } from 'zod';
 import { glob } from 'astro/loaders';
 
 const blog = defineCollection({
   loader: glob({ base: './src/content/blog', pattern: '**/*.md' }),
-  schema: ({ image }) =>
-    z.object({
+  schema: z.object({
       title: z.string().max(70),          // keep SERP titles from truncating
       description: z.string().min(70).max(165),
       publishedAt: z.coerce.date(),
