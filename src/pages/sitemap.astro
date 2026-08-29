@@ -10,8 +10,8 @@ const posts = (await getCollection('blog', ({ data }) => !data.draft))
 const jsonLd = graph([breadcrumbs([{ name: 'Home', path: '/' }, { name: 'Site index', path: '/sitemap/' }])]);
 ---
 <BaseLayout
-  title="Site Index | Tristate Property Management LLC"
-  description="Every page on this website in one list - services, industries, company pages, articles and policies."
+  title="Site Index - Every Page on This Website"
+  description="Every page on this site in one list: services, the buildings we manage, company pages, articles and policies. The XML version lives at /sitemap-index.xml."
   path="/sitemap/"
   active="/sitemap/"
   jsonLd={jsonLd}

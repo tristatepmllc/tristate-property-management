@@ -259,6 +259,27 @@ Policy pages carry no "last updated" date. If you materially change one, say so 
 text itself rather than reintroducing a date stamp that nobody remembers to bump - a stale
 "Last updated August 2026" is worse than none.
 
+## Titles and descriptions
+
+Every page carries a hand-written title and meta description sized to current Google display
+limits: titles 39-52 characters (the desktop cut-off is ~580px / 50-60 characters, and the
+51-55 band has the lowest rewrite rate), descriptions 154-160 characters (~920px desktop).
+Hyphens rather than pipes as separators, keyword front-loaded, brand only where it earns its
+place - it is dropped entirely on blog posts, where appending "| Tristate Property Management"
+was pushing every title past 80 characters.
+
+The blog frontmatter cap is now 60 characters rather than 70, so the build fails on a title that
+would truncate in search.
+
+Google rewrites a large share of descriptions regardless; the point of writing them is that the
+one you supply is the default and the source material, and it is what WhatsApp, Facebook,
+LinkedIn and X show verbatim in a link preview - those do not rewrite anything.
+
+**Locations are still generic.** Titles say "Connecticut" because no town has been supplied. The
+highest-value local queries are "[town] property management" style, and hitting those needs the
+town in the title, the H1 and the first 100 words. That is the single biggest ranking gain left
+on the table.
+
 ## Share card (Open Graph)
 
 `/images/og-tristate.jpg`, 1200x630, referenced from `SITE.defaultOgImage`. Blog posts override

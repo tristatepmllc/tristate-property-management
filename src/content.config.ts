@@ -5,7 +5,7 @@ import { glob } from 'astro/loaders';
 const blog = defineCollection({
   loader: glob({ base: './src/content/blog', pattern: '**/*.md' }),
   schema: z.object({
-      title: z.string().max(70),          // keep SERP titles from truncating
+      title: z.string().max(60),          // ~580px, the desktop SERP cut-off
       description: z.string().min(70).max(165),
       publishedAt: z.coerce.date(),
       updatedAt: z.coerce.date().optional(),

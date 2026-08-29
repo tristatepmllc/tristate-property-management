@@ -1,6 +1,6 @@
 ---
 title: "A Commercial HVAC Preventive Maintenance Checklist"
-description: "What a facility manager should have done to rooftop units, split systems and coolers each quarter, and the failures that catch buildings out in Florida heat."
+description: "What a facility manager should have done to rooftop units, split systems and coolers each quarter, and the failures that catch buildings out when the season turns."
 publishedAt: 2026-08-12
 author: "Tristate Property Management"
 category: "HVAC"
@@ -8,7 +8,7 @@ cover: "/images/home-hvac.webp"
 coverAlt: "Technician servicing a rooftop HVAC unit"
 ---
 
-Most emergency HVAC calls we take in August were preventable in April. A rooftop unit rarely
+Most emergency HVAC calls we take in midsummer were preventable in April. A rooftop unit rarely
 fails without warning - it gets louder, it runs longer, the condensate line backs up, and then
 on the first 95-degree afternoon it stops. The cost difference between a scheduled filter and
 coil service and an after-hours compressor replacement is not small.

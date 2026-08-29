@@ -28,7 +28,7 @@ const fmt = (date: Date) =>
   date.toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' });
 ---
 <BaseLayout
-  title={`${d.title} | Tristate Property Management`}
+  title={d.title}
   description={d.description}
   path={`/blog/${post.id}/`}
   active="/blog/"

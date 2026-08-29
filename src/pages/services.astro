@@ -6,8 +6,8 @@ import { graph, breadcrumbs, serviceList } from '../lib/schema';
 const jsonLd = graph([breadcrumbs([{ name: 'Home', path: '/' }, { name: 'Services', path: '/services/' }]), ...serviceList()]);
 ---
 <BaseLayout
-  title="Commercial Facility Services - All 8 Trades | Tristate Property Management"
-  description="Janitorial, plumbing, electrical, HVAC, handyman, painting, grounds and build-out services for commercial properties in Jacksonville, FL. In-house licensed technicians, flat written pricing."
+  title="Property Maintenance Services - Every Trade In-House"
+  description="Cleaning, plumbing, electrical, HVAC, handyman, painting, grounds and build-out - handled by our own licensed technicians. Flat written pricing, same-day calls."
   path="/services/"
   active="/services/"
   jsonLd={jsonLd}
