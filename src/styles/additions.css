@@ -516,3 +516,60 @@ img{height:auto}
   .prose table{display:block;overflow-x:auto;-webkit-overflow-scrolling:touch}
   .prose thead th{white-space:nowrap}
 }
+
+/* ── Fractured CTA band ──────────────────────────────────────────────────
+   "Something broken right now?" sat on a flat navy panel that said nothing.
+   A crack running across the band makes the section carry its own message.
+
+   Drawn as inline SVG rather than an image: it scales to any width, weighs
+   nothing, recolours with the brand variables, and stays crisp on any display.
+   The polygon fills the plate above the crack a shade lighter, so the surface
+   reads as two pieces that have shifted rather than a line drawn on one. */
+
+.cta-fracture{
+  position:absolute;
+  inset:0;
+  width:100%;height:100%;
+  z-index:2;              /* above the photo tint and the gradient, below .wrap */
+  pointer-events:none;
+}
+
+/* the slab above the break, lifted just enough to separate the two planes */
+.frac-plate{fill:rgba(255,255,255,.06)}
+
+.frac-line{
+  fill:none;
+  stroke:var(--red);
+  stroke-width:2;
+  stroke-linejoin:miter;
+  opacity:.62;
+}
+.frac-branch{
+  fill:none;
+  stroke:var(--red);
+  stroke-width:1.4;
+  stroke-linejoin:miter;
+  opacity:.26;
+}
+.frac-branch--fine{stroke-width:1;opacity:.18}
+
+/* the crack should read against the photo, not compete with the headline */
+.cta-band--fractured .cta-bg{opacity:.3}
+
+@media (max-width:940px){
+  .frac-line{stroke-width:2}
+  .frac-branch{stroke-width:1.3}
+}
+
+/* On a phone the band is nearly as tall as it is wide, so the same path
+   compresses horizontally into a zigzag that reads as noise across the buttons.
+   Drop the strokes there and keep only the tonal split, which still says the
+   surface is broken without competing with the call-to-action. */
+@media (max-width:720px){
+  .frac-line,
+  .frac-branch{display:none}
+  .frac-plate{fill:rgba(255,255,255,.05)}
+}
+
+/* The crack is decoration; it should not survive into a printed page. */
+@media print{ .cta-fracture{display:none} }
