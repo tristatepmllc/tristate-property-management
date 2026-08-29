@@ -23,6 +23,7 @@ interface Props {
   path: string;              // e.g. "/services/"
   active?: string;           // nav href to highlight
   ogImage?: string;
+  ogAlt?: string;
   showPopup?: boolean;
   noindex?: boolean;
   preloadImage?: string;     // LCP image
@@ -31,7 +32,8 @@ interface Props {
 
 const {
   title, description, path, active = path,
-  ogImage = SITE.defaultOgImage, noindex = false, preloadImage, jsonLd, showPopup = true,
+  ogImage = SITE.defaultOgImage, ogAlt = SITE.defaultOgAlt,
+  noindex = false, preloadImage, jsonLd, showPopup = true,
 } = Astro.props;
 
 const canonical = new URL(path, SITE.url).href;
@@ -55,11 +57,15 @@ const ogAbsolute = new URL(ogImage, SITE.url).href;
   <meta property="og:description" content={description} />
   <meta property="og:url" content={canonical} />
   <meta property="og:image" content={ogAbsolute} />
+  <meta property="og:image:width" content="1200" />
+  <meta property="og:image:height" content="630" />
+  <meta property="og:image:alt" content={ogAlt} />
   <meta property="og:locale" content="en_US" />
   <meta name="twitter:card" content="summary_large_image" />
   <meta name="twitter:title" content={title} />
   <meta name="twitter:description" content={description} />
   <meta name="twitter:image" content={ogAbsolute} />
+  <meta name="twitter:image:alt" content={ogAlt} />
 
   <link rel="icon" href="/favicon.ico" sizes="48x48" />
   <link rel="icon" href="/favicon-32.png" sizes="32x32" type="image/png" />

@@ -253,6 +253,23 @@ Policy pages carry no "last updated" date. If you materially change one, say so 
 text itself rather than reintroducing a date stamp that nobody remembers to bump - a stale
 "Last updated August 2026" is worse than none.
 
+## Share card (Open Graph)
+
+`/images/og-tristate.jpg`, 1200x630, referenced from `SITE.defaultOgImage`. Blog posts override
+it with their own cover and `coverAlt`.
+
+The supplied artwork is 1536x1024 (1.5:1) and Facebook and LinkedIn crop link previews to 1.91:1.
+A centre crop looked fine but cut off the phone number bar, which is the whole point of the card
+for a service business. The image is therefore fitted whole into 1200x630 on a cream field
+sampled from its own left panel (#F4F0EC), with 102px bars each side, after trimming the 52px of
+empty canvas above the logo. Nothing is lost on any platform.
+
+`og:image:width`, `og:image:height` and `og:image:alt` are all declared - without the dimensions
+some scrapers fetch the image before rendering the card, which delays or drops the preview.
+
+Test with Facebook's Sharing Debugger and X's Card Validator after the domain is live; both cache
+aggressively, so scrape once the real content is in place rather than now.
+
 ## Testimonials
 
 `src/data/testimonials.ts` - add an entry and the carousel picks it up, no markup changes.

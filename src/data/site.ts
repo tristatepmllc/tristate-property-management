@@ -27,7 +27,10 @@ export const SITE = {
     { days: ['Monday','Tuesday','Wednesday','Thursday','Friday'], opens: '07:00', closes: '18:00' },
   ],
   social: [] as string[],                       // TODO: GBP / Facebook / LinkedIn URLs
-  defaultOgImage: '/images/home-crew-carrying-ladders-on-a-commercial-job-si.webp',
+  // 1200x630 branded share card. Blog posts override this with their cover.
+  defaultOgImage: '/images/og-tristate.jpg',
+  defaultOgAlt:
+    'Tristate Property Management LLC - property management made easy. Professional, reliable, committed.',
 } as const;
 
 export const NAV = [
