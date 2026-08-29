@@ -1,0 +1,85 @@
+---
+import BaseLayout from '../layouts/BaseLayout.astro';
+import { SITE } from '../data/site';
+import { graph, breadcrumbs } from '../lib/schema';
+
+const jsonLd = graph([breadcrumbs([{ name: 'Home', path: '/' }, { name: 'Terms of Service', path: '/terms-of-service/' }])]);
+const updated = 'August 2026';
+---
+<BaseLayout
+  title="Terms of Service | Tristate Property Management LLC"
+  description="The terms that apply to using this website: what the content is and is not, quotes and pricing, and the limits of what a website can promise."
+  path="/terms-of-service/"
+  active="/terms-of-service/"
+  jsonLd={jsonLd}
+>
+  <section class="page-hero">
+    <div class="page-hero-bg" style="background-image:url('/images/home-site-supervisor-reviewing-building-plans-on-.webp')"></div>
+    <div class="wrap">
+      <p class="crumb"><a href="/">Home</a> &nbsp;/&nbsp; <span>Terms of Service</span></p>
+      <h1>Terms of Service</h1>
+      <p>The rules that apply to this website. The work itself is governed by your written quote or service agreement, not by this page.</p>
+    </div>
+  </section>
+
+  <section class="section section--paper">
+    <div class="wrap">
+      <article class="prose">
+        <p class="post-meta">Last updated {updated}</p>
+
+        <h2>Using this site</h2>
+        <p>
+          You are welcome to read, print and share anything here. You may not scrape it at scale,
+          republish it as your own, or use it to train a competing commercial service without
+          asking us first.
+        </p>
+
+        <h2>What the content is</h2>
+        <p>
+          Service descriptions, guides and blog posts are general information about commercial
+          facility work. They are not an inspection of your building and not professional advice
+          for your specific situation. Do not act on a checklist here in place of having someone
+          qualified look at the actual equipment.
+        </p>
+
+        <h2>Quotes and pricing</h2>
+        <p>
+          Nothing on this website is a binding offer or a fixed price. Response times, coverage
+          and scheduling described here are typical, not guaranteed. A price becomes real when we
+          put it in writing for your building, after we understand the scope. Written quotes state
+          their own validity period.
+        </p>
+
+        <h2>Forms and submissions</h2>
+        <p>
+          Submitting a form starts a conversation; it does not create a contract, book a crew, or
+          guarantee that we can take the job. For anything urgent, call
+          <a href={SITE.telHref}>{SITE.phone}</a> — a form is not an emergency channel.
+        </p>
+
+        <h2>The work itself</h2>
+        <p>
+          Services we actually perform are governed by the written quote, work order or service
+          agreement you sign. Where that document and this page disagree, that document wins.
+        </p>
+
+        <h2>Third-party links</h2>
+        <p>We are not responsible for the content or practices of sites we link to.</p>
+
+        <h2>Limits</h2>
+        <p>
+          This website is provided as-is. We keep it accurate and available, but we do not warrant
+          that it will be error-free or uninterrupted, and we are not liable for losses arising
+          from relying on general information published here rather than on advice given for your
+          building.
+        </p>
+
+        <h2>Governing law</h2>
+        <p>These terms are governed by the laws of the State of Connecticut.</p>
+
+        <h2>Contact</h2>
+        <p>Questions about these terms: <a href={SITE.mailtoHref}>{SITE.email}</a>.</p>
+      </article>
+    </div>
+  </section>
+</BaseLayout>

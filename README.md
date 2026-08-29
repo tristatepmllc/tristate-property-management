@@ -228,6 +228,35 @@ SELECT source, COUNT(*) FROM leads GROUP BY source;
 (`security.checkOrigin`) rejects cross-site *form-encoded* POSTs, which would 403 the future
 mobile app on this same endpoint. JSON is exempt, so one contract serves the website and the app.
 
+## Anti-spam behaviour
+
+Three layers, in order:
+
+1. **Honeypot** — a hidden `company_website` field. Filled in, the request returns `200` and
+   writes nothing. Bots get no signal that they were caught.
+2. **Turnstile** — a token that is present but *invalid* is a hard `403`.
+3. **Missing token** — accepted, but stored with `status = 'needs_review'` and the notification
+   email is prefixed `[unverified]`.
+
+Layer 3 matters: `challenges.cloudflare.com` is blocked by some privacy extensions and corporate
+networks. Rejecting those visitors would silently lose real enquiries with no trace. Quarantining
+is the safer trade — spam gets flagged rather than reaching the pipeline as a normal lead, and
+nothing legitimate disappears. Review with:
+
+```sql
+SELECT * FROM leads WHERE status = 'needs_review' ORDER BY created_at DESC;
+```
+
+## Chat widget
+
+No longer a mock. It is a three-step lead capture — message, name, phone or email — that POSTs to
+`/api/leads` with `source = 'chat-widget'`. The status line says "Messages go straight to
+dispatch" rather than "Online now", because nobody is sitting in a live chat queue.
+
+Because it only asks for one contact method, `validateLead` requires a name plus **either** a
+valid email **or** a valid phone, not all three. The page forms still mark all three required in
+HTML; a lead you can actually call is worth more than one rejected for tidiness.
+
 ## What is deliberately NOT here
 
 - No `AggregateRating` markup. Self-serving review schema on your own domain is discounted or

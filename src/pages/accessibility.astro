@@ -1,0 +1,66 @@
+---
+import BaseLayout from '../layouts/BaseLayout.astro';
+import { SITE } from '../data/site';
+import { graph, breadcrumbs } from '../lib/schema';
+
+const jsonLd = graph([breadcrumbs([{ name: 'Home', path: '/' }, { name: 'Accessibility', path: '/accessibility/' }])]);
+const updated = 'August 2026';
+---
+<BaseLayout
+  title="Accessibility Statement | Tristate Property Management LLC"
+  description="How this website is built for accessibility, which WCAG standard we target, the areas we know need work, and how to tell us if something blocks you."
+  path="/accessibility/"
+  active="/accessibility/"
+  jsonLd={jsonLd}
+>
+  <section class="page-hero">
+    <div class="page-hero-bg" style="background-image:url('/images/home-site-supervisor-reviewing-building-plans-on-.webp')"></div>
+    <div class="wrap">
+      <p class="crumb"><a href="/">Home</a> &nbsp;/&nbsp; <span>Accessibility</span></p>
+      <h1>Accessibility Statement</h1>
+      <p>We want this site to work for everyone. Here is where it stands and how to tell us when it does not.</p>
+    </div>
+  </section>
+
+  <section class="section section--paper">
+    <div class="wrap">
+      <article class="prose">
+        <p class="post-meta">Last updated {updated}</p>
+
+        <h2>What we aim for</h2>
+        <p>
+          We target <strong>WCAG 2.2 Level AA</strong>. That is the standard most commonly
+          referenced in US accessibility law, and it is the bar we hold new pages to.
+        </p>
+
+        <h2>What is already in place</h2>
+        <ul>
+          <li>A skip link so keyboard users can jump straight past the navigation.</li>
+          <li>Every image carries descriptive alt text, and decorative images are hidden from screen readers.</li>
+          <li>Dialogs — the quote popup and the message widget — trap focus, close on Escape, and return focus where it was.</li>
+          <li>Every form field has a real <code>&lt;label&gt;</code>, not a placeholder standing in for one.</li>
+          <li>Text is sized in relative units and reflows down to a 320px screen without horizontal scrolling.</li>
+          <li>Animation is disabled automatically for anyone whose system requests reduced motion.</li>
+          <li>Headings run in order, and the page structure uses real landmarks.</li>
+        </ul>
+
+        <h2>Known gaps</h2>
+        <p>
+          We would rather list these than claim the site is perfect:
+        </p>
+        <ul>
+          <li>The site has not yet been audited by a third party or tested with a screen reader by a daily screen reader user. Our testing so far is automated plus keyboard-only.</li>
+          <li>Some photographs used as decorative backgrounds carry no text alternative because the information is repeated in the surrounding copy — if you find a case where it is not, tell us.</li>
+        </ul>
+
+        <h2>Tell us</h2>
+        <p>
+          If anything on this site stops you getting what you need, email
+          <a href={SITE.mailtoHref}>{SITE.email}</a> or call <a href={SITE.telHref}>{SITE.phone}</a>.
+          Tell us the page and what happened, and we will fix it and reply. If you would rather
+          not use the website at all, the phone line does everything the forms do.
+        </p>
+      </article>
+    </div>
+  </section>
+</BaseLayout>

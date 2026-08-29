@@ -1,19 +1,20 @@
 ---
 import { SITE } from '../data/site';
+const siteKey = import.meta.env.PUBLIC_TURNSTILE_SITE_KEY ?? '1x00000000000000000000AA';
 ---
-<div class="chat-widget" data-chat="tristate">
+<div class="chat-widget" data-chat="tristate" data-phone={SITE.phone}>
   <div class="chat-panel" role="dialog" aria-label="Live chat with Tristate" aria-hidden="true">
     <div class="chat-head">
       <span class="chat-avatar" aria-hidden="true">T</span>
       <span>
         <strong>Tristate Support</strong>
-        <span class="status">Online now &middot; replies in a few minutes</span>
+        <span class="status">Messages go straight to dispatch</span>
       </span>
     </div>
 
     <div class="chat-body">
       <span class="chat-time">Today</span>
-      <div class="bubble them">Hi &mdash; you're through to the Tristate dispatch desk. What's going on at your building?</div>
+      <div class="bubble them">Hi &mdash; leave a message here and it goes straight to our dispatch desk. What&rsquo;s going on at your building?</div>
       <div class="bubble them">If it's an emergency, call <strong>{SITE.phone}</strong> and we'll get a crew moving straight away.</div>
     </div>
 
@@ -29,7 +30,8 @@ import { SITE } from '../data/site';
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 2 11 13M22 2l-7 20-4-9-9-4z"/></svg>
       </button>
     </div>
-    <p class="chat-foot">Typical reply time: under 5 minutes during business hours</p>
+    <div class="cf-turnstile chat-turnstile" data-sitekey={siteKey} data-size="flexible" data-appearance="interaction-only"></div>
+    <p class="chat-foot">Answered during business hours. For anything urgent, call {SITE.phone} &mdash; 24/7.</p>
   </div>
 
   <button type="button" class="chat-launcher" aria-label="Open live chat" aria-expanded="false">
@@ -40,9 +42,9 @@ import { SITE } from '../data/site';
 </div>
 
 <script is:inline>
-(function(){
+(function () {
   var root = document.querySelector('.chat-widget[data-chat="tristate"]');
-  if(!root || root.dataset.ready) return;
+  if (!root || root.dataset.ready) return;
   root.dataset.ready = "1";
 
   var panel    = root.querySelector(".chat-panel");
@@ -51,60 +53,131 @@ import { SITE } from '../data/site';
   var input    = root.querySelector(".chat-input input");
   var send     = root.querySelector(".chat-send");
   var chips    = root.querySelector(".chat-chips");
+  var PHONE    = root.dataset.phone || "";
 
-  var replies = {
-    quote:     "Happy to quote that. Which building is it, and roughly how big is the space? I can usually get a written price back the same day.",
-    emergency: "Understood \u2014 please call (708) 905-4471 right now so we can dispatch a crew. That line is answered by a person 24 hours a day.",
-    coverage:  "We cover Jacksonville and Northeast Florida \u2014 Orange Park, St. Augustine, Ponte Vedra, Fernandina and the Beaches. Whereabouts is your site?",
-    fallback:  "Thanks \u2014 got it. One of our dispatch team will pick this up shortly. If it can't wait, call (708) 905-4471 and we'll get someone moving."
-  };
+  // Real lead capture, not a canned-reply mock. Three questions, then the
+  // message is written to D1 through the same /api/leads endpoint the forms
+  // use, tagged source=chat-widget.
+  var state = { step: "message", message: "", name: "", contact: "", sent: false };
+  var lastFocus = null;
 
-  launcher.addEventListener("click", function(){
-    var open = root.classList.toggle("is-open");
-    launcher.setAttribute("aria-expanded", open ? "true" : "false");
-    panel.setAttribute("aria-hidden", open ? "false" : "true");
-    if(open){ body.scrollTop = body.scrollHeight; }
-  });
-
-  function bubble(text, who){
+  function bubble(text, who) {
     var el = document.createElement("div");
-    el.className = "bubble " + who;
-    el.innerHTML = text;
+    el.className = "bubble " + (who || "them");
+    el.textContent = text;
     body.appendChild(el);
     body.scrollTop = body.scrollHeight;
+    return el;
   }
 
-  function respond(text){
-    var t = text.toLowerCase(), pick = "fallback";
-    if(/quote|price|cost|estimate|clean|contract/.test(t)) pick = "quote";
-    if(/emergenc|leak|urgent|flood|burst|no power|broken/.test(t)) pick = "emergency";
-    if(/area|cover|near|located|where|serve/.test(t)) pick = "coverage";
-
-    var w = document.createElement("div");
-    w.className = "bubble them";
-    w.style.padding = "0";
-    w.innerHTML = '<span class="typing"><i></i><i></i><i></i></span>';
-    body.appendChild(w);
-    body.scrollTop = body.scrollHeight;
-
-    setTimeout(function(){ w.remove(); bubble(replies[pick], "them"); }, 1100);
+  function ask(text) {
+    setTimeout(function () { bubble(text, "them"); }, 350);
   }
 
-  function submit(text){
+  function token() {
+    var el = root.querySelector('input[name="cf-turnstile-response"]');
+    return el ? el.value : "";
+  }
+
+  function submit() {
+    if (state.sent) return;
+    state.sent = true;
+    var typing = bubble("Sending\u2026", "them");
+
+    var isEmail = state.contact.indexOf("@") > -1;
+    fetch("/api/leads", {
+      method: "POST",
+      headers: { "content-type": "application/json" },
+      body: JSON.stringify({
+        name: state.name,
+        email: isEmail ? state.contact : "",
+        phone: isEmail ? "" : state.contact,
+        details: state.message,
+        source: "chat-widget",
+        service: "Chat enquiry",
+        "cf-turnstile-response": token()
+      })
+    })
+      .then(function (r) { return r.json().then(function (d) { return { ok: r.ok, d: d }; }); })
+      .then(function (res) {
+        typing.remove();
+        if (res.ok) {
+          bubble("Got it \u2014 that is with our dispatch desk now. Someone will come back to you, usually the same business day. If it cannot wait, call " + PHONE + ".", "them");
+          if (window.turnstile) window.turnstile.reset();
+        } else {
+          bubble("Something went wrong sending that. Please call " + PHONE + " \u2014 the line is answered 24/7.", "them");
+          state.sent = false;
+        }
+      })
+      .catch(function () {
+        typing.remove();
+        bubble("No connection. Please call " + PHONE + " \u2014 answered 24/7.", "them");
+        state.sent = false;
+      });
+  }
+
+  function handle(text) {
     text = (text || "").trim();
-    if(!text) return;
-    bubble(text.replace(/&/g,"&amp;").replace(/</g,"&lt;"), "me");
-    input.value = "";
-    respond(text);
+    if (!text) return;
+    bubble(text, "me");
+
+    if (state.step === "message") {
+      state.message = text;
+      state.step = "name";
+      ask("Thanks. What is your name?");
+    } else if (state.step === "name") {
+      state.name = text;
+      state.step = "contact";
+      ask("And the best number or email to reach you on?");
+    } else if (state.step === "contact") {
+      var digits = text.replace(/\D/g, "").length;
+      if (text.indexOf("@") === -1 && digits < 7) {
+        ask("That does not look like a phone number or an email \u2014 could you check it?");
+        return;
+      }
+      state.contact = text;
+      state.step = "done";
+      if (chips) chips.style.display = "none";
+      submit();
+    } else {
+      state.message += "\n" + text;
+      state.sent = false;
+      submit();
+    }
   }
 
-  send.addEventListener("click", function(){ submit(input.value); });
-  input.addEventListener("keydown", function(e){
-    if(e.key === "Enter"){ e.preventDefault(); submit(input.value); }
+  function open() {
+    lastFocus = document.activeElement;
+    root.classList.add("is-open");
+    launcher.setAttribute("aria-expanded", "true");
+    panel.setAttribute("aria-hidden", "false");
+    setTimeout(function () { input.focus(); }, 60);
+  }
+  function close() {
+    root.classList.remove("is-open");
+    launcher.setAttribute("aria-expanded", "false");
+    panel.setAttribute("aria-hidden", "true");
+    if (lastFocus && lastFocus.focus) lastFocus.focus();
+  }
+
+  launcher.addEventListener("click", function () {
+    root.classList.contains("is-open") ? close() : open();
   });
-  chips.addEventListener("click", function(e){
-    var b = e.target.closest("button");
-    if(b) submit(b.dataset.msg);
+
+  document.addEventListener("keydown", function (e) {
+    if (e.key === "Escape" && root.classList.contains("is-open")) close();
   });
+
+  send.addEventListener("click", function () { handle(input.value); input.value = ""; });
+  input.addEventListener("keydown", function (e) {
+    if (e.key === "Enter") { e.preventDefault(); handle(input.value); input.value = ""; }
+  });
+  if (chips) {
+    chips.addEventListener("click", function (e) {
+      var b = e.target.closest("button");
+      if (!b) return;
+      handle(b.dataset.msg);
+    });
+  }
 })();
 </script>

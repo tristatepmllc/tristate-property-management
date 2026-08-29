@@ -1,0 +1,137 @@
+---
+import BaseLayout from '../layouts/BaseLayout.astro';
+import LeadFormExtras from '../components/LeadFormExtras.astro';
+import { SITE } from '../data/site';
+import { graph, breadcrumbs } from '../lib/schema';
+
+const jsonLd = graph([breadcrumbs([{ name: 'Home', path: '/' }, { name: 'Careers', path: '/careers/' }])]);
+---
+<BaseLayout
+  title="Careers — Work With Tristate Property Management LLC"
+  description="We hire licensed technicians and dependable crew for commercial facility work in Connecticut. Tell us what you do and we will call you back."
+  path="/careers/"
+  active="/careers/"
+  jsonLd={jsonLd}
+>
+  <section class="page-hero">
+    <div class="page-hero-bg" style="background-image:url('/images/home-crew-carrying-ladders-on-a-commercial-job-si.webp')"></div>
+    <div class="wrap">
+      <p class="crumb"><a href="/">Home</a> &nbsp;/&nbsp; <span>Careers</span></p>
+      <h1>Work with our crew</h1>
+      <p>
+        We do our own work rather than subcontracting it, which means the people we hire stay
+        with the same buildings and get to know them. If you take pride in finishing a job
+        properly, we want to hear from you.
+      </p>
+    </div>
+  </section>
+
+  <section class="section section--paper">
+    <div class="wrap">
+      <div class="sec-head">
+        <p class="eyebrow">Who we hire</p>
+        <h2>Trades and roles we take on</h2>
+        <p>
+          We are usually open to good people even when nothing is formally posted. Send your
+          details and we will tell you honestly what is available.
+        </p>
+      </div>
+
+      <div class="cards">
+        <article class="card">
+          <div class="card-body">
+            <h3>Licensed trades</h3>
+            <p>Plumbers, electricians and HVAC technicians with current licences and commercial experience.</p>
+            <ul class="card-list">
+              <li>Plumbing</li><li>Electrical</li><li>HVAC &amp; refrigeration</li>
+            </ul>
+          </div>
+        </article>
+        <article class="card">
+          <div class="card-body">
+            <h3>General maintenance</h3>
+            <p>Handyman, carpentry, drywall, painting and punch-list work across occupied commercial buildings.</p>
+            <ul class="card-list">
+              <li>Carpentry</li><li>Drywall &amp; paint</li><li>Doors &amp; hardware</li>
+            </ul>
+          </div>
+        </article>
+        <article class="card">
+          <div class="card-body">
+            <h3>Cleaning &amp; grounds</h3>
+            <p>Janitorial crews, day porters, floor care specialists and grounds staff, including evening shifts.</p>
+            <ul class="card-list">
+              <li>Janitorial</li><li>Floor care</li><li>Grounds</li>
+            </ul>
+          </div>
+        </article>
+      </div>
+    </div>
+  </section>
+
+  <section class="section">
+    <div class="wrap">
+      <div class="sec-head center">
+        <p class="eyebrow">Apply</p>
+        <h2>Tell us what you do</h2>
+        <p>
+          No portal, no twelve-page application. Give us your trade and your number and someone
+          will call you. Prefer to talk first? Call <a href={SITE.telHref}>{SITE.phone}</a>.
+        </p>
+      </div>
+
+      <div class="form-card" style="max-width:640px;margin:0 auto">
+        <form action="/api/leads" method="post" data-lead-form data-source="careers" novalidate>
+          <input type="hidden" name="service" value="Careers enquiry" />
+
+          <div class="field-row">
+            <div class="field">
+              <label for="c-name">Your name <span class="req">*</span></label>
+              <input type="text" id="c-name" name="name" autocomplete="name" placeholder="Jane Whitfield" required />
+            </div>
+            <div class="field">
+              <label for="c-phone">Phone <span class="req">*</span></label>
+              <input type="tel" id="c-phone" name="phone" autocomplete="tel" placeholder="(203) 000-0000" required />
+            </div>
+          </div>
+
+          <div class="field">
+            <label for="c-email">Email <span class="req">*</span></label>
+            <input type="email" id="c-email" name="email" autocomplete="email" placeholder="jane@example.com" required />
+          </div>
+
+          <div class="field">
+            <label for="c-trade">Trade or role</label>
+            <select id="c-trade" name="building">
+              <option value="">Choose&hellip;</option>
+              <option>Plumbing</option>
+              <option>Electrical</option>
+              <option>HVAC &amp; refrigeration</option>
+              <option>Handyman / carpentry</option>
+              <option>Painting</option>
+              <option>Janitorial / cleaning</option>
+              <option>Grounds &amp; exterior</option>
+              <option>Supervisor / dispatch</option>
+              <option>Something else</option>
+            </select>
+          </div>
+
+          <div class="field">
+            <label for="c-details">Experience and licences <span class="req">*</span></label>
+            <textarea id="c-details" name="details" placeholder="How long you have been doing it, what licences you hold, and when you can start." required></textarea>
+          </div>
+
+          <LeadFormExtras source="careers" />
+
+          <button type="submit" class="btn btn--red btn--wide">Send my details</button>
+          <p class="form-status" role="status" aria-live="polite" hidden></p>
+
+          <p class="form-note">
+            We read every one and reply either way. Your details are used for hiring only —
+            see our <a href="/privacy-policy/">privacy policy</a>.
+          </p>
+        </form>
+      </div>
+    </div>
+  </section>
+</BaseLayout>

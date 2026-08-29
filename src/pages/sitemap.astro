@@ -1,0 +1,74 @@
+---
+import { getCollection } from 'astro:content';
+import BaseLayout from '../layouts/BaseLayout.astro';
+import { SERVICE_CATEGORIES } from '../data/site';
+import { graph, breadcrumbs } from '../lib/schema';
+
+const posts = (await getCollection('blog', ({ data }) => !data.draft))
+  .sort((a, b) => b.data.publishedAt.getTime() - a.data.publishedAt.getTime());
+
+const jsonLd = graph([breadcrumbs([{ name: 'Home', path: '/' }, { name: 'Site index', path: '/sitemap/' }])]);
+---
+<BaseLayout
+  title="Site Index | Tristate Property Management LLC"
+  description="Every page on this website in one list — services, industries, company pages, articles and policies."
+  path="/sitemap/"
+  active="/sitemap/"
+  jsonLd={jsonLd}
+>
+  <section class="page-hero">
+    <div class="page-hero-bg" style="background-image:url('/images/home-offices.webp')"></div>
+    <div class="wrap">
+      <p class="crumb"><a href="/">Home</a> &nbsp;/&nbsp; <span>Site index</span></p>
+      <h1>Everything on this site</h1>
+      <p>
+        The human version of the sitemap. The machine-readable one lives at
+        <a href="/sitemap-index.xml">/sitemap-index.xml</a>.
+      </p>
+    </div>
+  </section>
+
+  <section class="section section--paper">
+    <div class="wrap">
+      <div class="sitemap-grid">
+        <div>
+          <h2>Main pages</h2>
+          <ul class="footer-links">
+            <li><a href="/">Home</a></li>
+            <li><a href="/services/">Services</a></li>
+            <li><a href="/industries/">Industries</a></li>
+            <li><a href="/why-tristate/">Why Tristate</a></li>
+            <li><a href="/blog/">Blog</a></li>
+            <li><a href="/careers/">Careers</a></li>
+            <li><a href="/contact/">Contact &amp; quote</a></li>
+          </ul>
+        </div>
+
+        <div>
+          <h2>Services</h2>
+          <ul class="footer-links">
+            {SERVICE_CATEGORIES.map((c) => (
+              <li><a href={`/services/#${c.slug}`}>{c.name}</a></li>
+            ))}
+          </ul>
+        </div>
+
+        <div>
+          <h2>Articles</h2>
+          <ul class="footer-links">
+            {posts.map((p) => <li><a href={`/blog/${p.id}/`}>{p.data.title}</a></li>)}
+          </ul>
+        </div>
+
+        <div>
+          <h2>Policies</h2>
+          <ul class="footer-links">
+            <li><a href="/privacy-policy/">Privacy Policy</a></li>
+            <li><a href="/terms-of-service/">Terms of Service</a></li>
+            <li><a href="/accessibility/">Accessibility</a></li>
+          </ul>
+        </div>
+      </div>
+    </div>
+  </section>
+</BaseLayout>

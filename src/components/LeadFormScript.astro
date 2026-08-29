@@ -31,6 +31,8 @@
       // the very same endpoint. JSON is exempt, so one contract serves both.
       var payload = {};
       new FormData(form).forEach(function (v, k) { payload[k] = v; });
+      // If Turnstile never loaded there is no token. Send anyway — the server
+      // quarantines it as needs_review rather than losing the enquiry.
 
       fetch('/api/leads', {
         method: 'POST',

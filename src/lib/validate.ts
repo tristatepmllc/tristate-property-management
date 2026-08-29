@@ -20,9 +20,16 @@ export function validateLead(raw: Record<string, unknown>): { ok: true; value: L
   const email = str('email', 200).toLowerCase();
   const phone = str('phone', 40);
 
+  const emailOk = EMAIL.test(email);
+  const phoneOk = phone.replace(/\D/g, '').length >= 7;
+
   if (name.length < 2) errors.push('name');
-  if (!EMAIL.test(email)) errors.push('email');
-  if (phone.replace(/\D/g, '').length < 7) errors.push('phone');
+  if (email && !emailOk) errors.push('email');
+  if (phone && !phoneOk) errors.push('phone');
+  // One usable way to reply is enough. The page forms still mark all three
+  // required in HTML; the chat widget only asks for one, and a lead we can
+  // actually call is worth more than a lead we rejected for tidiness.
+  if (!emailOk && !phoneOk) errors.push('contact');
 
   if (errors.length) return { ok: false, errors };
 

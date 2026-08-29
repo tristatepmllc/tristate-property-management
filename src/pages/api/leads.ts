@@ -36,10 +36,20 @@ export const POST: APIRoute = async ({ request }) => {
   const parsed = validateLead(raw);
   if (!parsed.ok) return json({ error: 'validation_failed', fields: parsed.errors }, 422);
 
-  const token = typeof raw['cf-turnstile-response'] === 'string' ? raw['cf-turnstile-response'] : undefined;
+  // Turnstile. A token that is present but WRONG is a hard reject. A token that
+  // never arrived is not: challenges.cloudflare.com is blocked by some privacy
+  // extensions and corporate networks, and silently 403-ing those visitors means
+  // losing real enquiries with no trace. Those leads are accepted but quarantined
+  // as `needs_review` instead of landing in the pipeline unverified.
+  const token = typeof raw['cf-turnstile-response'] === 'string' ? raw['cf-turnstile-response'].trim() : '';
+  let status = 'new';
   if (env.TURNSTILE_SECRET_KEY) {
-    const passed = await verifyTurnstile(token, env.TURNSTILE_SECRET_KEY, ip);
-    if (!passed) return json({ error: 'challenge_failed' }, 403);
+    if (token) {
+      const passed = await verifyTurnstile(token, env.TURNSTILE_SECRET_KEY, ip);
+      if (!passed) return json({ error: 'challenge_failed' }, 403);
+    } else {
+      status = 'needs_review';
+    }
   }
 
   const lead = parsed.value;
@@ -51,13 +61,13 @@ export const POST: APIRoute = async ({ request }) => {
       `INSERT INTO leads (id, name, email, phone, company, address, service, urgency,
                           building, message, source, utm_source, utm_medium, utm_campaign,
                           referrer, status, created_at)
-       VALUES (?1,?2,?3,?4,?5,?6,?7,?8,?9,?10,?11,?12,?13,?14,?15,'new',?16)`
+       VALUES (?1,?2,?3,?4,?5,?6,?7,?8,?9,?10,?11,?12,?13,?14,?15,?16,?17)`
     ).bind(
       id, lead.name, lead.email, lead.phone,
       lead.company ?? null, lead.address ?? null, lead.service ?? null, lead.urgency ?? null,
       lead.building ?? null, lead.message ?? null, lead.source ?? null,
       lead.utm_source ?? null, lead.utm_medium ?? null, lead.utm_campaign ?? null,
-      request.headers.get('referer'), now
+      request.headers.get('referer'), status, now
     ).run();
   } catch (e) {
     console.error('lead_insert_failed', e);
@@ -80,14 +90,15 @@ export const POST: APIRoute = async ({ request }) => {
       from: env.LEAD_NOTIFY_FROM,
       to: env.LEAD_NOTIFY_TO,
       replyTo: lead.email,
-      subject: `New quote request — ${lead.name}${lead.urgency ? ` (${lead.urgency})` : ''}`,
+      subject: `${status === 'needs_review' ? '[unverified] ' : ''}New enquiry — ${lead.name}${lead.urgency ? ` (${lead.urgency})` : ''}`,
       html: `<h2 style="font-family:Arial">New lead from the website</h2>
+             ${status === 'needs_review' ? '<p style="font-family:Arial;color:#A9161C"><strong>Spam check did not run</strong> — the visitor could not load Turnstile. Treat with normal caution.</p>' : ''}
              <table style="font-family:Arial;font-size:14px;border-collapse:collapse">${rows}</table>
              <p style="color:#8798AC;font-size:12px">Lead ID ${id}</p>`,
     });
   }
 
-  return json({ ok: true, id }, 201);
+  return json({ ok: true, id, status }, 201);
 };
 
 export const ALL: APIRoute = () => methodNotAllowed('POST');

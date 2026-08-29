@@ -1,0 +1,100 @@
+---
+import BaseLayout from '../layouts/BaseLayout.astro';
+import { SITE } from '../data/site';
+import { graph, breadcrumbs } from '../lib/schema';
+
+const jsonLd = graph([breadcrumbs([{ name: 'Home', path: '/' }, { name: 'Privacy Policy', path: '/privacy-policy/' }])]);
+const updated = 'August 2026';
+---
+<BaseLayout
+  title="Privacy Policy | Tristate Property Management LLC"
+  description="What we collect when you use this website, why we collect it, how long we keep it, and how to ask us to delete it. Written in plain language."
+  path="/privacy-policy/"
+  active="/privacy-policy/"
+  jsonLd={jsonLd}
+>
+  <section class="page-hero">
+    <div class="page-hero-bg" style="background-image:url('/images/home-site-supervisor-reviewing-building-plans-on-.webp')"></div>
+    <div class="wrap">
+      <p class="crumb"><a href="/">Home</a> &nbsp;/&nbsp; <span>Privacy Policy</span></p>
+      <h1>Privacy Policy</h1>
+      <p>What this website collects, why, and what you can ask us to do about it.</p>
+    </div>
+  </section>
+
+  <section class="section section--paper">
+    <div class="wrap">
+      <article class="prose">
+        <p class="post-meta">Last updated {updated}</p>
+
+        <h2>Who we are</h2>
+        <p>
+          {SITE.legalName} operates this website. If you have a question about anything on this
+          page, email <a href={SITE.mailtoHref}>{SITE.email}</a> or call
+          <a href={SITE.telHref}>{SITE.phone}</a>.
+        </p>
+
+        <h2>What we collect</h2>
+        <p>Only two things, and both are things you choose to give us:</p>
+        <ul>
+          <li>
+            <strong>What you type into a form.</strong> Your name, phone number, email address,
+            and whatever you tell us about the job — plus the company, address, service, urgency
+            and building type fields where the form asks for them.
+          </li>
+          <li>
+            <strong>How you found us.</strong> If you arrived from an ad or a campaign link, the
+            <code>utm_source</code>, <code>utm_medium</code> and <code>utm_campaign</code> values
+            in that link, and the page that referred you. This tells us which marketing is worth
+            paying for.
+          </li>
+        </ul>
+
+        <h2>What we do not collect</h2>
+        <p>
+          This site sets <strong>no advertising or tracking cookies</strong>. We do not use
+          Google Analytics, Meta Pixel, or any cross-site advertising tracker. We do not sell,
+          rent or share your details with data brokers, lead resellers or anyone else.
+        </p>
+
+        <h2>Third parties that see your data</h2>
+        <ul>
+          <li>
+            <strong>Cloudflare</strong> hosts the site and runs the spam check (Turnstile) on our
+            forms. As with any website, its servers process your IP address to deliver the page
+            and to tell a person apart from a bot. Cloudflare Web Analytics counts page views
+            without cookies and without building a profile of you.
+          </li>
+          <li>
+            <strong>Resend</strong> delivers the email that tells our team you got in touch. Your
+            submission is included in that email so we can reply to it.
+          </li>
+        </ul>
+
+        <h2>How long we keep it</h2>
+        <p>
+          Enquiries are kept for as long as we may reasonably need them for the work or for our
+          records, and we delete them on request. If we never do business together, tell us and
+          we will remove your details.
+        </p>
+
+        <h2>Your choices</h2>
+        <p>
+          You can ask us what we hold about you, ask us to correct it, or ask us to delete it.
+          Email <a href={SITE.mailtoHref}>{SITE.email}</a> and we will respond. Depending on where
+          you live, you may have additional rights under state privacy law; we honour those
+          requests regardless of whether the law technically applies to a business our size.
+        </p>
+
+        <h2>Children</h2>
+        <p>This is a business-to-business service. We do not knowingly collect anything from anyone under 18.</p>
+
+        <h2>Changes</h2>
+        <p>
+          If this policy changes we will update the date at the top. We will not apply a materially
+          different policy to information you already gave us without telling you first.
+        </p>
+      </article>
+    </div>
+  </section>
+</BaseLayout>

@@ -1,0 +1,54 @@
+---
+import BaseLayout from '../layouts/BaseLayout.astro';
+import { SITE, SERVICE_CATEGORIES } from '../data/site';
+---
+<BaseLayout
+  title="Page not found | Tristate Property Management LLC"
+  description="That page does not exist. Here are the places people usually want."
+  path="/404/"
+  active=""
+  noindex
+  showPopup={false}
+>
+  <section class="page-hero">
+    <div class="page-hero-bg" style="background-image:url('/images/home-something-broken-right-now.webp')"></div>
+    <div class="wrap">
+      <p class="crumb"><a href="/">Home</a> &nbsp;/&nbsp; <span>404</span></p>
+      <h1>That page is not here</h1>
+      <p>
+        The link may be old, or we may have moved something. Nothing is broken on your end —
+        below are the pages people are usually looking for.
+      </p>
+      <div class="hero-actions">
+        <a class="btn btn--red" href="/contact/">Get a free quote</a>
+        <a class="btn btn--ghost" href={SITE.telHref}>Call {SITE.phone}</a>
+      </div>
+    </div>
+  </section>
+
+  <section class="section section--paper">
+    <div class="wrap">
+      <div class="sec-head center">
+        <p class="eyebrow">Try one of these</p>
+        <h2>Where do you want to go?</h2>
+      </div>
+      <ul class="notfound-links">
+        <li><a href="/services/">All services</a></li>
+        <li><a href="/industries/">Industries we serve</a></li>
+        <li><a href="/why-tristate/">Why Tristate</a></li>
+        <li><a href="/blog/">Blog</a></li>
+        <li><a href="/contact/">Request a quote</a></li>
+        <li><a href="/sitemap/">Full site index</a></li>
+      </ul>
+
+      <div class="sec-head center" style="margin-top:44px">
+        <p class="eyebrow">Or jump straight to a trade</p>
+      </div>
+      <ul class="notfound-links">
+        {SERVICE_CATEGORIES.map((c) => (
+          <li><a href={`/services/#${c.slug}`}>{c.name}</a></li>
+        ))}
+      </ul>
+    </div>
+  </section>
+</BaseLayout>
