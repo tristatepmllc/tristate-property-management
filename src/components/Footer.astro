@@ -57,7 +57,14 @@ const year = new Date().getFullYear();
         <ul class="footer-contact">
           <li><span class="k">Phone</span><span><a href={SITE.telHref}>{SITE.phone}</a></span></li>
           <li><span class="k">Email</span><span><a href={SITE.mailtoHref}>{SITE.email}</a></span></li>
-          <li><span class="k">Office</span><span>{SITE.address.street}<br />{SITE.address.city}, {SITE.address.region} {SITE.address.postal}</span></li>
+          <li>
+            <span class="k">{SITE.address.street ? 'Office' : 'Serving'}</span>
+            <span>
+              {SITE.address.street
+                ? <>{SITE.address.street}<br />{SITE.address.city}, {SITE.address.region} {SITE.address.postal}</>
+                : <>Connecticut, USA<br />Service-area business &mdash; we come to you</>}
+            </span>
+          </li>
           <li><span class="k">Hours</span><span>Mon&ndash;Fri 7:00 AM &ndash; 6:00 PM<br>Emergency: 24/7/365</span></li>
         </ul>
       </div>

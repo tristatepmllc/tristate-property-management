@@ -121,10 +121,18 @@ token where the web sends a session cookie.
 
 ## Blockers before going live
 
-- [ ] **Real NAP.** Everything is placeholder: `(904) 555-0142`, `service@tristatepropertymanagement.com`,
+- [ ] **Location copy still says Jacksonville, FL.** The phone and state are now real
+      (Connecticut), but 54 references across 11 files still describe a Northeast Florida
+      business — page titles, meta descriptions, hero copy, the chat widget's coverage answer,
+      the footer, and one blog post. This is a content rewrite, not a config edit, and it needs
+      the actual towns served before it can be done. **Do not let Google index the site until
+      this is resolved** — a Connecticut business ranking on Jacksonville pages is worse than
+      not ranking at all.
+- [ ] **Old NAP items still placeholder: `(904) 555-0142`, `service@tristatepropertymanagement.com`,
       `4131 Sunbeam Road`, licence `FL CGC-0000000`, and the lat/lng. All of it lives in
       `src/data/site.ts` — one file, one edit. It also feeds the JSON-LD, so wrong data here
-      means schema that conflicts with the Google Business Profile.
+      means schema that conflicts with the Google Business Profile. Still empty: `address.city`,
+      `address.postal`, `geo`, `license`, `areaServed`.
 - [ ] **Real domain** in `src/data/site.ts` and `astro.config.mjs` (canonicals + sitemap).
 - [ ] **Google Business Profile** created and matching the NAP exactly.
 - [ ] **Decide on the chat widget.** `src/components/ChatWidget.astro` is the prototype's

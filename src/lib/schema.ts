@@ -13,16 +13,27 @@ export function localBusiness() {
     telephone: SITE.phoneE164,
     email: SITE.email,
     image: `${SITE.url}${SITE.defaultOgImage}`,
-    address: {
-      '@type': 'PostalAddress',
-      streetAddress: SITE.address.street,
-      addressLocality: SITE.address.city,
-      addressRegion: SITE.address.region,
-      postalCode: SITE.address.postal,
-      addressCountry: SITE.address.country,
-    },
-    geo: { '@type': 'GeoCoordinates', latitude: SITE.geo.lat, longitude: SITE.geo.lng },
-    areaServed: SITE.areaServed.map((n) => ({ '@type': 'City', name: n })),
+    // A PostalAddress is only emitted when there is a real, visitable address.
+    // A half-filled one is worse than none: Google cross-checks it against the
+    // Google Business Profile and discounts markup that disagrees.
+    ...(SITE.address.street && SITE.address.city
+      ? {
+          address: {
+            '@type': 'PostalAddress',
+            streetAddress: SITE.address.street,
+            addressLocality: SITE.address.city,
+            addressRegion: SITE.address.region,
+            postalCode: SITE.address.postal,
+            addressCountry: SITE.address.country,
+          },
+        }
+      : {}),
+    ...(SITE.geo
+      ? { geo: { '@type': 'GeoCoordinates', latitude: SITE.geo.lat, longitude: SITE.geo.lng } }
+      : {}),
+    areaServed: SITE.areaServed.length
+      ? SITE.areaServed.map((n) => ({ '@type': 'City', name: n }))
+      : [{ '@type': 'AdministrativeArea', name: 'Connecticut' }],
     openingHoursSpecification: SITE.hours.map((h) => ({
       '@type': 'OpeningHoursSpecification',
       dayOfWeek: h.days, opens: h.opens, closes: h.closes,
@@ -62,7 +73,9 @@ export function serviceList() {
     name: c.name,
     serviceType: c.name,
     provider: { '@id': BIZ_ID },
-    areaServed: SITE.areaServed.map((n) => ({ '@type': 'City', name: n })),
+    areaServed: SITE.areaServed.length
+      ? SITE.areaServed.map((n) => ({ '@type': 'City', name: n }))
+      : [{ '@type': 'AdministrativeArea', name: 'Connecticut' }],
   }));
 }
 

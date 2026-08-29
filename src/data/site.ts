@@ -2,24 +2,27 @@ export const SITE = {
   name: 'Tristate Property Management',
   legalName: 'Tristate Property Management LLC',
   url: 'https://tristatepropertymanagement.com',           // TODO: real production domain
-  phone: '(904) 555-0142',                      // TODO: real number
-  phoneE164: '+19045550142',
+  phone: '(708) 905-4471',
+  phoneE164: '+17089054471',
   get telHref() { return `tel:${this.phoneE164}`; },
   email: 'service@tristatepropertymanagement.com',         // TODO: real inbox
   get mailtoHref() { return `mailto:${this.email}`; },
+  // Service-area business: we travel to the client, there is no walk-in office.
+  // Leave `street`/`city`/`postal` empty and Schema.org PostalAddress + geo are
+  // omitted entirely rather than published half-filled — Google cross-checks this
+  // against the Google Business Profile and discounts markup that conflicts.
+  // Fill them in ONLY if there is a real address customers can visit.
   address: {
-    street: '4131 Sunbeam Road',                // TODO: real address (or delete if service-area only)
-    city: 'Jacksonville',
-    region: 'FL',
-    postal: '32257',
+    street: '',                                 // TODO: street, if there is a visitable office
+    city: '',                                   // TODO: town — required for GBP and local ranking
+    region: 'CT',
+    postal: '',                                 // TODO
     country: 'US',
   },
-  geo: { lat: 30.2033, lng: -81.6098 },         // TODO: verify
-  license: 'FL CGC-0000000',                    // TODO: real licence number
-  areaServed: [
-    'Jacksonville','Orange Park','St. Augustine','Ponte Vedra',
-    'Fernandina Beach','Jacksonville Beach','Neptune Beach','Atlantic Beach',
-  ],
+  geo: null as { lat: number; lng: number } | null,   // TODO: set once the town is known
+  license: '',                                  // TODO: CT licence number (currently hidden when empty)
+  // TODO: replace with the actual Connecticut towns served.
+  areaServed: [] as string[],
   hours: [
     { days: ['Monday','Tuesday','Wednesday','Thursday','Friday'], opens: '07:00', closes: '18:00' },
   ],
