@@ -79,3 +79,37 @@ export function faqPage(qa: { q: string; a: string }[]) {
 export function graph(nodes: object[]) {
   return { '@context': 'https://schema.org', '@graph': nodes };
 }
+
+export function blogPosting(post: {
+  title: string; description: string; slug: string;
+  publishedAt: Date; updatedAt?: Date; author: string; cover: string;
+}) {
+  return {
+    '@type': 'BlogPosting',
+    '@id': `${SITE.url}/blog/${post.slug}/#article`,
+    headline: post.title,
+    description: post.description,
+    url: `${SITE.url}/blog/${post.slug}/`,
+    mainEntityOfPage: { '@type': 'WebPage', '@id': `${SITE.url}/blog/${post.slug}/` },
+    image: `${SITE.url}${post.cover}`,
+    datePublished: post.publishedAt.toISOString(),
+    dateModified: (post.updatedAt ?? post.publishedAt).toISOString(),
+    author: { '@type': 'Organization', name: post.author, url: SITE.url },
+    publisher: { '@id': `${SITE.url}/#organization` },
+  };
+}
+
+export function blogIndex(posts: { title: string; slug: string }[]) {
+  return {
+    '@type': 'Blog',
+    '@id': `${SITE.url}/blog/#blog`,
+    name: `${SITE.name} — Insights`,
+    url: `${SITE.url}/blog/`,
+    publisher: { '@id': `${SITE.url}/#organization` },
+    blogPost: posts.map((p) => ({
+      '@type': 'BlogPosting',
+      headline: p.title,
+      url: `${SITE.url}/blog/${p.slug}/`,
+    })),
+  };
+}

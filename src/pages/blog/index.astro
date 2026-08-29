@@ -1,0 +1,65 @@
+---
+import { getCollection } from 'astro:content';
+import BaseLayout from '../../layouts/BaseLayout.astro';
+import { graph, breadcrumbs, blogIndex } from '../../lib/schema';
+
+const posts = (await getCollection('blog', ({ data }) => !data.draft))
+  .sort((a, b) => b.data.publishedAt.getTime() - a.data.publishedAt.getTime());
+
+const jsonLd = graph([
+  breadcrumbs([{ name: 'Home', path: '/' }, { name: 'Blog', path: '/blog/' }]),
+  blogIndex(posts.map((p) => ({ title: p.data.title, slug: p.id }))),
+]);
+
+const fmt = (d: Date) =>
+  d.toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' });
+---
+<BaseLayout
+  title="Facility Maintenance Insights | Tristate Property Management"
+  description="Practical guidance for facility and property managers in Northeast Florida — maintenance planning, budgeting, vendor selection and what actually breaks in commercial buildings."
+  path="/blog/"
+  active="/blog/"
+  jsonLd={jsonLd}
+>
+  <section class="page-hero">
+    <div class="page-hero-bg" style="background-image:url('/images/home-site-supervisor-reviewing-building-plans-on-.webp')"></div>
+    <div class="wrap">
+      <p class="crumb"><a href="/">Home</a> &nbsp;/&nbsp; <span>Blog</span></p>
+      <h1>Notes from the field</h1>
+      <p>
+        What we learn keeping commercial buildings running — maintenance planning, what things
+        cost, and the failures that catch facility managers out. Written by the people doing
+        the work, not a marketing department.
+      </p>
+    </div>
+  </section>
+
+  <section class="section section--paper">
+    <div class="wrap">
+      {posts.length === 0 ? (
+        <div class="sec-head center">
+          <h2>Nothing published yet</h2>
+          <p>The first articles are on their way. In the meantime, <a href="/contact/">tell us what needs fixing</a>.</p>
+        </div>
+      ) : (
+        <div class="cards">
+          {posts.map((post) => (
+            <article class="card">
+              <div class="card-media" style={`background-image:url('${post.data.cover}')`}>
+                <span class="card-tag">{post.data.category}</span>
+              </div>
+              <div class="card-body">
+                <h3><a href={`/blog/${post.id}/`}>{post.data.title}</a></h3>
+                <p class="post-meta">
+                  <time datetime={post.data.publishedAt.toISOString()}>{fmt(post.data.publishedAt)}</time>
+                </p>
+                <p>{post.data.description}</p>
+                <a class="card-link" href={`/blog/${post.id}/`}>Read article <span>&rarr;</span></a>
+              </div>
+            </article>
+          ))}
+        </div>
+      )}
+    </div>
+  </section>
+</BaseLayout>

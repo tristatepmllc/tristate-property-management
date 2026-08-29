@@ -30,3 +30,71 @@
    (CLS). Pair them with height:auto so intrinsic sizing never distorts a photo
    whose width is constrained by CSS. */
 img{height:auto}
+
+/* ── Blog ────────────────────────────────────────────────────────────────
+   Built from the approved design tokens and existing components (.page-hero,
+   .cards/.card, .section). Only the article body needed new rules, since the
+   prototype had no long-form page to inherit from. */
+
+.post-meta{
+  font-family:var(--mono);
+  font-size:.72rem;letter-spacing:.1em;text-transform:uppercase;
+  color:var(--steel-light);
+  margin:0 0 10px;
+}
+.page-hero .post-meta{color:#A9BAD2}
+
+.card-body h3 a{color:inherit}
+.card-body h3 a:hover{color:var(--red)}
+
+.prose{
+  max-width:72ch;
+  margin:0 auto;
+  font-size:1.02rem;
+  line-height:1.75;
+  color:#23324A;
+}
+.prose h2{
+  font-family:var(--display);
+  font-weight:700;font-size:1.7rem;
+  letter-spacing:.02em;
+  color:var(--navy-900);
+  margin:2.2em 0 .6em;
+}
+.prose h3{
+  font-family:var(--display);
+  font-weight:700;font-size:1.3rem;
+  color:var(--navy-800);
+  margin:1.8em 0 .5em;
+}
+.prose p{margin:0 0 1.15em}
+.prose ul,.prose ol{margin:0 0 1.3em;padding-left:1.35em}
+.prose ul{list-style:disc}
+.prose ol{list-style:decimal}
+.prose li{margin:0 0 .5em}
+.prose li::marker{color:var(--red)}
+.prose a{color:var(--red);text-decoration:underline;text-underline-offset:2px}
+.prose a:hover{color:var(--red-dark)}
+.prose strong{color:var(--navy-900);font-weight:600}
+.prose blockquote{
+  margin:1.6em 0;padding:.2em 0 .2em 1.1em;
+  border-left:3px solid var(--red);
+  color:var(--steel);
+}
+.prose img{border-radius:var(--radius);margin:1.6em 0}
+.prose code{
+  font-family:var(--mono);font-size:.88em;
+  background:var(--paper-2);padding:.15em .4em;border-radius:3px;
+}
+.prose hr{border:0;border-top:1px solid var(--line);margin:2.4em 0}
+
+.prose-cta{
+  max-width:72ch;margin:2.6em auto 0;
+  padding-top:1.8em;border-top:1px solid var(--line);
+  display:flex;flex-wrap:wrap;gap:12px;
+}
+
+@media (max-width:720px){
+  .prose{font-size:.98rem}
+  .prose h2{font-size:1.45rem}
+}

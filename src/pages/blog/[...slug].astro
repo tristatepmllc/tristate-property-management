@@ -1,0 +1,64 @@
+---
+import { getCollection, render } from 'astro:content';
+import type { GetStaticPaths } from 'astro';
+import BaseLayout from '../../layouts/BaseLayout.astro';
+import { graph, breadcrumbs, blogPosting } from '../../lib/schema';
+
+export const getStaticPaths: GetStaticPaths = async () => {
+  const posts = await getCollection('blog', ({ data }) => !data.draft);
+  return posts.map((post) => ({ params: { slug: post.id }, props: { post } }));
+};
+
+const { post } = Astro.props;
+const { Content } = await render(post);
+const d = post.data;
+
+const jsonLd = graph([
+  breadcrumbs([
+    { name: 'Home', path: '/' },
+    { name: 'Blog', path: '/blog/' },
+    { name: d.title, path: `/blog/${post.id}/` },
+  ]),
+  blogPosting({ ...d, slug: post.id }),
+]);
+
+const fmt = (date: Date) =>
+  date.toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' });
+---
+<BaseLayout
+  title={`${d.title} | Tristate Property Management`}
+  description={d.description}
+  path={`/blog/${post.id}/`}
+  active="/blog/"
+  ogImage={d.cover}
+  preloadImage={d.cover}
+  jsonLd={jsonLd}
+>
+  <section class="page-hero">
+    <div class="page-hero-bg" style={`background-image:url('${d.cover}')`}></div>
+    <div class="wrap">
+      <p class="crumb">
+        <a href="/">Home</a> &nbsp;/&nbsp; <a href="/blog/">Blog</a> &nbsp;/&nbsp; <span>{d.category}</span>
+      </p>
+      <h1>{d.title}</h1>
+      <p class="post-meta">
+        <time datetime={d.publishedAt.toISOString()}>{fmt(d.publishedAt)}</time>
+        {d.updatedAt && <span> &middot; updated {fmt(d.updatedAt)}</span>}
+        <span> &middot; {d.author}</span>
+      </p>
+    </div>
+  </section>
+
+  <section class="section section--paper">
+    <div class="wrap">
+      <article class="prose">
+        <Content />
+      </article>
+
+      <div class="prose-cta">
+        <a class="btn btn--red" href="/contact/">Get a free quote</a>
+        <a class="btn btn--ghost" href="/blog/">More articles</a>
+      </div>
+    </div>
+  </section>
+</BaseLayout>

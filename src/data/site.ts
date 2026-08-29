@@ -1,11 +1,11 @@
 export const SITE = {
-  name: 'Bedrock Facility Services',
-  legalName: 'Bedrock Facility Services LLC',
-  url: 'https://bedrockfacility.com',           // TODO: real production domain
+  name: 'Tristate Property Management',
+  legalName: 'Tristate Property Management LLC',
+  url: 'https://tristatepropertymanagement.com',           // TODO: real production domain
   phone: '(904) 555-0142',                      // TODO: real number
   phoneE164: '+19045550142',
   get telHref() { return `tel:${this.phoneE164}`; },
-  email: 'service@bedrockfacility.com',         // TODO: real inbox
+  email: 'service@tristatepropertymanagement.com',         // TODO: real inbox
   get mailtoHref() { return `mailto:${this.email}`; },
   address: {
     street: '4131 Sunbeam Road',                // TODO: real address (or delete if service-area only)
@@ -31,7 +31,8 @@ export const NAV = [
   { href: '/',             label: 'Home' },
   { href: '/services/',    label: 'Services' },
   { href: '/industries/',  label: 'Industries' },
-  { href: '/why-bedrock/', label: 'Why Bedrock' },
+  { href: '/why-tristate/', label: 'Why Tristate' },
+  { href: '/blog/',        label: 'Blog' },
   { href: '/contact/',     label: 'Contact' },
 ] as const;
 

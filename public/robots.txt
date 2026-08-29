@@ -3,4 +3,4 @@ Allow: /
 Disallow: /portal/
 Disallow: /api/
 
-Sitemap: https://bedrockfacility.com/sitemap-index.xml
+Sitemap: https://tristatepropertymanagement.com/sitemap-index.xml

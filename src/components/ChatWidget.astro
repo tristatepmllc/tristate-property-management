@@ -1,19 +1,19 @@
 ---
 import { SITE } from '../data/site';
 ---
-<div class="chat-widget" data-chat="proto">
-  <div class="chat-panel" role="dialog" aria-label="Live chat with Bedrock" aria-hidden="true">
+<div class="chat-widget" data-chat="tristate">
+  <div class="chat-panel" role="dialog" aria-label="Live chat with Tristate" aria-hidden="true">
     <div class="chat-head">
       <span class="chat-avatar">B</span>
       <span>
-        <strong>Bedrock Support</strong>
+        <strong>Tristate Support</strong>
         <span class="status">Online now &middot; replies in a few minutes</span>
       </span>
     </div>
 
     <div class="chat-body">
       <span class="chat-time">Today</span>
-      <div class="bubble them">Hi &mdash; you're through to the Bedrock dispatch desk. What's going on at your building?</div>
+      <div class="bubble them">Hi &mdash; you're through to the Tristate dispatch desk. What's going on at your building?</div>
       <div class="bubble them">If it's an emergency, call <strong>{SITE.phone}</strong> and we'll get a crew moving straight away.</div>
     </div>
 
@@ -41,7 +41,7 @@ import { SITE } from '../data/site';
 
 <script is:inline>
 (function(){
-  var root = document.querySelector('.chat-widget[data-chat="bedrock"]');
+  var root = document.querySelector('.chat-widget[data-chat="tristate"]');
   if(!root || root.dataset.ready) return;
   root.dataset.ready = "1";
 

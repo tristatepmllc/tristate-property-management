@@ -37,7 +37,7 @@ function cloudflarePagesCompat() {
 }
 
 export default defineConfig({
-  site: 'https://bedrockfacility.com', // TODO: real domain — canonicals + sitemap depend on it
+  site: 'https://tristatepropertymanagement.com', // TODO: real domain — canonicals + sitemap depend on it
   // `output: 'hybrid'` was removed in Astro 5. The modern equivalent is
   // `output: 'static'` + an adapter; routes that need a server opt in with
   // `export const prerender = false` (see src/pages/api/*).

@@ -1,6 +1,6 @@
 {
   "$schema": "node_modules/wrangler/config-schema.json",
-  "name": "bedrock",
+  "name": "tristate-property-management",
   "compatibility_date": "2026-08-01",
   "compatibility_flags": ["nodejs_compat"],
 
@@ -13,22 +13,22 @@
   "observability": { "enabled": true },
 
   // --- D1 -------------------------------------------------------------
-  // npx wrangler d1 create bedrock-db   -> paste the id below
+  // npx wrangler d1 create tristate-db   -> paste the id below
   "d1_databases": [
-    { "binding": "DB", "database_name": "bedrock-db", "database_id": "REPLACE_WITH_DATABASE_ID" }
+    { "binding": "DB", "database_name": "tristate-db", "database_id": "REPLACE_WITH_DATABASE_ID" }
   ],
 
   // --- R2 (scaffolded for future job photos) --------------------------
-  // npx wrangler r2 bucket create bedrock-media
+  // npx wrangler r2 bucket create tristate-media
   "r2_buckets": [
-    { "binding": "MEDIA", "bucket_name": "bedrock-media" }
+    { "binding": "MEDIA", "bucket_name": "tristate-media" }
   ],
 
   // Secrets are NOT stored here:
   //   npx wrangler secret put TURNSTILE_SECRET_KEY
   //   npx wrangler secret put RESEND_API_KEY
   "vars": {
-    "LEAD_NOTIFY_TO": "service@bedrockfacility.com",
-    "LEAD_NOTIFY_FROM": "Bedrock Website <noreply@bedrockfacility.com>"
+    "LEAD_NOTIFY_TO": "service@tristatepropertymanagement.com",
+    "LEAD_NOTIFY_FROM": "Tristate Website <noreply@tristatepropertymanagement.com>"
   }
 }

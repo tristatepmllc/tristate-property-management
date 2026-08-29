@@ -1,4 +1,4 @@
-# Bedrock Facility Services — website
+# Tristate Property Management LLC — website
 
 Astro 7 (TypeScript) → Cloudflare Workers static assets, with D1, R2, Turnstile and Resend.
 The approved `index (1).html` prototype is reproduced markup-for-markup; the stylesheet is the
@@ -42,7 +42,7 @@ output directory is `dist` finds no `index.html` at the root and every URL retur
 ```
 dist/
 |- index.html            <- root document (this is what was missing)
-|- services/index.html   contact/  industries/  why-bedrock/
+|- services/index.html   contact/  industries/  why-tristate/
 |- _astro/  images/  robots.txt  sitemap-index.xml
 |- _headers  _routes.json  .assetsignore
 `- _worker.js/           entry.mjs + index.js (server routes)
@@ -80,8 +80,8 @@ honeypot returns 200 and writes nothing; bad input returns 422 with the failing 
 
 ```bash
 npx wrangler login
-npx wrangler d1 create bedrock-db          # paste database_id into wrangler.jsonc
-npx wrangler r2 bucket create bedrock-media
+npx wrangler d1 create tristate-db          # paste database_id into wrangler.jsonc
+npx wrangler r2 bucket create tristate-media
 npm run db:remote                          # apply db/schema.sql
 npx wrangler secret put TURNSTILE_SECRET_KEY
 npx wrangler secret put RESEND_API_KEY
@@ -121,7 +121,7 @@ token where the web sends a session cookie.
 
 ## Blockers before going live
 
-- [ ] **Real NAP.** Everything is placeholder: `(904) 555-0142`, `service@bedrockfacility.com`,
+- [ ] **Real NAP.** Everything is placeholder: `(904) 555-0142`, `service@tristatepropertymanagement.com`,
       `4131 Sunbeam Road`, licence `FL CGC-0000000`, and the lat/lng. All of it lives in
       `src/data/site.ts` — one file, one edit. It also feeds the JSON-LD, so wrong data here
       means schema that conflicts with the Google Business Profile.
@@ -131,6 +131,36 @@ token where the web sends a session cookie.
       canned-reply mock — it answers with hardcoded strings. Either wire it to a real inbox or
       remove it; shipping a fake "Online now" chat is a trust problem, not a technical one.
 - [ ] **`52 services` and `$2M Insured`** claims — confirm they are accurate.
+
+## Blog
+
+Content collection at `src/content/blog/*.md`, typed by `src/content.config.ts`. Adding a post
+means dropping in one markdown file — no code changes, and the sitemap and RSS feed pick it up
+on the next build.
+
+```yaml
+---
+title: "Under 70 characters"          # enforced by the schema
+description: "70-165 characters"      # enforced — this is the meta description
+publishedAt: 2026-08-20
+updatedAt: 2026-09-01                 # optional; feeds dateModified
+author: "Tristate Property Management"
+category: "HVAC"
+cover: "/images/home-hvac.webp"       # path under public/
+coverAlt: "Describe the image"
+draft: false                          # true = built locally, excluded from the site
+---
+```
+
+The length limits are deliberate: a title over ~70 characters truncates in search results and a
+missing or overlong description gets rewritten by Google. The build fails loudly rather than
+shipping a bad one.
+
+Routes: `/blog/` (listing), `/blog/<filename>/` (post), `/rss.xml` (feed, linked from `<head>`).
+Each post emits `BlogPosting` + `BreadcrumbList` JSON-LD and uses its cover image for Open Graph
+and the LCP preload. The listing and hero reuse the approved `.page-hero` / `.cards` / `.card`
+components, so the blog inherits the design rather than introducing new UI; only the article body
+(`.prose`) needed new rules, since the prototype had no long-form page to copy.
 
 ## What is deliberately NOT here
 

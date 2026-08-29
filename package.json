@@ -1,5 +1,5 @@
 {
-  "name": "bedrock-facility-services",
+  "name": "tristate-property-management",
   "type": "module",
   "version": "0.1.0",
   "private": true,
@@ -9,11 +9,12 @@
     "preview": "wrangler dev",
     "deploy": "npm run build && wrangler deploy",
     "check": "astro check",
-    "db:local": "wrangler d1 execute bedrock-db --local --file=./db/schema.sql",
-    "db:remote": "wrangler d1 execute bedrock-db --remote --file=./db/schema.sql"
+    "db:local": "wrangler d1 execute tristate-db --local --file=./db/schema.sql",
+    "db:remote": "wrangler d1 execute tristate-db --remote --file=./db/schema.sql"
   },
   "dependencies": {
     "@astrojs/cloudflare": "^14.2.5",
+    "@astrojs/rss": "^4.0.19",
     "@astrojs/sitemap": "^3.7.3",
     "astro": "^7.2.9",
     "typescript": "^7.0.2"
