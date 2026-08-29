@@ -390,7 +390,7 @@ const jsonLd = graph([localBusiness(), organisation(), website(), ...serviceList
     <div class="sec-head">
       <p class="eyebrow">On site this week</p>
       <h2>Our crews, your buildings</h2>
-      <p>A sample of what our technicians were working on across Northeast Florida over the last seven days.</p>
+      <p>A sample of what our technicians were working on across Connecticut, USA over the last seven days.</p>
     </div>
     <div class="gallery">
       <figure>
@@ -419,24 +419,12 @@ const jsonLd = graph([localBusiness(), organisation(), website(), ...serviceList
     <div class="sec-head">
       <p class="eyebrow">Coverage</p>
       <h2>Where our vans go</h2>
-      <p>If you are just outside these areas, ask anyway - we will tell you honestly whether we can cover you properly.</p>
+      <p>We cover Connecticut. If you are just outside, ask anyway - we will tell you honestly whether we can cover you properly.</p>
     </div>
     <div class="areas">
-      <span class="area">Jacksonville</span>
-      <span class="area">Orange Park</span>
-      <span class="area">St. Augustine</span>
-      <span class="area">Ponte Vedra</span>
-      <span class="area">Fernandina Beach</span>
-      <span class="area">Middleburg</span>
-      <span class="area">Green Cove Springs</span>
-      <span class="area">Fleming Island</span>
-      <span class="area">Atlantic Beach</span>
-      <span class="area">Neptune Beach</span>
-      <span class="area">Jacksonville Beach</span>
-      <span class="area">Yulee</span>
-      <span class="area">Macclenny</span>
-      <span class="area">Palm Coast</span>
-      <span class="area">Nocatee</span>
+      {SITE.areaServed.length
+        ? SITE.areaServed.map((town) => <span class="area">{town}</span>)
+        : <span class="area area--wide">Connecticut, USA</span>}
     </div>
   </div>
 </section>
@@ -467,14 +455,14 @@ const jsonLd = graph([localBusiness(), organisation(), website(), ...serviceList
               <span>Photos of the problem help us quote faster</span></span>
           </li>
           <li>
-            <span class="qk">Office</span>
-            <span class="qv">4131 Sunbeam Road, Jacksonville, FL 32257
+            <span class="qk">Serving</span>
+            <span class="qv">Connecticut, USA
               <span>Mon&ndash;Fri 7:00 AM &ndash; 6:00 PM &middot; Emergency 24/7</span></span>
           </li>
           <li>
             <span class="qk">Coverage</span>
-            <span class="qv">Jacksonville &amp; Northeast Florida
-              <span>Orange Park, St. Augustine, Ponte Vedra, the Beaches and beyond</span></span>
+            <span class="qv">Connecticut, USA
+              <span>Service-area business - our crews come to your building</span></span>
           </li>
         </ul>
       </div>
@@ -499,7 +487,7 @@ const jsonLd = graph([localBusiness(), organisation(), website(), ...serviceList
             </div>
             <div class="field">
               <label for="h-property">Property / company</label>
-              <input type="text" id="h-property" name="property" placeholder="Sunbeam Business Park">
+              <input type="text" id="h-property" name="property" placeholder="Riverside Business Park">
             </div>
           </div>
 

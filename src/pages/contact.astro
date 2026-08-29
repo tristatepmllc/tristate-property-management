@@ -47,7 +47,7 @@ const jsonLd = graph([breadcrumbs([{ name: 'Home', path: '/' }, { name: 'Contact
             </div>
             <div class="field">
               <label for="company">Company / property</label>
-              <input type="text" id="company" name="company" placeholder="Sunbeam Business Park">
+              <input type="text" id="company" name="company" placeholder="Riverside Business Park">
             </div>
           </div>
 
@@ -176,17 +176,12 @@ const jsonLd = graph([breadcrumbs([{ name: 'Home', path: '/' }, { name: 'Contact
         <div class="info-block">
           <h3>Coverage</h3>
           <p style="font-size:.9rem;color:var(--steel);margin-bottom:14px">
-            Jacksonville and Northeast Florida, including:
+            We cover:
           </p>
           <div class="areas" style="grid-template-columns:1fr 1fr">
-            <span class="area">Jacksonville</span>
-            <span class="area">Orange Park</span>
-            <span class="area">St. Augustine</span>
-            <span class="area">Ponte Vedra</span>
-            <span class="area">Fernandina</span>
-            <span class="area">Fleming Island</span>
-            <span class="area">The Beaches</span>
-            <span class="area">Nocatee</span>
+            {SITE.areaServed.length
+              ? SITE.areaServed.map((town) => <span class="area">{town}</span>)
+              : <span class="area area--wide">Connecticut, USA</span>}
           </div>
         </div>
       </div>

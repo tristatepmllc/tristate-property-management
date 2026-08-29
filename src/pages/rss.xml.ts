@@ -9,7 +9,7 @@ export const GET: APIRoute = async (context) => {
 
   return rss({
     title: `${SITE.name} - Insights`,
-    description: 'Practical guidance for facility and property managers in Northeast Florida.',
+    description: 'Practical guidance for facility and property managers in Connecticut, USA.',
     site: context.site ?? SITE.url,
     items: posts.map((post) => ({
       title: post.data.title,
