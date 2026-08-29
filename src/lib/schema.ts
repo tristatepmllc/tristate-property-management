@@ -49,7 +49,7 @@ export function organisation() {
     '@id': ORG_ID,
     name: SITE.name,
     url: SITE.url,
-    logo: `${SITE.url}${SITE.defaultOgImage}`,
+    logo: `${SITE.url}/icon-512.png`,
   };
 }
 

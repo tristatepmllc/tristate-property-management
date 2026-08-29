@@ -6,11 +6,16 @@ const { active = '/' } = Astro.props;
 <header class="header">
   <div class="wrap">
     <a class="logo" href="/" aria-label={`${SITE.name} home`}>
-      <span class="logo-mark" aria-hidden="true">T</span>
-      <span class="logo-text">
-        <span class="logo-name">Tristate</span>
-        <span class="logo-sub">Property Management</span>
-      </span>
+      <picture>
+        <source srcset="/images/logo-tristate.avif" type="image/avif" />
+        <source srcset="/images/logo-tristate.webp" type="image/webp" />
+        <img
+          src="/images/logo-tristate.png"
+          alt="Tristate Property Management LLC — professional, reliable, committed"
+          width="380" height="130"
+          fetchpriority="high" decoding="async"
+        />
+      </picture>
     </a>
 
     <input type="checkbox" id="nav-toggle" class="nav-toggle" />

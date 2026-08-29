@@ -170,6 +170,30 @@ and the LCP preload. The listing and hero reuse the approved `.page-hero` / `.ca
 components, so the blog inherits the design rather than introducing new UI; only the article body
 (`.prose`) needed new rules, since the prototype had no long-form page to copy.
 
+## Logo assets
+
+Source artwork had a white paper background. It was cut out with a **border flood fill**, not a
+global "make white transparent" threshold — that keeps the white highlight inside the roof, which
+a threshold would have eaten. Fringe pixels get partial alpha so the edges stay smooth.
+
+| File | Use |
+|---|---|
+| `/images/logo-tristate.{avif,webp,png}` | header — dark ink, for the white background |
+| `/images/logo-tristate-light.{avif,webp,png}` | footer — ink lifted to white, red brightened to `--red` for contrast on navy |
+| `/favicon-32.png`, `/icon-192.png`, `/icon-512.png` | favicons — house mark only, the full lockup is unreadable at 32px |
+| `/apple-touch-icon.png` | 180x180 on white (iOS does not respect transparency here) |
+
+Served through `<picture>`: AVIF (21 KB) → WebP (28 KB) → PNG (30 KB) fallback. The header copy
+carries `fetchpriority="high"`; the footer copy is lazy. `icon-512.png` is also the
+`Organization.logo` in the JSON-LD.
+
+The header grew from a 78px to an 88px minimum so the lockup's "PROFESSIONAL · RELIABLE ·
+COMMITTED" line stays legible; nav and CTA keep their approved positions, and the header returns
+to 78px below 900px wide.
+
+To regenerate after an artwork change, re-run the cutout against the new source and re-emit at
+380px wide — that is 2x the largest rendered size (60px tall), so anything bigger is wasted bytes.
+
 ## Quote popup
 
 `src/components/QuotePopup.astro`. Offer: a free building walk-through with a written

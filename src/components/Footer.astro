@@ -6,12 +6,16 @@ const year = new Date().getFullYear();
   <div class="wrap">
     <div class="footer-top">
       <div class="footer-about">
-        <a class="logo" href="/">
-          <span class="logo-mark" aria-hidden="true">T</span>
-          <span class="logo-text">
-            <span class="logo-name">Tristate</span>
-            <span class="logo-sub">Property Management</span>
-          </span>
+        <a class="logo" href="/" aria-label={`${SITE.name} home`}>
+          <picture>
+            <source srcset="/images/logo-tristate-light.avif" type="image/avif" />
+            <source srcset="/images/logo-tristate-light.webp" type="image/webp" />
+            <img
+              src="/images/logo-tristate-light.png"
+              alt="Tristate Property Management LLC"
+              width="380" height="130" loading="lazy" decoding="async"
+            />
+          </picture>
         </a>
         <p>
           A full-service facility maintenance company. Our own technicians, our own vans
