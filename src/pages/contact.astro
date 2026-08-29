@@ -156,12 +156,12 @@ const jsonLd = graph([breadcrumbs([{ name: 'Home', path: '/' }, { name: 'Contact
             <span class="v"><a href={SITE.mailtoHref}>{SITE.email}</a></span>
           </div>
           <div class="info-row">
-            <span class="k">Office</span>
-            <span class="v">{SITE.address.street}<br />{SITE.address.city}, {SITE.address.region} {SITE.address.postal}</span>
-          </div>
-          <div class="info-row">
-            <span class="k">Yard</span>
-            <span class="v">9799 US Highway 301<br>Hampton, FL 32044</span>
+            <span class="k">{SITE.address.street ? 'Office' : 'Serving'}</span>
+            <span class="v">
+              {SITE.address.street
+                ? <>{SITE.address.street}<br />{SITE.address.city}, {SITE.address.region} {SITE.address.postal}</>
+                : <>Connecticut, USA<br />We come to you &mdash; no walk-in office</>}
+            </span>
           </div>
         </div>
 

@@ -290,3 +290,18 @@ img{height:auto}
 .sitemap-grid .footer-links li{margin-bottom:8px}
 
 .chat-turnstile{margin:0 14px}
+
+/* ── Two layout corrections ──────────────────────────────────────────────
+
+   1. `.sec-head` is capped at 720px. The stylesheet centres a section head with
+      `.center .sec-head` (a DESCENDANT selector), so when `center` sits on the
+      .sec-head element itself the text centres inside a 720px box that is still
+      pinned left — which reads as "indented to the right" against the full-width
+      cards underneath. Centre the box too. */
+.sec-head.center{margin-left:auto;margin-right:auto}
+
+/* 2. `.photo-card` is a <figure>, and the stylesheet only resets its bottom
+      margin. The browser default `margin: 1em 40px` was left in place, insetting
+      the photo ~40px on each side so it sat narrower than the emergency card
+      below it. Clear the rest of the margin so it fills the column. */
+.photo-card{margin:0 0 18px}
