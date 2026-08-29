@@ -176,7 +176,13 @@ token where the web sends a session cookie.
       `src/data/site.ts` — one file, one edit. It also feeds the JSON-LD, so wrong data here
       means schema that conflicts with the Google Business Profile. Still empty: `address.city`,
       `address.postal`, `geo`, `license`, `areaServed`.
-- [ ] **Real domain** in `src/data/site.ts` and `astro.config.mjs` (canonicals + sitemap).
+- [ ] **Attach the custom domain.** `tristatepropertymanagement.com` currently returns 503, so
+      `SITE.url` and `astro.config.mjs` point at the `.pages.dev` host instead. That is deliberate:
+      `og:image`, `og:url` and the canonicals are absolute URLs built from that value, and while
+      they pointed at the dead domain WhatsApp and Facebook fetched a 503 and showed no preview at
+      all. Once the domain is attached in Cloudflare Pages, change both values back in the same
+      commit - a canonical pointing at a host that does not serve the page is worse than none.
+      `public/robots.txt` carries the sitemap URL too.
 - [ ] **Google Business Profile** created and matching the NAP exactly.
 - [ ] **Decide on the chat widget.** `src/components/ChatWidget.astro` is the prototype's
       canned-reply mock — it answers with hardcoded strings. Either wire it to a real inbox or

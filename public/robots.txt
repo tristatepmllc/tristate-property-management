@@ -3,4 +3,4 @@ Allow: /
 Disallow: /portal/
 Disallow: /api/
 
-Sitemap: https://tristatepropertymanagement.com/sitemap-index.xml
+Sitemap: https://tristate-property-management.pages.dev/sitemap-index.xml

@@ -1,7 +1,11 @@
 export const SITE = {
   name: 'Tristate Property Management',
   legalName: 'Tristate Property Management LLC',
-  url: 'https://tristatepropertymanagement.com',           // TODO: real production domain
+  // Live host today. The custom domain (tristatepropertymanagement.com) currently
+  // returns 503, and og:image / og:url / canonical all resolve against this value -
+  // pointing them at a dead host is why WhatsApp and Facebook showed no preview.
+  // Switch back the moment the custom domain is attached in Cloudflare Pages.
+  url: 'https://tristate-property-management.pages.dev',
   phone: '(708) 905-4471',
   phoneE164: '+17089054471',
   get telHref() { return `tel:${this.phoneE164}`; },
