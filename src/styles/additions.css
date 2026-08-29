@@ -1,0 +1,32 @@
+/* Additions required by the production build. The approved stylesheet in
+   global.css is untouched apart from @container -> @media (see README). */
+
+.skip-link{
+  position:absolute;left:-9999px;top:0;z-index:999;
+  background:var(--red);color:#fff;padding:10px 16px;
+  font-family:var(--body);font-weight:600;border-radius:0 0 4px 0;
+}
+.skip-link:focus{left:0}
+
+.cf-turnstile{margin:0 0 14px}
+
+.form-status{
+  margin:12px 0 0;
+  font-size:.9rem;line-height:1.5;
+  color:var(--navy-700);
+}
+
+/* Respect users who ask for less motion */
+@media (prefers-reduced-motion:reduce){
+  *,*::before,*::after{
+    animation-duration:.01ms !important;
+    animation-iteration-count:1 !important;
+    transition-duration:.01ms !important;
+    scroll-behavior:auto !important;
+  }
+}
+
+/* Explicit width/height attributes were added to every <img> to reserve space
+   (CLS). Pair them with height:auto so intrinsic sizing never distorts a photo
+   whose width is constrained by CSS. */
+img{height:auto}

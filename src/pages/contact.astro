@@ -1,0 +1,238 @@
+---
+import BaseLayout from '../layouts/BaseLayout.astro';
+import LeadFormExtras from '../components/LeadFormExtras.astro';
+import LeadFormScript from '../components/LeadFormScript.astro';
+import { SITE } from '../data/site';
+import { graph, breadcrumbs } from '../lib/schema';
+
+const jsonLd = graph([breadcrumbs([{ name: 'Home', path: '/' }, { name: 'Contact', path: '/contact/' }])]);
+---
+<BaseLayout
+  title="Request a Quote — Commercial Facility Services | Bedrock Jacksonville"
+  description="Tell us what needs fixing and get a written quote, usually the same day. Commercial cleaning, plumbing, electrical, HVAC and repairs across Jacksonville and Northeast Florida. 24/7 emergency line."
+  path="/contact/"
+  active="/contact/"
+  jsonLd={jsonLd}
+>
+<section class="page-hero">
+  <div class="page-hero-bg" style="background-image:url('/images/industries-automotive.webp')"></div>
+  <div class="wrap">
+    <p class="crumb"><a href="/">Home</a> &nbsp;/&nbsp; <span>Contact</span></p>
+    <h1>Tell us what needs fixing</h1>
+    <p>
+      Send it before noon on a working day and you will have a written price back the same
+      day. If it is an emergency, call — the phone is faster than any form.
+    </p>
+  </div>
+</section>
+
+<section class="section">
+  <div class="wrap">
+    <div class="contact-grid">
+
+      <!-- FORM -->
+      <div class="form-card">
+        <p class="eyebrow">Free quote &middot; No obligation</p>
+        <h2 style="font-size:1.9rem;text-transform:uppercase;margin-bottom:8px">Request a quote</h2>
+        <p style="color:var(--steel);font-size:.93rem;margin-bottom:26px">
+          The more detail you give us, the more accurate the price. A photo helps more than
+          a paragraph — you can send one to the email or number on the right.
+        </p>
+
+        <form action="/api/leads" method="post" data-lead-form data-source="contact-page-form">
+          <div class="field-row">
+            <div class="field">
+              <label for="name">Your name <span class="req">*</span></label>
+              <input type="text" id="name" name="name" placeholder="Jane Whitfield" required>
+            </div>
+            <div class="field">
+              <label for="company">Company / property</label>
+              <input type="text" id="company" name="company" placeholder="Sunbeam Business Park">
+            </div>
+          </div>
+
+          <div class="field-row">
+            <div class="field">
+              <label for="email">Email <span class="req">*</span></label>
+              <input type="email" id="email" name="email" placeholder="jane@company.com" required>
+            </div>
+            <div class="field">
+              <label for="phone">Phone <span class="req">*</span></label>
+              <input type="tel" id="phone" name="phone" placeholder="(904) 000-0000" required>
+            </div>
+          </div>
+
+          <div class="field">
+            <label for="address">Site address</label>
+            <input type="text" id="address" name="address" placeholder="Street, city, ZIP">
+          </div>
+
+          <div class="field-row">
+            <div class="field">
+              <label for="service">Service needed <span class="req">*</span></label>
+              <select id="service" name="service" required>
+                <option value="">Choose a service&hellip;</option>
+                <option>Janitorial &amp; Cleaning</option>
+                <option>Plumbing &amp; Drains</option>
+                <option>Electrical &amp; Lighting</option>
+                <option>HVAC &amp; Refrigeration</option>
+                <option>Handyman &amp; Repairs</option>
+                <option>Painting &amp; Surfaces</option>
+                <option>Grounds &amp; Exterior</option>
+                <option>Restoration &amp; Projects</option>
+                <option>Multiple services / not sure</option>
+              </select>
+            </div>
+            <div class="field">
+              <label for="urgency">How urgent? <span class="req">*</span></label>
+              <select id="urgency" name="urgency" required>
+                <option value="">Choose&hellip;</option>
+                <option>Emergency — today</option>
+                <option>Within 48 hours</option>
+                <option>This week</option>
+                <option>Planning ahead / budgeting</option>
+                <option>Ongoing contract enquiry</option>
+              </select>
+            </div>
+          </div>
+
+          <div class="field">
+            <label for="building">Building type</label>
+            <select id="building" name="building">
+              <option value="">Choose&hellip;</option>
+              <option>Office</option>
+              <option>Retail / shopping centre</option>
+              <option>Restaurant / commercial kitchen</option>
+              <option>Medical / dental</option>
+              <option>Warehouse / industrial</option>
+              <option>School / childcare</option>
+              <option>Multifamily / HOA</option>
+              <option>Auto dealership</option>
+              <option>Other</option>
+            </select>
+          </div>
+
+          <div class="field">
+            <label for="details">Describe the job <span class="req">*</span></label>
+            <textarea id="details" name="details" placeholder="Example: Second-floor men's restroom, two of three faucets dripping constantly and one flush valve running. Building is open 8&ndash;6, work would need to be after hours." required></textarea>
+          </div>
+
+          <LeadFormExtras source="contact-page-form" />
+
+          <button type="submit" class="btn btn--red btn--wide">Send request</button>
+
+          <p class="form-note">
+            We reply to every request. Quotes sent before noon on a business day are answered
+            the same day; anything later comes back the next morning. We never pass your
+            details to a third party.
+          </p>
+        </form>
+      </div>
+
+      <!-- SIDEBAR -->
+      <div>
+        <figure class="photo-card">
+          <img src="/images/contact-bedrock-technician-on-a-service-call.webp" alt="Bedrock technician on a service call" width="760" height="507" loading="lazy" decoding="async">
+          <figcaption>Same crew. Every visit.</figcaption>
+        </figure>
+        <div class="emergency-card" id="emergency">
+          <h3>Emergency? Call, don't type</h3>
+          <p>
+            Active leaks, no power, no heat or cooling, broken glass, sewage backup or a
+            blocked fire exit — the line is answered by a person who can dispatch a crew,
+            24 hours a day.
+          </p>
+          <a class="big" href={SITE.telHref}>{SITE.phone}</a>
+        </div>
+
+        <div class="info-block" style="margin-top:18px">
+          <h3>Contact details</h3>
+          <div class="info-row">
+            <span class="k">Phone</span>
+            <span class="v"><a href={SITE.telHref}>{SITE.phone}</a></span>
+          </div>
+          <div class="info-row">
+            <span class="k">Email</span>
+            <span class="v"><a href={SITE.mailtoHref}>{SITE.email}</a></span>
+          </div>
+          <div class="info-row">
+            <span class="k">Office</span>
+            <span class="v">{SITE.address.street}<br />{SITE.address.city}, {SITE.address.region} {SITE.address.postal}</span>
+          </div>
+          <div class="info-row">
+            <span class="k">Yard</span>
+            <span class="v">9799 US Highway 301<br>Hampton, FL 32044</span>
+          </div>
+        </div>
+
+        <div class="info-block">
+          <h3>Hours</h3>
+          <div class="info-row"><span class="k">Mon&ndash;Fri</span><span class="v">7:00 AM &ndash; 6:00 PM</span></div>
+          <div class="info-row"><span class="k">Saturday</span><span class="v">8:00 AM &ndash; 2:00 PM</span></div>
+          <div class="info-row"><span class="k">Sunday</span><span class="v">Emergency dispatch only</span></div>
+          <div class="info-row"><span class="k">Emergency</span><span class="v">24 / 7 / 365</span></div>
+        </div>
+
+        <div class="info-block">
+          <h3>Coverage</h3>
+          <p style="font-size:.9rem;color:var(--steel);margin-bottom:14px">
+            Jacksonville and Northeast Florida, including:
+          </p>
+          <div class="areas" style="grid-template-columns:1fr 1fr">
+            <span class="area">Jacksonville</span>
+            <span class="area">Orange Park</span>
+            <span class="area">St. Augustine</span>
+            <span class="area">Ponte Vedra</span>
+            <span class="area">Fernandina</span>
+            <span class="area">Fleming Island</span>
+            <span class="area">The Beaches</span>
+            <span class="area">Nocatee</span>
+          </div>
+        </div>
+      </div>
+
+    </div>
+  </div>
+</section>
+
+<!-- ================= REASSURANCE ================= -->
+<section class="section section--tight section--paper">
+  <div class="wrap">
+    <div class="stats">
+      <div class="stat">
+        <div class="stat-num">Free</div>
+        <div class="stat-label">Quotes &amp; site visits</div>
+      </div>
+      <div class="stat">
+        <div class="stat-num">Same<em>-day</em></div>
+        <div class="stat-label">Written pricing</div>
+      </div>
+      <div class="stat">
+        <div class="stat-num">30<em>-day</em></div>
+        <div class="stat-label">Workmanship guarantee</div>
+      </div>
+      <div class="stat">
+        <div class="stat-num">24<em>/7</em></div>
+        <div class="stat-label">Emergency dispatch</div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section class="cta-band cta-band--photo">
+  <div class="cta-bg" style="background-image:url('/images/home-offices.webp')"></div>
+  <div class="wrap">
+    <div class="cta-inner">
+      <div>
+        <h2>Prefer to just talk it through?</h2>
+        <p>Call and describe the problem. Most jobs can be priced over the phone in a few minutes.</p>
+      </div>
+      <div class="cta-actions">
+        <a class="btn btn--red" href={SITE.telHref}>Call {SITE.phone}</a>
+        <a class="btn btn--ghost" href="/services/">Browse services</a>
+      </div>
+    </div>
+  </div>
+</section>
+<LeadFormScript />
+</BaseLayout>

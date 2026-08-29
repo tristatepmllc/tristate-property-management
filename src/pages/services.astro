@@ -1,0 +1,469 @@
+---
+import BaseLayout from '../layouts/BaseLayout.astro';
+import { SITE } from '../data/site';
+import { graph, breadcrumbs, serviceList } from '../lib/schema';
+
+const jsonLd = graph([breadcrumbs([{ name: 'Home', path: '/' }, { name: 'Services', path: '/services/' }]), ...serviceList()]);
+---
+<BaseLayout
+  title="Commercial Facility Services — All 8 Trades | Bedrock Jacksonville"
+  description="Janitorial, plumbing, electrical, HVAC, handyman, painting, grounds and build-out services for commercial properties in Jacksonville, FL. In-house licensed technicians, flat written pricing."
+  path="/services/"
+  active="/services/"
+  jsonLd={jsonLd}
+>
+<!-- ================= PAGE HERO ================= -->
+<section class="page-hero">
+  <div class="page-hero-bg" style="background-image:url('/images/home-plumbing.webp')"></div>
+  <div class="wrap">
+    <p class="crumb"><a href="/">Home</a> &nbsp;/&nbsp; <span>Services</span></p>
+    <h1>52 services. All done by our own crews.</h1>
+    <p>
+      If it is on this page, we have the licence, the tools and the people for it in-house.
+      One work order, one crew, one invoice — whatever the size of the job.
+    </p>
+    <div class="jump">
+      <a href="#cleaning">Cleaning</a>
+      <a href="#plumbing">Plumbing</a>
+      <a href="#electrical">Electrical</a>
+      <a href="#hvac">HVAC</a>
+      <a href="#handyman">Handyman</a>
+      <a href="#painting">Painting</a>
+      <a href="#grounds">Grounds</a>
+      <a href="#projects">Restoration</a>
+    </div>
+  </div>
+</section>
+
+<!-- ================= CATALOG ================= -->
+<section class="section section--paper">
+  <div class="wrap">
+    <div class="catalog">
+
+      <!-- CLEANING -->
+      <div class="cat-block" id="cleaning">
+        <div class="cat-head">
+          <h2>Janitorial &amp; Cleaning</h2>
+          <span class="cat-count">8 services</span>
+        </div>
+        <div class="cat-banner" style="background-image:url('/images/services-office-commercial-cleaning.webp')">
+          <div class="cat-banner-text">
+            <span class="cat-banner-kicker">Nightly &amp; scheduled</span>
+            <p>Lobbies, restrooms, floors and glass — the parts of your building every visitor judges you on. Scheduled around your hours, signed off every night.</p>
+          </div>
+        </div>
+        <div class="svc-grid">
+          <article class="svc">
+            <h3>Office &amp; Commercial Cleaning</h3>
+            <p>Scheduled cleaning of workspaces, lobbies, break rooms and meeting rooms, built around your operating hours.</p>
+            <div class="svc-meta"><span class="chip">Recurring</span></div>
+          </article>
+          <article class="svc">
+            <h3>Nightly Janitorial Contracts</h3>
+            <p>A fixed crew, a fixed scope and a written checklist signed off every night. Monthly billing, no surprises.</p>
+            <div class="svc-meta"><span class="chip">Contract</span></div>
+          </article>
+          <article class="svc">
+            <h3>Day Porter &amp; Matron Service</h3>
+            <p>Someone on site during business hours for spills, restrooms, trash, lobby presentation and anything unplanned.</p>
+            <div class="svc-meta"><span class="chip">Staffed</span></div>
+          </article>
+          <article class="svc">
+            <h3>Restroom Sanitation &amp; Restocking</h3>
+            <p>Deep sanitation of fixtures, grout and touchpoints, plus consumable restocking so you never run out mid-week.</p>
+            <div class="svc-meta"><span class="chip">Recurring</span></div>
+          </article>
+          <article class="svc">
+            <h3>Carpet &amp; Upholstery Cleaning</h3>
+            <p>Hot water extraction, spot treatment and traffic-lane restoration that buys you years before replacement.</p>
+            <div class="svc-meta"><span class="chip">Scheduled</span></div>
+          </article>
+          <article class="svc">
+            <h3>Hard Floor Care</h3>
+            <p>Strip, seal, wax, burnish and polish for VCT, terrazzo, concrete and stone. Done overnight so you open clean.</p>
+            <div class="svc-meta"><span class="chip">Scheduled</span></div>
+          </article>
+          <article class="svc">
+            <h3>Window &amp; Glass Cleaning</h3>
+            <p>Interior and exterior glass, storefronts, partitions and mid-rise work with certified rope and lift access.</p>
+            <div class="svc-meta"><span class="chip">Scheduled</span></div>
+          </article>
+          <article class="svc">
+            <h3>Disinfection &amp; Electrostatic Spraying</h3>
+            <p>EPA-listed disinfectants applied electrostatically for full-surface coverage after illness or before an inspection.</p>
+            <div class="svc-meta"><span class="chip chip--red">Rapid response</span></div>
+          </article>
+        </div>
+      </div>
+
+      <!-- PLUMBING -->
+      <div class="cat-block" id="plumbing">
+        <div class="cat-head">
+          <h2>Plumbing &amp; Drains</h2>
+          <span class="cat-count">6 services</span>
+        </div>
+        <div class="cat-banner" style="background-image:url('/images/services-leak-detection-pipe-repair.webp')">
+          <div class="cat-banner-text">
+            <span class="cat-banner-kicker">24/7 callout</span>
+            <p>From a dripping tap to a jetted main line. Licensed plumbers, 24-hour callout, and a camera down the drain before we quote the repair.</p>
+          </div>
+        </div>
+        <div class="svc-grid">
+          <article class="svc">
+            <h3>Leak Detection &amp; Pipe Repair</h3>
+            <p>Acoustic and thermal leak location, then repair or repipe — copper, PEX, CPVC and cast iron.</p>
+            <div class="svc-meta"><span class="chip chip--red">24/7</span></div>
+          </article>
+          <article class="svc">
+            <h3>Drain Cleaning &amp; Hydro Jetting</h3>
+            <p>Cabling for quick clogs, high-pressure jetting for grease and root intrusion, camera inspection included.</p>
+            <div class="svc-meta"><span class="chip chip--red">24/7</span></div>
+          </article>
+          <article class="svc">
+            <h3>Water Heater Service &amp; Replacement</h3>
+            <p>Tank and tankless diagnostics, element and thermostat swaps, flush service and full replacement.</p>
+            <div class="svc-meta"><span class="chip">Service call</span></div>
+          </article>
+          <article class="svc">
+            <h3>Fixture Repair &amp; Replacement</h3>
+            <p>Faucets, flush valves, sensors, toilets, urinals and sinks — including the single dripping tap nobody else will come out for.</p>
+            <div class="svc-meta"><span class="chip">Small job</span></div>
+          </article>
+          <article class="svc">
+            <h3>Grease Trap &amp; Kitchen Plumbing</h3>
+            <p>Scheduled pumping, line jetting and compliance records for restaurants and commercial kitchens.</p>
+            <div class="svc-meta"><span class="chip">Compliance</span></div>
+          </article>
+          <article class="svc">
+            <h3>Backflow Testing &amp; Certification</h3>
+            <p>Annual testing, repair and paperwork filed with your water authority by a certified tester.</p>
+            <div class="svc-meta"><span class="chip">Annual</span></div>
+          </article>
+        </div>
+      </div>
+
+      <!-- ELECTRICAL -->
+      <div class="cat-block" id="electrical">
+        <div class="cat-head">
+          <h2>Electrical &amp; Lighting</h2>
+          <span class="cat-count">6 services</span>
+        </div>
+        <div class="cat-banner" style="background-image:url('/images/services-outlet-switch-circuit-repair.webp')">
+          <div class="cat-banner-text">
+            <span class="cat-banner-kicker">Licensed to code</span>
+            <p>Panels, circuits, lighting and EV chargers — all to code, all inspected, and all documented for the fire marshal.</p>
+          </div>
+        </div>
+        <div class="svc-grid">
+          <article class="svc">
+            <h3>Outlet, Switch &amp; Circuit Repair</h3>
+            <p>Dead outlets, tripping circuits, GFCI faults and rewiring — diagnosed and corrected to code.</p>
+            <div class="svc-meta"><span class="chip">Service call</span></div>
+          </article>
+          <article class="svc">
+            <h3>Panel Upgrades &amp; Breaker Service</h3>
+            <p>Load assessment, breaker replacement, sub-panel installation and infrared inspection of connections.</p>
+            <div class="svc-meta"><span class="chip">Project</span></div>
+          </article>
+          <article class="svc">
+            <h3>LED Retrofits &amp; Lighting Maintenance</h3>
+            <p>Group relamping, ballast and driver replacement, and full LED conversion with utility rebate paperwork.</p>
+            <div class="svc-meta"><span class="chip">Project</span></div>
+          </article>
+          <article class="svc">
+            <h3>Exterior &amp; Parking Lot Lighting</h3>
+            <p>Pole lights, wall packs, photocells and timers — bucket-truck work handled without a third party.</p>
+            <div class="svc-meta"><span class="chip">Scheduled</span></div>
+          </article>
+          <article class="svc">
+            <h3>EV Charger Installation</h3>
+            <p>Level 2 and Level 3 charger installation, load calculation, permitting and commissioning for tenant parking.</p>
+            <div class="svc-meta"><span class="chip">Project</span></div>
+          </article>
+          <article class="svc">
+            <h3>Exit Signs &amp; Emergency Lighting</h3>
+            <p>Monthly and annual testing, battery replacement and documentation your fire marshal will accept.</p>
+            <div class="svc-meta"><span class="chip">Compliance</span></div>
+          </article>
+        </div>
+      </div>
+
+      <!-- HVAC -->
+      <div class="cat-block" id="hvac">
+        <div class="cat-head">
+          <h2>HVAC &amp; Refrigeration</h2>
+          <span class="cat-count">5 services</span>
+        </div>
+        <div class="cat-banner" style="background-image:url('/images/home-plumbing.webp')">
+          <div class="cat-banner-text">
+            <span class="cat-banner-kicker">Preventive + emergency</span>
+            <p>Rooftop units, split systems and walk-in coolers. Preventive plans keep them running; our 24-hour line catches them when they don't.</p>
+          </div>
+        </div>
+        <div class="svc-grid">
+          <article class="svc">
+            <h3>Preventive Maintenance Plans</h3>
+            <p>Quarterly or bi-annual filter, coil, belt and refrigerant checks with a written condition report per unit.</p>
+            <div class="svc-meta"><span class="chip">Contract</span></div>
+          </article>
+          <article class="svc">
+            <h3>Rooftop Unit Repair &amp; Replacement</h3>
+            <p>Compressor, motor, board and economizer work on package RTUs, plus crane-set replacements.</p>
+            <div class="svc-meta"><span class="chip chip--red">24/7</span></div>
+          </article>
+          <article class="svc">
+            <h3>Split System &amp; Mini-Split Service</h3>
+            <p>Server rooms, small suites and supplemental cooling — install, service and refrigerant management.</p>
+            <div class="svc-meta"><span class="chip">Service call</span></div>
+          </article>
+          <article class="svc">
+            <h3>Commercial Refrigeration &amp; Walk-Ins</h3>
+            <p>Walk-in coolers and freezers, reach-ins, ice machines and prep tables. Emergency priority for food service.</p>
+            <div class="svc-meta"><span class="chip chip--red">24/7</span></div>
+          </article>
+          <article class="svc">
+            <h3>Duct Cleaning &amp; Indoor Air Quality</h3>
+            <p>NADCA-method duct cleaning, coil sanitation, UV and filtration upgrades for buildings with complaints.</p>
+            <div class="svc-meta"><span class="chip">Scheduled</span></div>
+          </article>
+        </div>
+      </div>
+
+      <!-- HANDYMAN -->
+      <div class="cat-block" id="handyman">
+        <div class="cat-head">
+          <h2>Handyman &amp; Building Repairs</h2>
+          <span class="cat-count">8 services</span>
+        </div>
+        <div class="cat-banner" style="background-image:url('/images/home-handyman.webp')">
+          <div class="cat-banner-text">
+            <span class="cat-banner-kicker">One visit, whole list</span>
+            <p>The list nobody else will send a van for. Send us all of it and one technician clears it in a single visit.</p>
+          </div>
+        </div>
+        <div class="svc-grid">
+          <article class="svc">
+            <h3>Drywall Repair &amp; Patching</h3>
+            <p>Holes, water stains, corner beads and texture matching, finished and painted in the same visit.</p>
+            <div class="svc-meta"><span class="chip">Small job</span></div>
+          </article>
+          <article class="svc">
+            <h3>Door, Lock &amp; Hardware Repair</h3>
+            <p>Closers, hinges, panic bars, thresholds, rekeying and ADA-compliant hardware replacement.</p>
+            <div class="svc-meta"><span class="chip">Small job</span></div>
+          </article>
+          <article class="svc">
+            <h3>Ceiling Tile &amp; Grid Replacement</h3>
+            <p>Stained or sagging tiles swapped, grid straightened, and the leak above it traced while we are up there.</p>
+            <div class="svc-meta"><span class="chip">Small job</span></div>
+          </article>
+          <article class="svc">
+            <h3>Carpentry &amp; Millwork</h3>
+            <p>Trim, casework, counters, shelving, partitions and custom builds for retail and office fit-outs.</p>
+            <div class="svc-meta"><span class="chip">Project</span></div>
+          </article>
+          <article class="svc">
+            <h3>Flooring Repair &amp; Installation</h3>
+            <p>LVT, VCT, carpet tile, base and transition strips — patch a trip hazard or redo a whole suite.</p>
+            <div class="svc-meta"><span class="chip">Project</span></div>
+          </article>
+          <article class="svc">
+            <h3>Glass Replacement &amp; Board-Up</h3>
+            <p>Emergency board-up within hours of a break-in or storm, then permanent glass and frame replacement.</p>
+            <div class="svc-meta"><span class="chip chip--red">24/7</span></div>
+          </article>
+          <article class="svc">
+            <h3>Furniture &amp; Fixture Assembly</h3>
+            <p>Workstations, shelving, lockers, TV mounts and display fixtures — assembled, levelled and anchored.</p>
+            <div class="svc-meta"><span class="chip">Small job</span></div>
+          </article>
+          <article class="svc">
+            <h3>Punch Lists &amp; Small Repairs</h3>
+            <p>Send us the list. One technician, one day, everything crossed off — instead of five vendors and five invoices.</p>
+            <div class="svc-meta"><span class="chip">Half day</span></div>
+          </article>
+        </div>
+      </div>
+
+      <!-- PAINTING -->
+      <div class="cat-block" id="painting">
+        <div class="cat-head">
+          <h2>Painting &amp; Surfaces</h2>
+          <span class="cat-count">5 services</span>
+        </div>
+        <div class="cat-banner" style="background-image:url('/images/home-crew-carrying-ladders-on-a-commercial-job-si.webp')">
+          <div class="cat-banner-text">
+            <span class="cat-banner-kicker">Scheduled after hours</span>
+            <p>Interior, exterior, epoxy floors and pressure washing — scheduled after hours so nobody loses a working day.</p>
+          </div>
+        </div>
+        <div class="svc-grid">
+          <article class="svc">
+            <h3>Interior Painting</h3>
+            <p>Offices, corridors, suites and common areas painted after hours so nobody loses a working day.</p>
+            <div class="svc-meta"><span class="chip">Project</span></div>
+          </article>
+          <article class="svc">
+            <h3>Exterior Painting</h3>
+            <p>Prep, prime and finish on stucco, block, metal and wood, with a written surface-prep scope up front.</p>
+            <div class="svc-meta"><span class="chip">Project</span></div>
+          </article>
+          <article class="svc">
+            <h3>Epoxy &amp; Sealed Floor Coatings</h3>
+            <p>Warehouse, kitchen and service-bay floors coated for chemical resistance and easy cleaning.</p>
+            <div class="svc-meta"><span class="chip">Project</span></div>
+          </article>
+          <article class="svc">
+            <h3>Pressure Washing &amp; Soft Wash</h3>
+            <p>Sidewalks, facades, dumpster pads, drive-throughs and awnings — including gum and oil-stain removal.</p>
+            <div class="svc-meta"><span class="chip">Scheduled</span></div>
+          </article>
+          <article class="svc">
+            <h3>Wall Coverings &amp; Graffiti Removal</h3>
+            <p>Vinyl and acoustic wall coverings installed or repaired, plus same-day graffiti removal and anti-graffiti coating.</p>
+            <div class="svc-meta"><span class="chip chip--red">Rapid response</span></div>
+          </article>
+        </div>
+      </div>
+
+      <!-- GROUNDS -->
+      <div class="cat-block" id="grounds">
+        <div class="cat-head">
+          <h2>Grounds &amp; Exterior</h2>
+          <span class="cat-count">7 services</span>
+        </div>
+        <div class="cat-banner" style="background-image:url('/images/services-landscaping-grounds-maintenance.webp')">
+          <div class="cat-banner-text">
+            <span class="cat-banner-kicker">Seasonal contracts</span>
+            <p>Everything outside the walls: landscaping, irrigation, parking lots, striping, gutters and seasonal snow work.</p>
+          </div>
+        </div>
+        <div class="svc-grid">
+          <article class="svc">
+            <h3>Landscaping &amp; Grounds Maintenance</h3>
+            <p>Mowing, edging, mulch, pruning, seasonal colour and litter policing on a fixed weekly or biweekly route.</p>
+            <div class="svc-meta"><span class="chip">Contract</span></div>
+          </article>
+          <article class="svc">
+            <h3>Irrigation Repair &amp; Scheduling</h3>
+            <p>Head and valve repair, controller programming, rain sensors and leak isolation to cut your water bill.</p>
+            <div class="svc-meta"><span class="chip">Service call</span></div>
+          </article>
+          <article class="svc">
+            <h3>Parking Lot Sweeping &amp; Striping</h3>
+            <p>Mechanical sweeping, layout design, ADA-compliant stalls, fire lanes and directional markings.</p>
+            <div class="svc-meta"><span class="chip">Scheduled</span></div>
+          </article>
+          <article class="svc">
+            <h3>Asphalt &amp; Concrete Repair</h3>
+            <p>Pothole patching, crack sealing, sealcoating, sidewalk trip-hazard grinding and curb replacement.</p>
+            <div class="svc-meta"><span class="chip">Project</span></div>
+          </article>
+          <article class="svc">
+            <h3>Gutter Cleaning &amp; Downspouts</h3>
+            <p>Clearing, resecuring and downspout extension before the wet season turns into an interior leak call.</p>
+            <div class="svc-meta"><span class="chip">Seasonal</span></div>
+          </article>
+          <article class="svc">
+            <h3>Fence, Gate &amp; Bollard Repair</h3>
+            <p>Chain link, ornamental and slat fencing, gate operators, bollards and dumpster enclosure repair.</p>
+            <div class="svc-meta"><span class="chip">Service call</span></div>
+          </article>
+          <article class="svc">
+            <h3>Snow &amp; Ice Management</h3>
+            <p>Seasonal contracts for plowing, salting and walkway clearing with logged service times for liability.</p>
+            <div class="svc-meta"><span class="chip">Seasonal</span><span class="chip">Per-event or seasonal</span></div>
+          </article>
+        </div>
+      </div>
+
+      <!-- PROJECTS -->
+      <div class="cat-block" id="projects">
+        <div class="cat-head">
+          <h2>Restoration &amp; Projects</h2>
+          <span class="cat-count">7 services</span>
+        </div>
+        <div class="cat-banner" style="background-image:url('/images/home-something-broken-right-now.webp')">
+          <div class="cat-banner-text">
+            <span class="cat-banner-kicker">Insurer documented</span>
+            <p>When something floods, burns or a tenant moves out. Documented for your insurer, managed as one contract.</p>
+          </div>
+        </div>
+        <div class="svc-grid">
+          <article class="svc">
+            <h3>Water Damage &amp; Flood Restoration</h3>
+            <p>Extraction, structural drying, moisture mapping and daily readings documented for your insurer.</p>
+            <div class="svc-meta"><span class="chip chip--red">24/7</span></div>
+          </article>
+          <article class="svc">
+            <h3>Fire &amp; Smoke Damage Cleanup</h3>
+            <p>Soot removal, odour neutralisation, content cleaning and coordination with your adjuster.</p>
+            <div class="svc-meta"><span class="chip chip--red">24/7</span></div>
+          </article>
+          <article class="svc">
+            <h3>Mold Inspection &amp; Remediation</h3>
+            <p>Containment, HEPA filtration, affected-material removal and third-party clearance testing.</p>
+            <div class="svc-meta"><span class="chip">Project</span></div>
+          </article>
+          <article class="svc">
+            <h3>Roof Repair &amp; Leak Response</h3>
+            <p>Emergency tarping, flashing and seam repair, drain clearing and coating on TPO, EPDM and modified bitumen.</p>
+            <div class="svc-meta"><span class="chip chip--red">24/7</span></div>
+          </article>
+          <article class="svc">
+            <h3>Tenant Improvements &amp; Build-Out</h3>
+            <p>Demolition, framing, electrical, HVAC and finishes for a new tenant — managed as one contract.</p>
+            <div class="svc-meta"><span class="chip">Project</span></div>
+          </article>
+          <article class="svc">
+            <h3>Unit Turnover &amp; Make-Ready</h3>
+            <p>Clean, paint, repair and inspect between tenants on a fixed per-unit price and a guaranteed turn time.</p>
+            <div class="svc-meta"><span class="chip">Per unit</span></div>
+          </article>
+          <article class="svc">
+            <h3>Supplemental Labour &amp; Staffing</h3>
+            <p>Vetted, insured hands for events, seasonal peaks, moves and coverage when your own team is short.</p>
+            <div class="svc-meta"><span class="chip">Staffed</span></div>
+          </article>
+        </div>
+      </div>
+
+    </div>
+  </div>
+</section>
+
+<!-- ================= NOT LISTED ================= -->
+<section class="section">
+  <div class="wrap">
+    <div class="sec-head center">
+      <p class="eyebrow">Not on the list?</p>
+      <h2>Ask anyway</h2>
+      <p>
+        This page covers what we do most weeks, not everything we can do. If your building
+        needs something unusual, send us a photo and we will tell you straight away whether
+        it is ours or whether you need a specialist.
+      </p>
+      <div class="hero-actions" style="justify-content:center">
+        <a class="btn btn--red" href="/contact/">Describe your job</a>
+        <a class="btn btn--outline" href={SITE.telHref}>Call {SITE.phone}</a>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section class="cta-band cta-band--photo">
+  <div class="cta-bg" style="background-image:url('/images/services-landscaping-grounds-maintenance.webp')"></div>
+  <div class="wrap">
+    <div class="cta-inner">
+      <div>
+        <h2>Get a written price today</h2>
+        <p>Send us the job before noon and you will have a flat, itemised quote back the same working day.</p>
+      </div>
+      <div class="cta-actions">
+        <a class="btn btn--red" href="/contact/">Request a quote</a>
+        <a class="btn btn--ghost" href="/why-bedrock/">Why Bedrock</a>
+      </div>
+    </div>
+  </div>
+</section>
+</BaseLayout>

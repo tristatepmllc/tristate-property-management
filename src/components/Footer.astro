@@ -1,0 +1,76 @@
+---
+import { SITE } from '../data/site';
+const year = new Date().getFullYear();
+---
+<footer class="footer">
+  <div class="wrap">
+    <div class="footer-top">
+      <div class="footer-about">
+        <a class="logo" href="/">
+          <span class="logo-mark">B</span>
+          <span class="logo-text">
+            <span class="logo-name">Bedrock</span>
+            <span class="logo-sub">Facility Services</span>
+          </span>
+        </a>
+        <p>
+          A full-service facility maintenance company. Our own technicians, our own vans
+          and one team responsible for the whole building — cleaning, trades, grounds
+          and restoration across Northeast Florida.
+        </p>
+        <div class="badges">
+          <span class="badge">Licensed</span>
+          <span class="badge">Bonded</span>
+          <span class="badge">$2M Insured</span>
+          <span class="badge">OSHA 30</span>
+        </div>
+      </div>
+
+      <div>
+        <h4>Services</h4>
+        <ul class="footer-links">
+          <li><a href="/services/#cleaning">Janitorial &amp; Cleaning</a></li>
+          <li><a href="/services/#plumbing">Plumbing &amp; Drains</a></li>
+          <li><a href="/services/#electrical">Electrical &amp; Lighting</a></li>
+          <li><a href="/services/#hvac">HVAC &amp; Refrigeration</a></li>
+          <li><a href="/services/#handyman">Handyman &amp; Repairs</a></li>
+          <li><a href="/services/#painting">Painting &amp; Finishes</a></li>
+          <li><a href="/services/#grounds">Grounds &amp; Exterior</a></li>
+          <li><a href="/services/#projects">Restoration &amp; Build-Out</a></li>
+        </ul>
+      </div>
+
+      <div>
+        <h4>Company</h4>
+        <ul class="footer-links">
+          <li><a href="/why-bedrock/">Why Bedrock</a></li>
+          <li><a href="/industries/">Industries we serve</a></li>
+          <li><a href="/services/">Full service list</a></li>
+          <li><a href="/contact/">Request a quote</a></li>
+          <li><a href="/contact/#emergency">Emergency service</a></li>
+          <li><a href="/why-bedrock/#faq">FAQ</a></li>
+        </ul>
+      </div>
+
+      <div>
+        <h4>Get in touch</h4>
+        <ul class="footer-contact">
+          <li><span class="k">Phone</span><span><a href={SITE.telHref}>{SITE.phone}</a></span></li>
+          <li><span class="k">Email</span><span><a href={SITE.mailtoHref}>{SITE.email}</a></span></li>
+          <li><span class="k">Office</span><span>{SITE.address.street}<br />{SITE.address.city}, {SITE.address.region} {SITE.address.postal}</span></li>
+          <li><span class="k">Hours</span><span>Mon&ndash;Fri 7:00 AM &ndash; 6:00 PM<br>Emergency: 24/7/365</span></li>
+        </ul>
+      </div>
+    </div>
+
+    <div class="footer-bottom">
+      <span>&copy; {year} Bedrock Facility Services. All rights reserved.</span>
+      <ul>
+        <li><a href="#">Privacy Policy</a></li>
+        <li><a href="#">Terms of Service</a></li>
+        <li><a href="#">Accessibility</a></li>
+        <li><a href="/contact/">Careers</a></li>
+      </ul>
+    </div>
+  </div>
+</footer>

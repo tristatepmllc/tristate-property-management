@@ -1,0 +1,110 @@
+---
+import { SITE } from '../data/site';
+---
+<div class="chat-widget" data-chat="proto">
+  <div class="chat-panel" role="dialog" aria-label="Live chat with Bedrock" aria-hidden="true">
+    <div class="chat-head">
+      <span class="chat-avatar">B</span>
+      <span>
+        <strong>Bedrock Support</strong>
+        <span class="status">Online now &middot; replies in a few minutes</span>
+      </span>
+    </div>
+
+    <div class="chat-body">
+      <span class="chat-time">Today</span>
+      <div class="bubble them">Hi &mdash; you're through to the Bedrock dispatch desk. What's going on at your building?</div>
+      <div class="bubble them">If it's an emergency, call <strong>{SITE.phone}</strong> and we'll get a crew moving straight away.</div>
+    </div>
+
+    <div class="chat-chips">
+      <button type="button" data-msg="I'd like a quote for cleaning">Get a quote</button>
+      <button type="button" data-msg="Something is leaking right now">Emergency</button>
+      <button type="button" data-msg="Do you cover my area?">Coverage</button>
+    </div>
+
+    <div class="chat-input">
+      <input type="text" placeholder="Type your message&hellip;" aria-label="Type your message">
+      <button type="button" class="chat-send" aria-label="Send message">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 2 11 13M22 2l-7 20-4-9-9-4z"/></svg>
+      </button>
+    </div>
+    <p class="chat-foot">Typical reply time: under 5 minutes during business hours</p>
+  </div>
+
+  <button type="button" class="chat-launcher" aria-label="Open live chat" aria-expanded="false">
+    <span class="chat-badge">1</span>
+    <svg class="ic-open" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M21 11.5a8.4 8.4 0 0 1-9 8.4 9 9 0 0 1-3.4-.6L3 21l1.8-5A8.3 8.3 0 0 1 4 11.5 8.4 8.4 0 0 1 12.5 3 8.4 8.4 0 0 1 21 11.5z"/></svg>
+    <svg class="ic-close" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="M18 6 6 18M6 6l12 12"/></svg>
+  </button>
+</div>
+
+<script is:inline>
+(function(){
+  var root = document.querySelector('.chat-widget[data-chat="bedrock"]');
+  if(!root || root.dataset.ready) return;
+  root.dataset.ready = "1";
+
+  var panel    = root.querySelector(".chat-panel");
+  var launcher = root.querySelector(".chat-launcher");
+  var body     = root.querySelector(".chat-body");
+  var input    = root.querySelector(".chat-input input");
+  var send     = root.querySelector(".chat-send");
+  var chips    = root.querySelector(".chat-chips");
+
+  var replies = {
+    quote:     "Happy to quote that. Which building is it, and roughly how big is the space? I can usually get a written price back the same day.",
+    emergency: "Understood \u2014 please call (904) 555-0142 right now so we can dispatch a crew. That line is answered by a person 24 hours a day.",
+    coverage:  "We cover Jacksonville and Northeast Florida \u2014 Orange Park, St. Augustine, Ponte Vedra, Fernandina and the Beaches. Whereabouts is your site?",
+    fallback:  "Thanks \u2014 got it. One of our dispatch team will pick this up shortly. If it can't wait, call (904) 555-0142 and we'll get someone moving."
+  };
+
+  launcher.addEventListener("click", function(){
+    var open = root.classList.toggle("is-open");
+    launcher.setAttribute("aria-expanded", open ? "true" : "false");
+    panel.setAttribute("aria-hidden", open ? "false" : "true");
+    if(open){ body.scrollTop = body.scrollHeight; }
+  });
+
+  function bubble(text, who){
+    var el = document.createElement("div");
+    el.className = "bubble " + who;
+    el.innerHTML = text;
+    body.appendChild(el);
+    body.scrollTop = body.scrollHeight;
+  }
+
+  function respond(text){
+    var t = text.toLowerCase(), pick = "fallback";
+    if(/quote|price|cost|estimate|clean|contract/.test(t)) pick = "quote";
+    if(/emergenc|leak|urgent|flood|burst|no power|broken/.test(t)) pick = "emergency";
+    if(/area|cover|near|located|where|serve/.test(t)) pick = "coverage";
+
+    var w = document.createElement("div");
+    w.className = "bubble them";
+    w.style.padding = "0";
+    w.innerHTML = '<span class="typing"><i></i><i></i><i></i></span>';
+    body.appendChild(w);
+    body.scrollTop = body.scrollHeight;
+
+    setTimeout(function(){ w.remove(); bubble(replies[pick], "them"); }, 1100);
+  }
+
+  function submit(text){
+    text = (text || "").trim();
+    if(!text) return;
+    bubble(text.replace(/&/g,"&amp;").replace(/</g,"&lt;"), "me");
+    input.value = "";
+    respond(text);
+  }
+
+  send.addEventListener("click", function(){ submit(input.value); });
+  input.addEventListener("keydown", function(e){
+    if(e.key === "Enter"){ e.preventDefault(); submit(input.value); }
+  });
+  chips.addEventListener("click", function(e){
+    var b = e.target.closest("button");
+    if(b) submit(b.dataset.msg);
+  });
+})();
+</script>

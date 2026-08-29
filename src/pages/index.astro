@@ -1,0 +1,572 @@
+---
+import BaseLayout from '../layouts/BaseLayout.astro';
+import LeadFormExtras from '../components/LeadFormExtras.astro';
+import LeadFormScript from '../components/LeadFormScript.astro';
+import { SITE } from '../data/site';
+import { graph, localBusiness, organisation, website, serviceList } from '../lib/schema';
+
+const jsonLd = graph([localBusiness(), organisation(), website(), ...serviceList()]);
+---
+<BaseLayout
+  title="Commercial Facility Services in Jacksonville, FL | Bedrock"
+  description="One crew for every trade — cleaning, plumbing, electrical, HVAC, handyman, painting and grounds for commercial buildings across Jacksonville and Northeast Florida. Licensed, insured, 24/7 emergency response."
+  path="/"
+  active="/"
+  jsonLd={jsonLd}
+  preloadImage="/images/home-hero-commercial-facility-crew.webp"
+>
+<!-- ================= HERO ================= -->
+<section class="hero">
+  <div class="hero-bg" style="background-image:url('/images/home-hero-commercial-facility-crew.webp')"></div>
+  <div class="wrap">
+    <div class="hero-inner">
+      <p class="eyebrow">Commercial facility services</p>
+      <h1>One crew.<br>Every trade.<br><span class="accent">One phone call.</span></h1>
+      <p class="hero-lede">
+        Cleaning, plumbing, electrical, HVAC, carpentry, painting and grounds — all handled
+        by our own licensed technicians. One number to call, one team who knows your building,
+        and one invoice at the end of the month.
+      </p>
+      <div class="hero-actions">
+        <a class="btn btn--red" href="/contact/">Get a free quote</a>
+        <a class="btn btn--ghost" href="/services/">See all 52 services</a>
+      </div>
+      <ul class="hero-badges">
+        <li><span class="tick">&#10003;</span> Licensed, bonded &amp; insured</li>
+        <li><span class="tick">&#10003;</span> Same-day service calls</li>
+        <li><span class="tick">&#10003;</span> Flat, written pricing</li>
+        <li><span class="tick">&#10003;</span> One invoice, one contact</li>
+      </ul>
+    </div>
+  </div>
+</section>
+
+<!-- ================= SERVICES ================= -->
+<section class="section section--paper">
+  <div class="wrap">
+    <div class="sec-head">
+      <p class="eyebrow">What we do</p>
+      <h2>Eight trades, one phone number</h2>
+      <p>
+        Every trade below is handled by our own people. That is why we can quote fast,
+        show up on time and stand behind the work — there is nobody else to blame.
+      </p>
+    </div>
+
+    <div class="cards">
+
+      <article class="card">
+        <div class="card-media" style="background-image:url('/images/home-cleaning.webp')">
+          <span class="card-tag">01 &middot; Cleaning</span>
+        </div>
+        <div class="card-body">
+          <h3>Janitorial &amp; Cleaning</h3>
+          <p>Nightly janitorial, day porters, floor care, windows, restrooms and deep cleans on a schedule that fits your hours.</p>
+          <ul class="card-list">
+            <li>Office cleaning</li><li>Floor care</li><li>Windows</li><li>Day porter</li>
+          </ul>
+          <a class="card-link" href="/services/#cleaning">View services <span>&rarr;</span></a>
+        </div>
+      </article>
+
+      <article class="card">
+        <div class="card-media" style="background-image:url('/images/home-plumbing.webp')">
+          <span class="card-tag">02 &middot; Plumbing</span>
+        </div>
+        <div class="card-body">
+          <h3>Plumbing &amp; Drains</h3>
+          <p>Leaks, blocked drains, water heaters, backflow testing and grease trap service — including after-hours callouts.</p>
+          <ul class="card-list">
+            <li>Leak repair</li><li>Hydro jetting</li><li>Water heaters</li><li>Fixtures</li>
+          </ul>
+          <a class="card-link" href="/services/#plumbing">View services <span>&rarr;</span></a>
+        </div>
+      </article>
+
+      <article class="card">
+        <div class="card-media" style="background-image:url('/images/home-electrical.webp')">
+          <span class="card-tag">03 &middot; Electrical</span>
+        </div>
+        <div class="card-body">
+          <h3>Electrical &amp; Lighting</h3>
+          <p>Licensed electricians for panels, circuits, lighting retrofits, EV chargers and emergency exit-sign compliance.</p>
+          <ul class="card-list">
+            <li>Panel service</li><li>LED retrofit</li><li>EV chargers</li><li>Outlets</li>
+          </ul>
+          <a class="card-link" href="/services/#electrical">View services <span>&rarr;</span></a>
+        </div>
+      </article>
+
+      <article class="card">
+        <div class="card-media" style="background-image:url('/images/home-hvac.webp')">
+          <span class="card-tag">04 &middot; HVAC</span>
+        </div>
+        <div class="card-body">
+          <h3>HVAC &amp; Refrigeration</h3>
+          <p>Preventive maintenance plans, rooftop units, split systems, walk-in coolers and indoor air quality work.</p>
+          <ul class="card-list">
+            <li>PM plans</li><li>RTU repair</li><li>Coolers</li><li>Air quality</li>
+          </ul>
+          <a class="card-link" href="/services/#hvac">View services <span>&rarr;</span></a>
+        </div>
+      </article>
+
+      <article class="card">
+        <div class="card-media" style="background-image:url('/images/home-handyman.webp')">
+          <span class="card-tag">05 &middot; Handyman</span>
+        </div>
+        <div class="card-body">
+          <h3>Handyman &amp; Repairs</h3>
+          <p>The list nobody else will take: drywall, doors, locks, ceiling tiles, shelving, furniture and general punch work.</p>
+          <ul class="card-list">
+            <li>Drywall</li><li>Doors &amp; locks</li><li>Carpentry</li><li>Punch lists</li>
+          </ul>
+          <a class="card-link" href="/services/#handyman">View services <span>&rarr;</span></a>
+        </div>
+      </article>
+
+      <article class="card">
+        <div class="card-media" style="background-image:url('/images/home-painting.webp')">
+          <span class="card-tag">06 &middot; Painting</span>
+        </div>
+        <div class="card-body">
+          <h3>Painting &amp; Finishes</h3>
+          <p>Interior and exterior painting, epoxy floors, wall coverings and pressure washing — scheduled around your business.</p>
+          <ul class="card-list">
+            <li>Interior</li><li>Exterior</li><li>Epoxy floors</li><li>Pressure wash</li>
+          </ul>
+          <a class="card-link" href="/services/#painting">View services <span>&rarr;</span></a>
+        </div>
+      </article>
+
+      <article class="card">
+        <div class="card-media" style="background-image:url('/images/home-grounds.webp')">
+          <span class="card-tag">07 &middot; Grounds</span>
+        </div>
+        <div class="card-body">
+          <h3>Grounds &amp; Exterior</h3>
+          <p>Landscaping, irrigation, parking lots, striping, sealcoating, gutters, signage and seasonal snow and ice work.</p>
+          <ul class="card-list">
+            <li>Landscaping</li><li>Parking lots</li><li>Striping</li><li>Snow</li>
+          </ul>
+          <a class="card-link" href="/services/#grounds">View services <span>&rarr;</span></a>
+        </div>
+      </article>
+
+      <article class="card">
+        <div class="card-media" style="background-image:url('/images/home-projects.webp')">
+          <span class="card-tag">08 &middot; Projects</span>
+        </div>
+        <div class="card-body">
+          <h3>Restoration &amp; Build-Out</h3>
+          <p>Water and fire damage response, mold remediation, tenant improvements and full turnover before a new lease starts.</p>
+          <ul class="card-list">
+            <li>Water damage</li><li>Mold</li><li>Build-out</li><li>Turnover</li>
+          </ul>
+          <a class="card-link" href="/services/#projects">View services <span>&rarr;</span></a>
+        </div>
+      </article>
+
+    </div>
+  </div>
+</section>
+
+<!-- ================= ONE CALL ================= -->
+<section class="section">
+  <div class="wrap">
+    <div class="split">
+      <div class="split-media">
+        <img src="/images/home-site-supervisor-reviewing-building-plans-on-.webp" alt="Site supervisor reviewing building plans on a work table" width="1500" height="844" loading="lazy" decoding="async">
+      </div>
+      <div>
+        <p class="eyebrow">One number for the whole building</p>
+        <h2 style="font-size:clamp(1.9rem,4vw,2.9rem);text-transform:uppercase">Stop keeping nine phone numbers in your desk drawer</h2>
+        <p style="margin-top:16px;color:var(--steel)">
+          Most property managers end up with a separate contractor for cleaning, another for
+          plumbing, another for the parking lot — each with their own schedule, their own
+          paperwork and their own invoice. Every problem starts with working out who to ring.
+        </p>
+
+        <div class="compare">
+          <div class="compare-col is-bad">
+            <h4>Nine separate vendors</h4>
+            <ul>
+              <li>Nine numbers, nine schedules</li>
+              <li>Nine invoices to reconcile</li>
+              <li>Chasing certificates of insurance</li>
+              <li>Nobody sees the whole building</li>
+              <li>Small jobs sit unfixed for weeks</li>
+            </ul>
+          </div>
+          <div class="compare-col is-good">
+            <h4>One call to Bedrock</h4>
+            <ul>
+              <li>One number, one contact</li>
+              <li>One itemised invoice</li>
+              <li>Insurance on file, always current</li>
+              <li>A crew who knows your site</li>
+              <li>Small jobs cleared in one visit</li>
+            </ul>
+          </div>
+        </div>
+
+        <div class="hero-actions" style="margin-top:26px">
+          <a class="btn btn--red" href="/contact/">Get a free quote</a>
+          <a class="btn btn--outline" href="/why-bedrock/">How we work</a>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ================= PROCESS ================= -->
+<section class="section section--navy">
+  <div class="wrap">
+    <div class="sec-head">
+      <p class="eyebrow">How a job runs</p>
+      <h2>From your call to a closed work order</h2>
+      <p>Four steps, and you can see where your job sits at any point.</p>
+    </div>
+
+    <div class="steps">
+      <div class="step">
+        <div class="step-num">STEP 01</div>
+        <h3>Tell us what broke</h3>
+        <p>Call, text a photo, or fill in the form. We ask what it is, where it is, and how urgent — that is all we need to price most jobs.</p>
+      </div>
+      <div class="step">
+        <div class="step-num">STEP 02</div>
+        <h3>Written quote same day</h3>
+        <p>Flat price in writing before anyone touches anything. Emergency calls skip this and get dispatched straight away.</p>
+      </div>
+      <div class="step">
+        <div class="step-num">STEP 03</div>
+        <h3>Our crew does the work</h3>
+        <p>Our own licensed technicians, in our own vans, badged and background-checked. You get a name and a phone number, not a dispatch queue.</p>
+      </div>
+      <div class="step">
+        <div class="step-num">STEP 04</div>
+        <h3>Photos, sign-off, one invoice</h3>
+        <p>Before-and-after photos on the work order, your sign-off, then a single itemised invoice. Net 30 available for contract accounts.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ================= STATS ================= -->
+<section class="section section--tight">
+  <div class="wrap">
+    <div class="stats">
+      <div class="stat">
+        <div class="stat-num">52</div>
+        <div class="stat-label">Services in-house</div>
+      </div>
+      <div class="stat">
+        <div class="stat-num">4<em>h</em></div>
+        <div class="stat-label">Average response time</div>
+      </div>
+      <div class="stat">
+        <div class="stat-num">600<em>+</em></div>
+        <div class="stat-label">Buildings maintained</div>
+      </div>
+      <div class="stat">
+        <div class="stat-num">24<em>/7</em></div>
+        <div class="stat-label">Emergency dispatch</div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ================= INDUSTRIES ================= -->
+<section class="section section--paper">
+  <div class="wrap">
+    <div class="sec-head">
+      <p class="eyebrow">Who we look after</p>
+      <h2>Buildings we know inside out</h2>
+      <p>Different buildings break in different ways. These are the ones we service every week.</p>
+    </div>
+
+    <div class="industries">
+      <a class="ind" href="/industries/">
+        <div class="ind-media" style="background-image:url('/images/home-offices.webp')">
+          <div class="ind-icon">OF</div>
+        </div>
+        <div class="ind-inner"><h3>Offices</h3>
+        <p>Nightly cleaning, HVAC comfort calls, lighting and small tenant repairs.</p></div>
+      </a>
+      <a class="ind" href="/industries/">
+        <div class="ind-media" style="background-image:url('/images/home-retail-malls.webp')">
+          <div class="ind-icon">RT</div>
+        </div>
+        <div class="ind-inner"><h3>Retail &amp; Malls</h3>
+        <p>Storefront glass, floor care, parking lots and fast turnaround on customer-facing damage.</p></div>
+      </a>
+      <a class="ind" href="/industries/">
+        <div class="ind-media" style="background-image:url('/images/home-restaurants.webp')">
+          <div class="ind-icon">RE</div>
+        </div>
+        <div class="ind-inner"><h3>Restaurants</h3>
+        <p>Hood cleaning, grease traps, walk-in coolers and health-inspection readiness.</p></div>
+      </a>
+      <a class="ind" href="/industries/">
+        <div class="ind-media" style="background-image:url('/images/home-medical-dental.webp')">
+          <div class="ind-icon">MD</div>
+        </div>
+        <div class="ind-inner"><h3>Medical &amp; Dental</h3>
+        <p>Clinical-grade disinfection, waiting room upkeep, compliance documentation.</p></div>
+      </a>
+      <a class="ind" href="/industries/">
+        <div class="ind-media" style="background-image:url('/images/home-warehouse-industrial.webp')">
+          <div class="ind-icon">IN</div>
+        </div>
+        <div class="ind-inner"><h3>Warehouse &amp; Industrial</h3>
+        <p>High-bay lighting, dock doors, concrete repair and heavy floor scrubbing.</p></div>
+      </a>
+      <a class="ind" href="/industries/">
+        <div class="ind-media" style="background-image:url('/images/home-schools-childcare.webp')">
+          <div class="ind-icon">ED</div>
+        </div>
+        <div class="ind-inner"><h3>Schools &amp; Childcare</h3>
+        <p>Term-break deep cleans, playground safety checks, background-checked crews.</p></div>
+      </a>
+      <a class="ind" href="/industries/">
+        <div class="ind-media" style="background-image:url('/images/home-multifamily-hoa.webp')">
+          <div class="ind-icon">MF</div>
+        </div>
+        <div class="ind-inner"><h3>Multifamily &amp; HOA</h3>
+        <p>Common areas, unit turnovers, amenity spaces and resident work orders.</p></div>
+      </a>
+      <a class="ind" href="/industries/">
+        <div class="ind-media" style="background-image:url('/images/home-auto-dealerships.webp')">
+          <div class="ind-icon">AU</div>
+        </div>
+        <div class="ind-inner"><h3>Auto Dealerships</h3>
+        <p>Showroom glass, lot striping, service-bay cleaning and pressure washing.</p></div>
+      </a>
+    </div>
+  </div>
+</section>
+
+<!-- ================= TESTIMONIALS ================= -->
+<section class="section">
+  <div class="wrap">
+    <div class="sec-head center">
+      <p class="eyebrow">From the people who sign the invoices</p>
+      <h2>What property managers say</h2>
+    </div>
+
+    <div class="quotes">
+      <div class="quote">
+        <div class="quote-stars">&#9733;&#9733;&#9733;&#9733;&#9733;</div>
+        <p>We used to run five separate contracts across the portfolio. Consolidating everything with one team cut about 22% off our maintenance spend in the first year, and the response time halved.</p>
+        <div class="quote-by">
+          <span class="avatar">DR</span>
+          <span><strong>Dana Reyes</strong><span>Property Manager, 14-building portfolio</span></span>
+        </div>
+      </div>
+      <div class="quote">
+        <div class="quote-stars">&#9733;&#9733;&#9733;&#9733;&#9733;</div>
+        <p>A ceiling tile fell in the lobby an hour before an inspection. They had somebody there in forty minutes and charged us for forty minutes. That is the whole relationship in one story.</p>
+        <div class="quote-by">
+          <span class="avatar">MT</span>
+          <span><strong>Marcus Tan</strong><span>Operations Lead, retail chain</span></span>
+        </div>
+      </div>
+      <div class="quote">
+        <div class="quote-stars">&#9733;&#9733;&#9733;&#9733;&#9733;</div>
+        <p>One invoice instead of nine vendors. My accounts team noticed before I did. And the crew is the same three faces every week, so they know the building better than I do now.</p>
+        <div class="quote-by">
+          <span class="avatar">SK</span>
+          <span><strong>Sarah Kowalski</strong><span>Facilities Director, medical group</span></span>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ================= ON SITE ================= -->
+<section class="section section--tight">
+  <div class="wrap">
+    <div class="sec-head">
+      <p class="eyebrow">On site this week</p>
+      <h2>Our crews, your buildings</h2>
+      <p>A sample of what our technicians were working on across Northeast Florida over the last seven days.</p>
+    </div>
+    <div class="gallery">
+      <figure>
+        <img src="/images/home-electrical.webp" alt="Technician servicing an electrical panel" width="760" height="507" loading="lazy" decoding="async">
+        <figcaption>Panel service</figcaption>
+      </figure>
+      <figure>
+        <img src="/images/home-crew-carrying-ladders-on-a-commercial-job-si.webp" alt="Crew carrying ladders on a commercial job site" width="1500" height="1002" loading="lazy" decoding="async">
+        <figcaption>Exterior repaint</figcaption>
+      </figure>
+      <figure>
+        <img src="/images/home-cleaning.webp" alt="Cleaner working on interior glass" width="760" height="507" loading="lazy" decoding="async">
+        <figcaption>Glass &amp; day porter</figcaption>
+      </figure>
+      <figure>
+        <img src="/images/home-warehouse-industrial.webp" alt="Warehouse interior with racking and a forklift" width="1500" height="1000" loading="lazy" decoding="async">
+        <figcaption>High-bay lighting</figcaption>
+      </figure>
+    </div>
+  </div>
+</section>
+
+<!-- ================= COVERAGE ================= -->
+<section class="section section--tight section--paper">
+  <div class="wrap">
+    <div class="sec-head">
+      <p class="eyebrow">Coverage</p>
+      <h2>Where our vans go</h2>
+      <p>If you are just outside these areas, ask anyway — we will tell you honestly whether we can cover you properly.</p>
+    </div>
+    <div class="areas">
+      <span class="area">Jacksonville</span>
+      <span class="area">Orange Park</span>
+      <span class="area">St. Augustine</span>
+      <span class="area">Ponte Vedra</span>
+      <span class="area">Fernandina Beach</span>
+      <span class="area">Middleburg</span>
+      <span class="area">Green Cove Springs</span>
+      <span class="area">Fleming Island</span>
+      <span class="area">Atlantic Beach</span>
+      <span class="area">Neptune Beach</span>
+      <span class="area">Jacksonville Beach</span>
+      <span class="area">Yulee</span>
+      <span class="area">Macclenny</span>
+      <span class="area">Palm Coast</span>
+      <span class="area">Nocatee</span>
+    </div>
+  </div>
+</section>
+
+<!-- ================= GET IN TOUCH ================= -->
+<section class="section section--paper" id="quote">
+  <div class="wrap">
+    <div class="contact-band">
+      <div>
+        <div class="sec-head">
+          <p class="eyebrow">Get in touch</p>
+          <h2>Tell us what needs fixing</h2>
+          <p>
+            Send us the job and a written price comes back the same working day. If it is
+            urgent, call — the phone is always faster than a form.
+          </p>
+        </div>
+
+        <ul class="quick-facts">
+          <li>
+            <span class="qk">Call</span>
+            <span class="qv"><a href={SITE.telHref}>{SITE.phone}</a>
+              <span>Answered by a person, 24 hours a day</span></span>
+          </li>
+          <li>
+            <span class="qk">Email</span>
+            <span class="qv"><a href={SITE.mailtoHref}>{SITE.email}</a>
+              <span>Photos of the problem help us quote faster</span></span>
+          </li>
+          <li>
+            <span class="qk">Office</span>
+            <span class="qv">4131 Sunbeam Road, Jacksonville, FL 32257
+              <span>Mon&ndash;Fri 7:00 AM &ndash; 6:00 PM &middot; Emergency 24/7</span></span>
+          </li>
+          <li>
+            <span class="qk">Coverage</span>
+            <span class="qv">Jacksonville &amp; Northeast Florida
+              <span>Orange Park, St. Augustine, Ponte Vedra, the Beaches and beyond</span></span>
+          </li>
+        </ul>
+      </div>
+
+      <div class="form-card">
+        <form action="/api/leads" method="post" data-lead-form data-source="home-hero-form">
+          <div class="field-row">
+            <div class="field">
+              <label for="h-name">Your name <span class="req">*</span></label>
+              <input type="text" id="h-name" name="name" placeholder="Jane Whitfield" required>
+            </div>
+            <div class="field">
+              <label for="h-phone">Phone <span class="req">*</span></label>
+              <input type="tel" id="h-phone" name="phone" placeholder="(904) 000-0000" required>
+            </div>
+          </div>
+
+          <div class="field-row">
+            <div class="field">
+              <label for="h-email">Email <span class="req">*</span></label>
+              <input type="email" id="h-email" name="email" placeholder="jane@company.com" required>
+            </div>
+            <div class="field">
+              <label for="h-property">Property / company</label>
+              <input type="text" id="h-property" name="property" placeholder="Sunbeam Business Park">
+            </div>
+          </div>
+
+          <div class="field-row">
+            <div class="field">
+              <label for="h-service">Service needed <span class="req">*</span></label>
+              <select id="h-service" name="service" required>
+                <option value="">Choose a service&hellip;</option>
+                <option>Janitorial &amp; Cleaning</option>
+                <option>Plumbing &amp; Drains</option>
+                <option>Electrical &amp; Lighting</option>
+                <option>HVAC &amp; Refrigeration</option>
+                <option>Handyman &amp; Repairs</option>
+                <option>Painting &amp; Surfaces</option>
+                <option>Grounds &amp; Exterior</option>
+                <option>Restoration &amp; Projects</option>
+                <option>Multiple services / not sure</option>
+              </select>
+            </div>
+            <div class="field">
+              <label for="h-urgency">How urgent? <span class="req">*</span></label>
+              <select id="h-urgency" name="urgency" required>
+                <option value="">Choose&hellip;</option>
+                <option>Emergency &mdash; today</option>
+                <option>Within 48 hours</option>
+                <option>This week</option>
+                <option>Planning ahead</option>
+                <option>Ongoing contract enquiry</option>
+              </select>
+            </div>
+          </div>
+
+          <div class="field">
+            <label for="h-details">Describe the job <span class="req">*</span></label>
+            <textarea id="h-details" name="details" placeholder="Where in the building, what is happening, and when we can get access." required></textarea>
+          </div>
+
+          <LeadFormExtras source="home-hero-form" />
+
+          <button type="submit" class="btn btn--red btn--wide">Send request</button>
+          <p class="form-note">
+            We reply to every request. Requests sent before noon on a business day are
+            answered the same day. We never pass your details to anyone else.
+          </p>
+        </form>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ================= CTA ================= -->
+<section class="cta-band cta-band--photo">
+  <div class="cta-bg" style="background-image:url('/images/home-something-broken-right-now.webp')"></div>
+  <div class="wrap">
+    <div class="cta-inner">
+      <div>
+        <h2>Something broken right now?</h2>
+        <p>Emergency lines are answered by a human, day or night. Non-urgent quotes come back the same working day.</p>
+      </div>
+      <div class="cta-actions">
+        <a class="btn btn--red" href={SITE.telHref}>Call {SITE.phone}</a>
+        <a class="btn btn--ghost" href="/contact/">Request a quote</a>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ================= FOOTER ================= -->
+<LeadFormScript />
+</BaseLayout>

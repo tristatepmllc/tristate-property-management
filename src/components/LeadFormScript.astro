@@ -1,0 +1,50 @@
+<script is:inline defer src="https://challenges.cloudflare.com/turnstile/v0/api.js"></script>
+<script is:inline>
+(function () {
+  var forms = document.querySelectorAll('form[data-lead-form]');
+  if (!forms.length) return;
+
+  var params = new URLSearchParams(location.search);
+
+  forms.forEach(function (form) {
+    // carry UTM parameters through with the lead
+    ['utm_source', 'utm_medium', 'utm_campaign'].forEach(function (k) {
+      var v = params.get(k);
+      if (!v) return;
+      var i = document.createElement('input');
+      i.type = 'hidden'; i.name = k; i.value = v;
+      form.appendChild(i);
+    });
+
+    var status = form.querySelector('.form-status');
+    var button = form.querySelector('button[type="submit"]');
+
+    form.addEventListener('submit', function (e) {
+      e.preventDefault();
+      if (button) { button.disabled = true; button.dataset.label = button.textContent; button.textContent = 'Sending…'; }
+      if (status) { status.hidden = false; status.textContent = 'Sending your request…'; }
+
+      fetch('/api/leads', { method: 'POST', body: new FormData(form) })
+        .then(function (r) { return r.json().then(function (d) { return { ok: r.ok, d: d }; }); })
+        .then(function (res) {
+          if (res.ok) {
+            form.reset();
+            if (status) status.textContent = 'Thanks — your request is in. We reply to every one, usually the same business day.';
+            if (window.turnstile) window.turnstile.reset();
+            if (history.replaceState) history.replaceState(null, '', '/contact/?sent=1');
+          } else {
+            if (status) status.textContent = res.d && res.d.error === 'challenge_failed'
+              ? 'The spam check did not pass. Please reload the page and try again.'
+              : 'Something went wrong. Please call us instead — we answer 24/7.';
+          }
+        })
+        .catch(function () {
+          if (status) status.textContent = 'Network problem. Please call us instead — we answer 24/7.';
+        })
+        .finally(function () {
+          if (button) { button.disabled = false; button.textContent = button.dataset.label || 'Send request'; }
+        });
+    });
+  });
+})();
+</script>

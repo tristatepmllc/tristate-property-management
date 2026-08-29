@@ -1,0 +1,78 @@
+---
+import '@fontsource/barlow-condensed/600.css';
+import '@fontsource/barlow-condensed/700.css';
+import '@fontsource/barlow-condensed/800.css';
+import '@fontsource-variable/inter';
+import '@fontsource/ibm-plex-mono/400.css';
+import '@fontsource/ibm-plex-mono/500.css';
+import '@fontsource/ibm-plex-mono/600.css';
+import '../styles/global.css';
+import '../styles/additions.css';
+
+import { SITE } from '../data/site';
+import UtilityBar from '../components/UtilityBar.astro';
+import Header from '../components/Header.astro';
+import Footer from '../components/Footer.astro';
+import ChatWidget from '../components/ChatWidget.astro';
+
+interface Props {
+  title: string;
+  description: string;
+  path: string;              // e.g. "/services/"
+  active?: string;           // nav href to highlight
+  ogImage?: string;
+  noindex?: boolean;
+  preloadImage?: string;     // LCP image
+  jsonLd?: object;
+}
+
+const {
+  title, description, path, active = path,
+  ogImage = SITE.defaultOgImage, noindex = false, preloadImage, jsonLd,
+} = Astro.props;
+
+const canonical = new URL(path, SITE.url).href;
+const ogAbsolute = new URL(ogImage, SITE.url).href;
+---
+<!DOCTYPE html>
+<html lang="en-US">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+
+  <title>{title}</title>
+  <meta name="description" content={description} />
+  <link rel="canonical" href={canonical} />
+  {noindex && <meta name="robots" content="noindex,nofollow" />}
+  {!noindex && <meta name="robots" content="index,follow,max-image-preview:large,max-snippet:-1" />}
+
+  <meta property="og:type" content="website" />
+  <meta property="og:site_name" content={SITE.name} />
+  <meta property="og:title" content={title} />
+  <meta property="og:description" content={description} />
+  <meta property="og:url" content={canonical} />
+  <meta property="og:image" content={ogAbsolute} />
+  <meta property="og:locale" content="en_US" />
+  <meta name="twitter:card" content="summary_large_image" />
+  <meta name="twitter:title" content={title} />
+  <meta name="twitter:description" content={description} />
+  <meta name="twitter:image" content={ogAbsolute} />
+
+  <meta name="theme-color" content="#08152E" />
+  <link rel="sitemap" href="/sitemap-index.xml" />
+
+  {preloadImage && <link rel="preload" as="image" href={preloadImage} fetchpriority="high" />}
+
+  {jsonLd && <script type="application/ld+json" set:html={JSON.stringify(jsonLd)} />}
+</head>
+<body>
+  <a class="skip-link" href="#main">Skip to content</a>
+  <UtilityBar />
+  <Header active={active} />
+  <main id="main">
+    <slot />
+  </main>
+  <Footer />
+  <ChatWidget />
+</body>
+</html>

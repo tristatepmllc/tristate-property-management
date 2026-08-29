@@ -1,0 +1,5 @@
+# copy to .dev.vars for local `wrangler dev` (git-ignored)
+TURNSTILE_SECRET_KEY=1x0000000000000000000000000000000AA
+RESEND_API_KEY=re_xxxxxxxxxxxxxxxxxxxx
+LEAD_NOTIFY_TO=service@bedrockfacility.com
+LEAD_NOTIFY_FROM=Bedrock Website <noreply@bedrockfacility.com>

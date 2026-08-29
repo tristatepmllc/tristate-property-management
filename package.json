@@ -1,0 +1,27 @@
+{
+  "name": "bedrock-facility-services",
+  "type": "module",
+  "version": "0.1.0",
+  "private": true,
+  "scripts": {
+    "dev": "astro dev",
+    "build": "astro build",
+    "preview": "wrangler dev",
+    "deploy": "npm run build && wrangler deploy",
+    "check": "astro check",
+    "db:local": "wrangler d1 execute bedrock-db --local --file=./db/schema.sql",
+    "db:remote": "wrangler d1 execute bedrock-db --remote --file=./db/schema.sql"
+  },
+  "dependencies": {
+    "@astrojs/cloudflare": "^14.2.5",
+    "@astrojs/sitemap": "^3.7.3",
+    "astro": "^7.2.9",
+    "typescript": "^7.0.2"
+  },
+  "devDependencies": {
+    "@fontsource-variable/inter": "^5.3.0",
+    "@fontsource/barlow-condensed": "^5.3.0",
+    "@fontsource/ibm-plex-mono": "^5.3.0",
+    "wrangler": "^4.127.1"
+  }
+}

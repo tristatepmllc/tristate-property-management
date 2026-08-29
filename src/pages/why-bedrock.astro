@@ -1,0 +1,289 @@
+---
+import BaseLayout from '../layouts/BaseLayout.astro';
+import { SITE } from '../data/site';
+import { graph, breadcrumbs, faqPage } from '../lib/schema';
+import { FAQ } from '../data/faq';
+
+const jsonLd = graph([breadcrumbs([{ name: 'Home', path: '/' }, { name: 'Why Bedrock', path: '/why-bedrock/' }]), faqPage(FAQ)]);
+---
+<BaseLayout
+  title="Why Bedrock — One Team for the Whole Building | Jacksonville FL"
+  description="Our own licensed technicians, our own vans, one point of contact and one invoice. How Bedrock Facility Services works, what we guarantee, and answers to the questions facility managers ask most."
+  path="/why-bedrock/"
+  active="/why-bedrock/"
+  jsonLd={jsonLd}
+>
+<section class="page-hero">
+  <div class="page-hero-bg" style="background-image:url('/images/home-site-supervisor-reviewing-building-plans-on-.webp')"></div>
+  <div class="wrap">
+    <p class="crumb"><a href="/">Home</a> &nbsp;/&nbsp; <span>Why Bedrock</span></p>
+    <h1>One team for the whole building</h1>
+    <p>
+      We started with two vans and a cleaning contract. Everything since has been added
+      because a customer asked for it — and because we would rather learn a trade than hand
+      the job to someone else.
+    </p>
+  </div>
+</section>
+
+<!-- ================= STORY ================= -->
+<section class="section">
+  <div class="wrap">
+    <div class="split">
+      <div class="split-media">
+        <img src="/images/home-hero-commercial-facility-crew.webp" alt="Crew on a commercial construction site" width="1900" height="1478" loading="lazy" decoding="async">
+      </div>
+      <div>
+        <p class="eyebrow">Our story</p>
+        <h2 style="font-size:clamp(1.9rem,4vw,2.9rem);text-transform:uppercase">Built one trade at a time, because customers kept asking</h2>
+        <p style="margin-top:16px;color:var(--steel)">
+          Cleaning came first. Then a client asked whether we could also fix the leaking
+          urinal, so we hired a plumber. Then the lighting, the HVAC, the parking lot,
+          the paint. Every service on our list started as a customer's question.
+        </p>
+        <p style="color:var(--steel)">
+          Doing it that way takes longer than buying in help, but it means the person who
+          answers your call is on the same team as the person who turns up. Nothing gets lost
+          in translation, and nobody can point at somebody else when it goes wrong twice.
+        </p>
+        <p style="color:var(--steel)">
+          Today we cover 52 services for around 600 buildings across Northeast Florida — all
+          of it with technicians on our own payroll, in our own vans. One team, one schedule,
+          one name to hold responsible.
+        </p>
+        <div class="hero-actions" style="margin-top:24px">
+          <a class="btn btn--red" href="/contact/">Get a free quote</a>
+          <a class="btn btn--outline" href="/services/">See what we do</a>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ================= VALUES ================= -->
+<section class="section section--paper">
+  <div class="wrap">
+    <div class="sec-head">
+      <p class="eyebrow">What you can hold us to</p>
+      <h2>Six commitments, in writing</h2>
+      <p>These are on every work order we issue. If we miss one, tell us and we will make it right.</p>
+    </div>
+
+    <div class="values">
+      <div class="value">
+        <div class="value-mark">01</div>
+        <h3>Flat price before we start</h3>
+        <p>You approve a written number first. If we find something underneath that changes the scope, we stop and call you — we do not surprise you on the invoice.</p>
+      </div>
+      <div class="value">
+        <div class="value-mark">02</div>
+        <h3>Our people, our payroll</h3>
+        <p>Every technician on your site is employed by us, badged, drug-screened and background-checked. The same faces every visit, not whoever was available that morning.</p>
+      </div>
+      <div class="value">
+        <div class="value-mark">03</div>
+        <h3>Same crew, every visit</h3>
+        <p>Contract sites get an assigned crew. After a month they know your building better than a rotating dispatch ever could — and that shows up in the response time.</p>
+      </div>
+      <div class="value">
+        <div class="value-mark">04</div>
+        <h3>No job turned away for size</h3>
+        <p>A single dripping tap and a full tenant build-out get the same paperwork and the same seriousness. Small jobs are how you find out whether a contractor is worth keeping.</p>
+      </div>
+      <div class="value">
+        <div class="value-mark">05</div>
+        <h3>Photo proof on every ticket</h3>
+        <p>Before and after images attached to the work order, so you can close it out from your phone without walking the building.</p>
+      </div>
+      <div class="value">
+        <div class="value-mark">06</div>
+        <h3>Answered by a human</h3>
+        <p>Day or night, an emergency call reaches a person who can dispatch — not a queue, a portal or a voicemail box you will hear back from on Monday.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ================= PROCESS ================= -->
+<section class="section section--navy">
+  <div class="wrap">
+    <div class="sec-head">
+      <p class="eyebrow">How a job runs</p>
+      <h2>From your call to a closed work order</h2>
+      <p>Four steps, and you can see where your job sits at any point.</p>
+    </div>
+    <div class="steps">
+      <div class="step">
+        <div class="step-num">STEP 01</div>
+        <h3>Tell us what broke</h3>
+        <p>Call, text a photo, or fill in the form. We ask what it is, where it is, and how urgent — that is all we need to price most jobs.</p>
+      </div>
+      <div class="step">
+        <div class="step-num">STEP 02</div>
+        <h3>Written quote same day</h3>
+        <p>Flat price in writing before anyone touches anything. Emergency calls skip this and get dispatched straight away.</p>
+      </div>
+      <div class="step">
+        <div class="step-num">STEP 03</div>
+        <h3>Our crew does the work</h3>
+        <p>Licensed technicians in our own vans, badged and background-checked. You get a name and a phone number, not a dispatch queue.</p>
+      </div>
+      <div class="step">
+        <div class="step-num">STEP 04</div>
+        <h3>Photos, sign-off, one invoice</h3>
+        <p>Before-and-after photos on the work order, your sign-off, then a single itemised invoice. Net 30 available for contract accounts.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ================= CREDENTIALS ================= -->
+<section class="section section--tight">
+  <div class="wrap">
+    <div class="stats">
+      <div class="stat">
+        <div class="stat-num">52</div>
+        <div class="stat-label">Services in-house</div>
+      </div>
+      <div class="stat">
+        <div class="stat-num">$2<em>M</em></div>
+        <div class="stat-label">General liability cover</div>
+      </div>
+      <div class="stat">
+        <div class="stat-num">4<em>h</em></div>
+        <div class="stat-label">Average response</div>
+      </div>
+      <div class="stat">
+        <div class="stat-num">98<em>%</em></div>
+        <div class="stat-label">First-visit fix rate</div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ================= THE CREW ================= -->
+<section class="section section--tight">
+  <div class="wrap">
+    <div class="sec-head">
+      <p class="eyebrow">The people on your site</p>
+      <h2>Faces, not a dispatch queue</h2>
+      <p>Everyone below is on our payroll — badged, background-checked and assigned to a route rather than rotated randomly.</p>
+    </div>
+    <div class="gallery">
+      <figure>
+        <img src="/images/industries-licensed-technician-on-site-in-safety-gear.webp" alt="Electrician working on a distribution board" width="1000" height="668" loading="lazy" decoding="async">
+        <figcaption>Electrical</figcaption>
+      </figure>
+      <figure>
+        <img src="/images/home-handyman.webp" alt="Technician carrying out a repair with hand tools" width="1200" height="800" loading="lazy" decoding="async">
+        <figcaption>Handyman</figcaption>
+      </figure>
+      <figure>
+        <img src="/images/home-site-supervisor-reviewing-building-plans-on-.webp" alt="Supervisor reviewing site drawings" width="1500" height="844" loading="lazy" decoding="async">
+        <figcaption>Site supervision</figcaption>
+      </figure>
+      <figure>
+        <img src="/images/home-something-broken-right-now.webp" alt="Crew on a commercial construction site" width="1500" height="994" loading="lazy" decoding="async">
+        <figcaption>Restoration</figcaption>
+      </figure>
+    </div>
+  </div>
+</section>
+
+<!-- ================= FAQ ================= -->
+<section class="section section--paper" id="faq">
+  <div class="wrap">
+    <div class="sec-head center">
+      <p class="eyebrow">Straight answers</p>
+      <h2>Questions we get asked first</h2>
+    </div>
+
+    <div class="faq">
+      <details open>
+        <summary>Do you really take small jobs?</summary>
+        <div class="answer">
+          Yes. A single tap washer, one ceiling tile, one dead outlet — we will schedule it.
+          There is a minimum service call charge that covers the visit, and if you have a
+          list of small items we will do them all in the same trip so you are not paying
+          that charge repeatedly.
+        </div>
+      </details>
+      <details>
+        <summary>What does a quote cost?</summary>
+        <div class="answer">
+          Nothing. Quotes are free, in writing, and valid for 30 days. For anything that
+          needs a site visit to price properly, the visit is free too as long as you are
+          inside our coverage area.
+        </div>
+      </details>
+      <details>
+        <summary>How fast can you get here?</summary>
+        <div class="answer">
+          Emergencies — active leaks, no power, no heat or cooling, broken glass, blocked
+          fire exits — are dispatched immediately, and our average on-site time is around
+          four hours. Standard service calls are usually scheduled within one to two
+          business days.
+        </div>
+      </details>
+      <details>
+        <summary>Are you licensed and insured?</summary>
+        <div class="answer">
+          Yes. We carry general liability, workers' compensation and commercial vehicle
+          cover, and we hold the trade licences required for the plumbing, electrical and
+          HVAC work we perform. A certificate of insurance naming you as additional insured
+          is available on request before we start.
+        </div>
+      </details>
+      <details>
+        <summary>Do I have to sign a contract?</summary>
+        <div class="answer">
+          No. Most clients start with a single job. Recurring services like janitorial,
+          landscaping and HVAC maintenance work better under an agreement because it lets us
+          assign a fixed crew and hold your pricing — but that is your choice, not a
+          condition of working with us.
+        </div>
+      </details>
+      <details>
+        <summary>Can you take over from our current vendor?</summary>
+        <div class="answer">
+          Regularly. We will walk the building, document its current condition, and build a
+          transition schedule that overlaps with your existing notice period so there is no
+          gap in service. Most changeovers are complete within two to three weeks.
+        </div>
+      </details>
+      <details>
+        <summary>How does billing work?</summary>
+        <div class="answer">
+          One itemised invoice per work order, or a single consolidated monthly invoice if
+          you have several sites. Card, ACH and check accepted. Net 30 terms are available
+          for contract accounts after a short approval.
+        </div>
+      </details>
+      <details>
+        <summary>What if the work is not right?</summary>
+        <div class="answer">
+          Tell us within 30 days and we come back at no charge. On the rare occasion we
+          cannot resolve it, we credit the labour. That is easier to promise when the person
+          who did the work still answers your call.
+        </div>
+      </details>
+    </div>
+  </div>
+</section>
+
+<section class="cta-band cta-band--photo">
+  <div class="cta-bg" style="background-image:url('/images/home-crew-carrying-ladders-on-a-commercial-job-si.webp')"></div>
+  <div class="wrap">
+    <div class="cta-inner">
+      <div>
+        <h2>Try us on something small</h2>
+        <p>Give us the job nobody else wants to send a van for. It is the fastest way to find out whether we are worth the bigger one.</p>
+      </div>
+      <div class="cta-actions">
+        <a class="btn btn--red" href="/contact/">Request a quote</a>
+        <a class="btn btn--ghost" href={SITE.telHref}>Call {SITE.phone}</a>
+      </div>
+    </div>
+  </div>
+</section>
+</BaseLayout>

@@ -1,0 +1,380 @@
+{
+ "0": {
+  "file": "home-hero-commercial-facility-crew.webp",
+  "page": "home",
+  "usage": "css-bg",
+  "alt": "",
+  "px": "1900x1478"
+ },
+ "1": {
+  "file": "home-cleaning.webp",
+  "page": "home",
+  "usage": "css-bg",
+  "alt": "",
+  "px": "760x507"
+ },
+ "2": {
+  "file": "home-plumbing.webp",
+  "page": "home",
+  "usage": "css-bg",
+  "alt": "",
+  "px": "1500x1125"
+ },
+ "3": {
+  "file": "home-electrical.webp",
+  "page": "home",
+  "usage": "css-bg",
+  "alt": "",
+  "px": "760x507"
+ },
+ "4": {
+  "file": "home-hvac.webp",
+  "page": "home",
+  "usage": "css-bg",
+  "alt": "",
+  "px": "760x507"
+ },
+ "5": {
+  "file": "home-handyman.webp",
+  "page": "home",
+  "usage": "css-bg",
+  "alt": "",
+  "px": "1200x800"
+ },
+ "6": {
+  "file": "home-painting.webp",
+  "page": "home",
+  "usage": "css-bg",
+  "alt": "",
+  "px": "760x531"
+ },
+ "7": {
+  "file": "home-grounds.webp",
+  "page": "home",
+  "usage": "css-bg",
+  "alt": "",
+  "px": "760x428"
+ },
+ "8": {
+  "file": "home-projects.webp",
+  "page": "home",
+  "usage": "css-bg",
+  "alt": "",
+  "px": "760x507"
+ },
+ "9": {
+  "file": "home-site-supervisor-reviewing-building-plans-on-.webp",
+  "page": "home",
+  "usage": "img",
+  "alt": "Site supervisor reviewing building plans on a work table",
+  "px": "1500x844"
+ },
+ "10": {
+  "file": "home-offices.webp",
+  "page": "home",
+  "usage": "css-bg",
+  "alt": "",
+  "px": "1500x1001"
+ },
+ "11": {
+  "file": "home-retail-malls.webp",
+  "page": "home",
+  "usage": "css-bg",
+  "alt": "",
+  "px": "760x507"
+ },
+ "12": {
+  "file": "home-restaurants.webp",
+  "page": "home",
+  "usage": "css-bg",
+  "alt": "",
+  "px": "760x1140"
+ },
+ "13": {
+  "file": "home-medical-dental.webp",
+  "page": "home",
+  "usage": "css-bg",
+  "alt": "",
+  "px": "760x507"
+ },
+ "14": {
+  "file": "home-warehouse-industrial.webp",
+  "page": "home",
+  "usage": "css-bg",
+  "alt": "",
+  "px": "1500x1000"
+ },
+ "15": {
+  "file": "home-schools-childcare.webp",
+  "page": "home",
+  "usage": "css-bg",
+  "alt": "",
+  "px": "620x438"
+ },
+ "16": {
+  "file": "home-multifamily-hoa.webp",
+  "page": "home",
+  "usage": "css-bg",
+  "alt": "",
+  "px": "760x507"
+ },
+ "17": {
+  "file": "home-auto-dealerships.webp",
+  "page": "home",
+  "usage": "css-bg",
+  "alt": "",
+  "px": "620x413"
+ },
+ "18": {
+  "file": "home-electrical.webp",
+  "page": "home",
+  "usage": "img",
+  "alt": "Technician servicing an electrical panel",
+  "px": "760x507"
+ },
+ "19": {
+  "file": "home-crew-carrying-ladders-on-a-commercial-job-si.webp",
+  "page": "home",
+  "usage": "img",
+  "alt": "Crew carrying ladders on a commercial job site",
+  "px": "1500x1002"
+ },
+ "20": {
+  "file": "home-cleaning.webp",
+  "page": "home",
+  "usage": "img",
+  "alt": "Cleaner working on interior glass",
+  "px": "760x507"
+ },
+ "21": {
+  "file": "home-warehouse-industrial.webp",
+  "page": "home",
+  "usage": "img",
+  "alt": "Warehouse interior with racking and a forklift",
+  "px": "1500x1000"
+ },
+ "22": {
+  "file": "home-something-broken-right-now.webp",
+  "page": "home",
+  "usage": "css-bg",
+  "alt": "",
+  "px": "1500x994"
+ },
+ "23": {
+  "file": "home-plumbing.webp",
+  "page": "services",
+  "usage": "css-bg",
+  "alt": "",
+  "px": "1500x1125"
+ },
+ "24": {
+  "file": "services-office-commercial-cleaning.webp",
+  "page": "services",
+  "usage": "css-bg",
+  "alt": "",
+  "px": "1200x817"
+ },
+ "25": {
+  "file": "services-leak-detection-pipe-repair.webp",
+  "page": "services",
+  "usage": "css-bg",
+  "alt": "",
+  "px": "1200x800"
+ },
+ "26": {
+  "file": "services-outlet-switch-circuit-repair.webp",
+  "page": "services",
+  "usage": "css-bg",
+  "alt": "",
+  "px": "1200x800"
+ },
+ "27": {
+  "file": "home-plumbing.webp",
+  "page": "services",
+  "usage": "css-bg",
+  "alt": "",
+  "px": "1500x1125"
+ },
+ "28": {
+  "file": "home-handyman.webp",
+  "page": "services",
+  "usage": "css-bg",
+  "alt": "",
+  "px": "1200x800"
+ },
+ "29": {
+  "file": "home-crew-carrying-ladders-on-a-commercial-job-si.webp",
+  "page": "services",
+  "usage": "css-bg",
+  "alt": "",
+  "px": "1500x1002"
+ },
+ "30": {
+  "file": "services-landscaping-grounds-maintenance.webp",
+  "page": "services",
+  "usage": "css-bg",
+  "alt": "",
+  "px": "1500x1000"
+ },
+ "31": {
+  "file": "home-something-broken-right-now.webp",
+  "page": "services",
+  "usage": "css-bg",
+  "alt": "",
+  "px": "1500x994"
+ },
+ "32": {
+  "file": "services-landscaping-grounds-maintenance.webp",
+  "page": "services",
+  "usage": "css-bg",
+  "alt": "",
+  "px": "1500x1000"
+ },
+ "33": {
+  "file": "industries-offices.webp",
+  "page": "industries",
+  "usage": "css-bg",
+  "alt": "",
+  "px": "1500x1001"
+ },
+ "34": {
+  "file": "industries-offices.webp",
+  "page": "industries",
+  "usage": "css-bg",
+  "alt": "",
+  "px": "1500x1001"
+ },
+ "35": {
+  "file": "home-retail-malls.webp",
+  "page": "industries",
+  "usage": "css-bg",
+  "alt": "",
+  "px": "760x507"
+ },
+ "36": {
+  "file": "home-restaurants.webp",
+  "page": "industries",
+  "usage": "css-bg",
+  "alt": "",
+  "px": "760x1140"
+ },
+ "37": {
+  "file": "home-medical-dental.webp",
+  "page": "industries",
+  "usage": "css-bg",
+  "alt": "",
+  "px": "760x507"
+ },
+ "38": {
+  "file": "industries-industrial.webp",
+  "page": "industries",
+  "usage": "css-bg",
+  "alt": "",
+  "px": "760x507"
+ },
+ "39": {
+  "file": "industries-education.webp",
+  "page": "industries",
+  "usage": "css-bg",
+  "alt": "",
+  "px": "760x428"
+ },
+ "40": {
+  "file": "home-multifamily-hoa.webp",
+  "page": "industries",
+  "usage": "css-bg",
+  "alt": "",
+  "px": "760x507"
+ },
+ "41": {
+  "file": "industries-automotive.webp",
+  "page": "industries",
+  "usage": "css-bg",
+  "alt": "",
+  "px": "1500x1000"
+ },
+ "42": {
+  "file": "industries-licensed-technician-on-site-in-safety-gear.webp",
+  "page": "industries",
+  "usage": "img",
+  "alt": "Licensed technician on site in safety gear",
+  "px": "1000x668"
+ },
+ "43": {
+  "file": "home-warehouse-industrial.webp",
+  "page": "industries",
+  "usage": "css-bg",
+  "alt": "",
+  "px": "1500x1000"
+ },
+ "44": {
+  "file": "home-site-supervisor-reviewing-building-plans-on-.webp",
+  "page": "about",
+  "usage": "css-bg",
+  "alt": "",
+  "px": "1500x844"
+ },
+ "45": {
+  "file": "home-hero-commercial-facility-crew.webp",
+  "page": "about",
+  "usage": "img",
+  "alt": "Crew on a commercial construction site",
+  "px": "1900x1478"
+ },
+ "46": {
+  "file": "industries-licensed-technician-on-site-in-safety-gear.webp",
+  "page": "about",
+  "usage": "img",
+  "alt": "Electrician working on a distribution board",
+  "px": "1000x668"
+ },
+ "47": {
+  "file": "home-handyman.webp",
+  "page": "about",
+  "usage": "img",
+  "alt": "Technician carrying out a repair with hand tools",
+  "px": "1200x800"
+ },
+ "48": {
+  "file": "home-site-supervisor-reviewing-building-plans-on-.webp",
+  "page": "about",
+  "usage": "img",
+  "alt": "Supervisor reviewing site drawings",
+  "px": "1500x844"
+ },
+ "49": {
+  "file": "home-something-broken-right-now.webp",
+  "page": "about",
+  "usage": "img",
+  "alt": "Crew on a commercial construction site",
+  "px": "1500x994"
+ },
+ "50": {
+  "file": "home-crew-carrying-ladders-on-a-commercial-job-si.webp",
+  "page": "about",
+  "usage": "css-bg",
+  "alt": "",
+  "px": "1500x1002"
+ },
+ "51": {
+  "file": "industries-automotive.webp",
+  "page": "contact",
+  "usage": "css-bg",
+  "alt": "",
+  "px": "1500x1000"
+ },
+ "52": {
+  "file": "contact-bedrock-technician-on-a-service-call.webp",
+  "page": "contact",
+  "usage": "img",
+  "alt": "Bedrock technician on a service call",
+  "px": "760x507"
+ },
+ "53": {
+  "file": "home-offices.webp",
+  "page": "contact",
+  "usage": "css-bg",
+  "alt": "",
+  "px": "1500x1001"
+ }
+}

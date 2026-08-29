@@ -1,0 +1,39 @@
+---
+import { SITE, NAV } from '../data/site';
+interface Props { active?: string }
+const { active = '/' } = Astro.props;
+---
+<header class="header">
+  <div class="wrap">
+    <a class="logo" href="/" aria-label={`${SITE.name} home`}>
+      <span class="logo-mark" aria-hidden="true">B</span>
+      <span class="logo-text">
+        <span class="logo-name">Bedrock</span>
+        <span class="logo-sub">Facility Services</span>
+      </span>
+    </a>
+
+    <input type="checkbox" id="nav-toggle" class="nav-toggle" />
+    <label for="nav-toggle" class="burger" aria-label="Open menu">
+      <span></span><span></span><span></span>
+    </label>
+
+    <div class="header-cta">
+      <a class="header-phone" href={SITE.telHref}>
+        <span class="lbl">Call the crew</span>
+        <span class="num">{SITE.phone}</span>
+      </a>
+      <a class="btn btn--red util-hide" href="/contact/">Get a Quote</a>
+    </div>
+
+    <nav class="nav" aria-label="Primary">
+      {NAV.map((item) => (
+        <a
+          href={item.href}
+          class={active === item.href ? 'is-active' : undefined}
+          aria-current={active === item.href ? 'page' : undefined}
+        >{item.label}</a>
+      ))}
+    </nav>
+  </div>
+</header>

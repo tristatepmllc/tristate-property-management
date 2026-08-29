@@ -1,0 +1,187 @@
+---
+import BaseLayout from '../layouts/BaseLayout.astro';
+import { SITE } from '../data/site';
+import { graph, breadcrumbs } from '../lib/schema';
+
+const jsonLd = graph([breadcrumbs([{ name: 'Home', path: '/' }, { name: 'Industries', path: '/industries/' }])]);
+---
+<BaseLayout
+  title="Industries We Serve — Offices, Retail, Medical, Schools | Bedrock"
+  description="Facility maintenance built around how your building actually runs: offices, retail and malls, restaurants, medical and dental, schools, warehouses, multifamily and auto dealerships in Northeast Florida."
+  path="/industries/"
+  active="/industries/"
+  jsonLd={jsonLd}
+>
+<section class="page-hero">
+  <div class="page-hero-bg" style="background-image:url('/images/industries-offices.webp')"></div>
+  <div class="wrap">
+    <p class="crumb"><a href="/">Home</a> &nbsp;/&nbsp; <span>Industries</span></p>
+    <h1>Every building type breaks differently</h1>
+    <p>
+      A dental clinic and a warehouse do not have the same problems, the same hours or the
+      same rules. Here is what we actually do in each, and what we plan around.
+    </p>
+  </div>
+</section>
+
+<section class="section section--paper">
+  <div class="wrap">
+    <div class="sec-head">
+      <p class="eyebrow">Sectors we service weekly</p>
+      <h2>Pick your building</h2>
+      <p>Each of these has a crew who knows the vocabulary, the compliance requirements and the hours you cannot be disturbed.</p>
+    </div>
+
+    <div class="cards">
+
+      <article class="card">
+        <div class="card-media" style="background-image:url('/images/industries-offices.webp')">
+          <span class="card-tag">Offices</span>
+        </div>
+        <div class="card-body">
+          <h3>Office Buildings</h3>
+          <p>Nightly janitorial, HVAC comfort calls, lighting, carpet care and quick tenant repairs — done between 6 PM and 6 AM so nobody notices we were there.</p>
+          <ul class="card-list"><li>Janitorial</li><li>HVAC</li><li>Lighting</li><li>Tenant repairs</li></ul>
+        </div>
+      </article>
+
+      <article class="card">
+        <div class="card-media" style="background-image:url('/images/home-retail-malls.webp')">
+          <span class="card-tag">Retail</span>
+        </div>
+        <div class="card-body">
+          <h3>Retail &amp; Shopping Centres</h3>
+          <p>Storefront glass, floor shine, restroom presentation, parking lot striping and same-day repair of anything a customer can see.</p>
+          <ul class="card-list"><li>Glass</li><li>Floor care</li><li>Parking lots</li><li>Board-up</li></ul>
+        </div>
+      </article>
+
+      <article class="card">
+        <div class="card-media" style="background-image:url('/images/home-restaurants.webp')">
+          <span class="card-tag">Food service</span>
+        </div>
+        <div class="card-body">
+          <h3>Restaurants &amp; Kitchens</h3>
+          <p>Hood and duct cleaning, grease traps, walk-in refrigeration, drain jetting and floor degreasing — scheduled around service, not through it.</p>
+          <ul class="card-list"><li>Hood cleaning</li><li>Grease traps</li><li>Refrigeration</li><li>Drains</li></ul>
+        </div>
+      </article>
+
+      <article class="card">
+        <div class="card-media" style="background-image:url('/images/home-medical-dental.webp')">
+          <span class="card-tag">Healthcare</span>
+        </div>
+        <div class="card-body">
+          <h3>Medical &amp; Dental</h3>
+          <p>Clinical disinfection protocols, exam-room turnover, waiting areas and documented cleaning logs your accreditation review will ask for.</p>
+          <ul class="card-list"><li>Disinfection</li><li>Compliance logs</li><li>Air quality</li><li>Restrooms</li></ul>
+        </div>
+      </article>
+
+      <article class="card">
+        <div class="card-media" style="background-image:url('/images/industries-industrial.webp')">
+          <span class="card-tag">Industrial</span>
+        </div>
+        <div class="card-body">
+          <h3>Warehouse &amp; Industrial</h3>
+          <p>High-bay lighting, dock levellers and doors, ride-on floor scrubbing, concrete repair and line marking for forklift traffic.</p>
+          <ul class="card-list"><li>High-bay lighting</li><li>Dock doors</li><li>Floor scrubbing</li><li>Concrete</li></ul>
+        </div>
+      </article>
+
+      <article class="card">
+        <div class="card-media" style="background-image:url('/images/industries-education.webp')">
+          <span class="card-tag">Education</span>
+        </div>
+        <div class="card-body">
+          <h3>Schools &amp; Childcare</h3>
+          <p>Term-break deep cleans, gym and cafeteria floors, playground safety checks — every technician background-checked and badged.</p>
+          <ul class="card-list"><li>Deep cleans</li><li>Gym floors</li><li>Safety checks</li><li>Vetted staff</li></ul>
+        </div>
+      </article>
+
+      <article class="card">
+        <div class="card-media" style="background-image:url('/images/home-multifamily-hoa.webp')">
+          <span class="card-tag">Residential</span>
+        </div>
+        <div class="card-body">
+          <h3>Multifamily &amp; HOA</h3>
+          <p>Common areas, amenity spaces, breezeways, unit turnovers on a fixed per-unit price, and resident work orders closed with photos.</p>
+          <ul class="card-list"><li>Common areas</li><li>Unit turns</li><li>Amenities</li><li>Work orders</li></ul>
+        </div>
+      </article>
+
+      <article class="card">
+        <div class="card-media" style="background-image:url('/images/industries-automotive.webp')">
+          <span class="card-tag">Automotive</span>
+        </div>
+        <div class="card-body">
+          <h3>Auto Dealerships</h3>
+          <p>Showroom glass and floors, service-bay degreasing, lot striping, pressure washing and lighting that makes the inventory look right at night.</p>
+          <ul class="card-list"><li>Showroom</li><li>Service bays</li><li>Lot striping</li><li>Lighting</li></ul>
+        </div>
+      </article>
+
+    </div>
+  </div>
+</section>
+
+<!-- ================= WHY IT MATTERS ================= -->
+<section class="section">
+  <div class="wrap">
+    <div class="split split--reverse">
+      <div class="split-media">
+        <img src="/images/industries-licensed-technician-on-site-in-safety-gear.webp" alt="Licensed technician on site in safety gear" width="1000" height="668" loading="lazy" decoding="async">
+      </div>
+      <div>
+        <p class="eyebrow">What stays the same</p>
+        <h2 style="font-size:clamp(1.9rem,4vw,2.9rem);text-transform:uppercase">Different buildings, same standard</h2>
+        <p style="margin-top:16px;color:var(--steel)">
+          Whatever the sector, the mechanics of working with us do not change. You get a
+          named contact, a written price, a badged technician and photographic proof the
+          job was finished properly.
+        </p>
+        <div class="compare" style="margin-top:22px">
+          <div class="compare-col is-good" style="border-right:1px solid var(--line)">
+            <h4>Always included</h4>
+            <ul>
+              <li>Badged, background-checked crews</li>
+              <li>Written scope before work starts</li>
+              <li>Before-and-after photos on every ticket</li>
+              <li>Certificate of insurance on request</li>
+            </ul>
+          </div>
+          <div class="compare-col is-good">
+            <h4>Available on contract</h4>
+            <ul>
+              <li>Dedicated crew assigned to your site</li>
+              <li>Quarterly building condition report</li>
+              <li>Net 30 terms and consolidated invoicing</li>
+              <li>Priority dispatch on emergencies</li>
+            </ul>
+          </div>
+        </div>
+        <div class="hero-actions" style="margin-top:26px">
+          <a class="btn btn--red" href="/contact/">Talk about your building</a>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section class="cta-band cta-band--photo">
+  <div class="cta-bg" style="background-image:url('/images/home-warehouse-industrial.webp')"></div>
+  <div class="wrap">
+    <div class="cta-inner">
+      <div>
+        <h2>Not sure which crew you need?</h2>
+        <p>Describe the building and the problem. We will tell you what it takes and what it costs — no obligation.</p>
+      </div>
+      <div class="cta-actions">
+        <a class="btn btn--red" href="/contact/">Request a quote</a>
+        <a class="btn btn--ghost" href={SITE.telHref}>Call {SITE.phone}</a>
+      </div>
+    </div>
+  </div>
+</section>
+</BaseLayout>
