@@ -172,9 +172,9 @@ components, so the blog inherits the design rather than introducing new UI; only
 
 ## Logo assets
 
-Source artwork had a white paper background. It was cut out with a **border flood fill**, not a
-global "make white transparent" threshold — that keeps the white highlight inside the roof, which
-a threshold would have eaten. Fringe pixels get partial alpha so the edges stay smooth.
+Source artwork already ships with a real alpha channel, so it is used as-is — no cutout step.
+Verified: of ~71,000 semi-transparent edge pixels only 2 are near-white, so there is no halo on
+the navy footer.
 
 | File | Use |
 |---|---|
@@ -183,16 +183,18 @@ a threshold would have eaten. Fringe pixels get partial alpha so the edges stay 
 | `/favicon-32.png`, `/icon-192.png`, `/icon-512.png` | favicons — house mark only, the full lockup is unreadable at 32px |
 | `/apple-touch-icon.png` | 180x180 on white (iOS does not respect transparency here) |
 
-Served through `<picture>`: AVIF (21 KB) → WebP (28 KB) → PNG (30 KB) fallback. The header copy
+Served through `<picture>`: AVIF (18 KB) → WebP (31 KB) → PNG (33 KB) fallback. The header copy
 carries `fetchpriority="high"`; the footer copy is lazy. `icon-512.png` is also the
 `Organization.logo` in the JSON-LD.
 
-The header grew from a 78px to an 88px minimum so the lockup's "PROFESSIONAL · RELIABLE ·
-COMMITTED" line stays legible; nav and CTA keep their approved positions, and the header returns
-to 78px below 900px wide.
+The header grew from a 78px to a 94px minimum so the lockup's "PROFESSIONAL · RELIABLE ·
+COMMITTED" line stays legible at 68px tall; nav and CTA keep their approved positions, and the
+header steps down to 82px below 900px wide and shrinks further on phones.
 
 To regenerate after an artwork change, re-run the cutout against the new source and re-emit at
-380px wide — that is 2x the largest rendered size (60px tall), so anything bigger is wasted bytes.
+460px wide — roughly 2.5x the largest rendered size (68px tall), so anything bigger is wasted
+bytes. Update the `width`/`height` attributes in Header.astro and Footer.astro if the aspect
+ratio changes, or CLS returns.
 
 ## Quote popup
 

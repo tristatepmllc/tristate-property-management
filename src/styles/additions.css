@@ -236,25 +236,25 @@ img{height:auto}
 .logo picture{display:block;line-height:0}
 .logo img{
   display:block;
-  height:60px;width:auto;
-  max-width:min(340px, 48vw);
+  height:68px;width:auto;
+  max-width:min(360px, 50vw);
   object-fit:contain;
 }
 /* the header grows a little to carry the lockup without shrinking the tagline
    into illegibility; nav and CTA keep their approved positions */
-.header .wrap{min-height:88px}
+.header .wrap{min-height:94px}
 
-.footer .logo img{height:78px;max-width:300px}
+.footer .logo img{height:86px;max-width:320px}
 .footer .logo{margin-bottom:6px}
 
 @media (max-width:900px){
-  .logo img{height:52px}
-  .header .wrap{min-height:78px}
+  .logo img{height:56px}
+  .header .wrap{min-height:82px}
 }
 @media (max-width:720px){
-  .logo img{height:46px;max-width:58vw}
+  .logo img{height:50px;max-width:60vw}
   .footer .logo img{height:64px}
 }
 @media (max-width:420px){
-  .logo img{height:38px;max-width:52vw}
+  .logo img{height:42px;max-width:56vw}
 }
