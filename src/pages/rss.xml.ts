@@ -8,7 +8,7 @@ export const GET: APIRoute = async (context) => {
     .sort((a, b) => b.data.publishedAt.getTime() - a.data.publishedAt.getTime());
 
   return rss({
-    title: `${SITE.name} — Insights`,
+    title: `${SITE.name} - Insights`,
     description: 'Practical guidance for facility and property managers in Northeast Florida.',
     site: context.site ?? SITE.url,
     items: posts.map((post) => ({

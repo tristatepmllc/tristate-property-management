@@ -7,7 +7,7 @@ import { graph, breadcrumbs } from '../lib/schema';
 const jsonLd = graph([breadcrumbs([{ name: 'Home', path: '/' }, { name: 'Contact', path: '/contact/' }])]);
 ---
 <BaseLayout
-  title="Request a Quote — Commercial Facility Services | Tristate Property Management"
+  title="Request a Quote - Commercial Facility Services | Tristate Property Management"
   description="Tell us what needs fixing and get a written quote, usually the same day. Commercial cleaning, plumbing, electrical, HVAC and repairs across Jacksonville and Northeast Florida. 24/7 emergency line."
   path="/contact/"
   active="/contact/"
@@ -21,7 +21,7 @@ const jsonLd = graph([breadcrumbs([{ name: 'Home', path: '/' }, { name: 'Contact
     <h1>Tell us what needs fixing</h1>
     <p>
       Send it before noon on a working day and you will have a written price back the same
-      day. If it is an emergency, call — the phone is faster than any form.
+      day. If it is an emergency, call - the phone is faster than any form.
     </p>
   </div>
 </section>
@@ -36,7 +36,7 @@ const jsonLd = graph([breadcrumbs([{ name: 'Home', path: '/' }, { name: 'Contact
         <h2 style="font-size:1.9rem;text-transform:uppercase;margin-bottom:8px">Request a quote</h2>
         <p style="color:var(--steel);font-size:.93rem;margin-bottom:26px">
           The more detail you give us, the more accurate the price. A photo helps more than
-          a paragraph — you can send one to the email or number on the right.
+          a paragraph - you can send one to the email or number on the right.
         </p>
 
         <form action="/api/leads" method="post" data-lead-form data-source="contact-page-form">
@@ -87,7 +87,7 @@ const jsonLd = graph([breadcrumbs([{ name: 'Home', path: '/' }, { name: 'Contact
               <label for="urgency">How urgent? <span class="req">*</span></label>
               <select id="urgency" name="urgency" required>
                 <option value="">Choose&hellip;</option>
-                <option>Emergency — today</option>
+                <option>Emergency - today</option>
                 <option>Within 48 hours</option>
                 <option>This week</option>
                 <option>Planning ahead / budgeting</option>
@@ -139,7 +139,7 @@ const jsonLd = graph([breadcrumbs([{ name: 'Home', path: '/' }, { name: 'Contact
           <h3>Emergency? Call, don't type</h3>
           <p>
             Active leaks, no power, no heat or cooling, broken glass, sewage backup or a
-            blocked fire exit — the line is answered by a person who can dispatch a crew,
+            blocked fire exit - the line is answered by a person who can dispatch a crew,
             24 hours a day.
           </p>
           <a class="big" href={SITE.telHref}>{SITE.phone}</a>
@@ -160,7 +160,7 @@ const jsonLd = graph([breadcrumbs([{ name: 'Home', path: '/' }, { name: 'Contact
             <span class="v">
               {SITE.address.street
                 ? <>{SITE.address.street}<br />{SITE.address.city}, {SITE.address.region} {SITE.address.postal}</>
-                : <>Connecticut, USA<br />We come to you &mdash; no walk-in office</>}
+                : <>Connecticut, USA<br />We come to you - no walk-in office</>}
             </span>
           </div>
         </div>

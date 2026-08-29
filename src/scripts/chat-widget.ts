@@ -1,5 +1,5 @@
 /**
- * Chat widget — real lead capture, not a canned-reply mock.
+ * Chat widget - real lead capture, not a canned-reply mock.
  *
  * Three questions (message → name → phone/email), then the transcript is
  * written to D1 through the same /api/leads endpoint the forms use, tagged
@@ -73,16 +73,16 @@ function init(): void {
 
       if (response.ok) {
         bubble(
-          `Got it — that is with our dispatch desk now. Someone will come back to you, usually the same business day. If it cannot wait, call ${phone}.`
+          `Got it - that is with our dispatch desk now. Someone will come back to you, usually the same business day. If it cannot wait, call ${phone}.`
         );
         window.turnstile?.reset();
       } else {
-        bubble(`Something went wrong sending that. Please call ${phone} — the line is answered 24/7.`);
+        bubble(`Something went wrong sending that. Please call ${phone} - the line is answered 24/7.`);
         draft.sent = false;
       }
     } catch {
       pending.remove();
-      bubble(`No connection. Please call ${phone} — answered 24/7.`);
+      bubble(`No connection. Please call ${phone} - answered 24/7.`);
       draft.sent = false;
     }
   }
@@ -106,7 +106,7 @@ function init(): void {
       case 'contact': {
         const digits = text.replace(/\D/g, '').length;
         if (!text.includes('@') && digits < 7) {
-          ask('That does not look like a phone number or an email — could you check it?');
+          ask('That does not look like a phone number or an email - could you check it?');
           return;
         }
         draft.contact = text;

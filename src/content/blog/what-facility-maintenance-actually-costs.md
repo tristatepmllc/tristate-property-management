@@ -17,7 +17,7 @@ underneath the number.
 **Time and materials.** You pay an hourly rate plus parts. Fair for unpredictable work, hard to
 budget against. Ask what the minimum call-out charge is and whether travel time is billed.
 
-**Flat rate per job.** A written price before work starts. Better for anything well defined —
+**Flat rate per job.** A written price before work starts. Better for anything well defined -
 a fixture swap, a lighting retrofit, a floor strip and wax.
 
 **Contract or per-square-foot.** Recurring services like janitorial and grounds. Cheaper per

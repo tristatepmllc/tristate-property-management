@@ -3,7 +3,7 @@
  *
  * Bundled and type-checked (it used to be an `is:inline` script, which Astro
  * ships untouched and never checks). Turnstile itself still loads inline from
- * challenges.cloudflare.com — that is a remote script, not ours.
+ * challenges.cloudflare.com - that is a remote script, not ours.
  */
 
 type LeadResponse = { ok?: boolean; id?: string; status?: string; error?: string };
@@ -72,7 +72,7 @@ function init(): void {
       try {
         // JSON, not FormData: Astro's CSRF check rejects cross-site form-encoded
         // POSTs, which would 403 the future mobile app on this same endpoint.
-        // If Turnstile never loaded there is simply no token — the server
+        // If Turnstile never loaded there is simply no token - the server
         // quarantines that lead as needs_review rather than losing it.
         const response = await fetch('/api/leads', {
           method: 'POST',
@@ -85,8 +85,8 @@ function init(): void {
           form.reset();
           say(
             inPopup
-              ? 'Booked — we will call to arrange a time, usually the same business day.'
-              : 'Thanks — your request is in. We reply to every one, usually the same business day.'
+              ? 'Booked - we will call to arrange a time, usually the same business day.'
+              : 'Thanks - your request is in. We reply to every one, usually the same business day.'
           );
           window.turnstile?.reset();
           form.dispatchEvent(new CustomEvent('lead:sent', { bubbles: true }));
@@ -95,11 +95,11 @@ function init(): void {
           say(
             data.error === 'challenge_failed'
               ? 'The spam check did not pass. Please reload the page and try again.'
-              : 'Something went wrong. Please call us instead — we answer 24/7.'
+              : 'Something went wrong. Please call us instead - we answer 24/7.'
           );
         }
       } catch {
-        say('Network problem. Please call us instead — we answer 24/7.');
+        say('Network problem. Please call us instead - we answer 24/7.');
       } finally {
         if (button) {
           button.disabled = false;

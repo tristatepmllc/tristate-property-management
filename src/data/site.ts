@@ -9,12 +9,12 @@ export const SITE = {
   get mailtoHref() { return `mailto:${this.email}`; },
   // Service-area business: we travel to the client, there is no walk-in office.
   // Leave `street`/`city`/`postal` empty and Schema.org PostalAddress + geo are
-  // omitted entirely rather than published half-filled — Google cross-checks this
+  // omitted entirely rather than published half-filled - Google cross-checks this
   // against the Google Business Profile and discounts markup that conflicts.
   // Fill them in ONLY if there is a real address customers can visit.
   address: {
     street: '',                                 // TODO: street, if there is a visitable office
-    city: '',                                   // TODO: town — required for GBP and local ranking
+    city: '',                                   // TODO: town - required for GBP and local ranking
     region: 'CT',
     postal: '',                                 // TODO
     country: 'US',

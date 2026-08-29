@@ -4,7 +4,7 @@ import { json, methodNotAllowed } from '../../lib/http';
 
 export const prerender = false;
 
-/** GET /api/offers — public promos. Consumed by the website and the future mobile app. */
+/** GET /api/offers - public promos. Consumed by the website and the future mobile app. */
 export const GET: APIRoute = async () => {
   const now = Date.now();
   const { results } = await env.DB.prepare(

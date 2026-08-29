@@ -39,7 +39,7 @@ export function localBusiness() {
       dayOfWeek: h.days, opens: h.opens, closes: h.closes,
     })),
     ...(SITE.social.length ? { sameAs: SITE.social } : {}),
-    // NOTE: no aggregateRating on purpose — self-serving review markup is discounted by Google.
+    // NOTE: no aggregateRating on purpose - self-serving review markup is discounted by Google.
   };
 }
 
@@ -116,7 +116,7 @@ export function blogIndex(posts: { title: string; slug: string }[]) {
   return {
     '@type': 'Blog',
     '@id': `${SITE.url}/blog/#blog`,
-    name: `${SITE.name} — Insights`,
+    name: `${SITE.name} - Insights`,
     url: `${SITE.url}/blog/`,
     publisher: { '@id': `${SITE.url}/#organization` },
     blogPost: posts.map((p) => ({

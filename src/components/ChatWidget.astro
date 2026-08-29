@@ -14,7 +14,7 @@ const siteKey = import.meta.env.PUBLIC_TURNSTILE_SITE_KEY ?? '1x0000000000000000
 
     <div class="chat-body">
       <span class="chat-time">Today</span>
-      <div class="bubble them">Hi &mdash; leave a message here and it goes straight to our dispatch desk. What&rsquo;s going on at your building?</div>
+      <div class="bubble them">Hi - leave a message here and it goes straight to our dispatch desk. What&rsquo;s going on at your building?</div>
       <div class="bubble them">If it's an emergency, call <strong>{SITE.phone}</strong> and we'll get a crew moving straight away.</div>
     </div>
 
@@ -31,7 +31,7 @@ const siteKey = import.meta.env.PUBLIC_TURNSTILE_SITE_KEY ?? '1x0000000000000000
       </button>
     </div>
     <div class="cf-turnstile chat-turnstile" data-sitekey={siteKey} data-size="flexible" data-appearance="interaction-only"></div>
-    <p class="chat-foot">Answered during business hours. For anything urgent, call {SITE.phone} &mdash; 24/7.</p>
+    <p class="chat-foot">Answered during business hours. For anything urgent, call {SITE.phone} - 24/7.</p>
   </div>
 
   <button type="button" class="chat-launcher" aria-label="Open live chat" aria-expanded="false">

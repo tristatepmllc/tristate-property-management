@@ -1,6 +1,6 @@
 type SendArgs = { apiKey: string; from: string; to: string | string[]; subject: string; html: string; replyTo?: string };
 
-/** Fire a transactional email through Resend. Never throws — the lead is already saved. */
+/** Fire a transactional email through Resend. Never throws - the lead is already saved. */
 export async function sendEmail(a: SendArgs): Promise<{ ok: boolean; error?: string }> {
   try {
     const res = await fetch('https://api.resend.com/emails', {

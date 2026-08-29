@@ -4,7 +4,7 @@ import { json } from '../../lib/http';
 
 export const prerender = false;
 
-/** GET /api/health — deploy smoke test: is the Worker up and is D1 bound? */
+/** GET /api/health - deploy smoke test: is the Worker up and is D1 bound? */
 export const GET: APIRoute = async () => {
   let db = 'unbound';
   try {

@@ -9,7 +9,7 @@ coverAlt: "Technician servicing a rooftop HVAC unit"
 ---
 
 Most emergency HVAC calls we take in August were preventable in April. A rooftop unit rarely
-fails without warning — it gets louder, it runs longer, the condensate line backs up, and then
+fails without warning - it gets louder, it runs longer, the condensate line backs up, and then
 on the first 95-degree afternoon it stops. The cost difference between a scheduled filter and
 coil service and an after-hours compressor replacement is not small.
 
@@ -33,7 +33,7 @@ coil service and an after-hours compressor replacement is not small.
 ## What to keep a record of
 
 Log the date, the unit, the readings and the technician. When a unit reaches the end of its
-life you want a maintenance history to justify replacement rather than another repair — and if
+life you want a maintenance history to justify replacement rather than another repair - and if
 you ever sell or refinance the building, that record is worth having.
 
 ## When to stop repairing

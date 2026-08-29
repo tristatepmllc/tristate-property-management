@@ -28,7 +28,7 @@ export const POST: APIRoute = async ({ request }) => {
     return json({ error: 'bad_request' }, 400);
   }
 
-  // Honeypot — bots fill hidden fields, humans do not.
+  // Honeypot - bots fill hidden fields, humans do not.
   if (typeof raw.company_website === 'string' && raw.company_website.trim() !== '') {
     return json({ ok: true }); // pretend success, drop silently
   }
@@ -90,9 +90,9 @@ export const POST: APIRoute = async ({ request }) => {
       from: env.LEAD_NOTIFY_FROM,
       to: env.LEAD_NOTIFY_TO,
       replyTo: lead.email,
-      subject: `${status === 'needs_review' ? '[unverified] ' : ''}New enquiry — ${lead.name}${lead.urgency ? ` (${lead.urgency})` : ''}`,
+      subject: `${status === 'needs_review' ? '[unverified] ' : ''}New enquiry - ${lead.name}${lead.urgency ? ` (${lead.urgency})` : ''}`,
       html: `<h2 style="font-family:Arial">New lead from the website</h2>
-             ${status === 'needs_review' ? '<p style="font-family:Arial;color:#A9161C"><strong>Spam check did not run</strong> — the visitor could not load Turnstile. Treat with normal caution.</p>' : ''}
+             ${status === 'needs_review' ? '<p style="font-family:Arial;color:#A9161C"><strong>Spam check did not run</strong> - the visitor could not load Turnstile. Treat with normal caution.</p>' : ''}
              <table style="font-family:Arial;font-size:14px;border-collapse:collapse">${rows}</table>
              <p style="color:#8798AC;font-size:12px">Lead ID ${id}</p>`,
     });

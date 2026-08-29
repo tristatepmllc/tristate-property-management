@@ -102,7 +102,7 @@ img{height:auto}
 /* ── Quote popup ─────────────────────────────────────────────────────────
    Desktop: centre modal at 15s. Mobile: slim sticky bar (~11% of the
    viewport, well under the ~30% ceiling Google treats as an intrusive
-   interstitial) that opens the same modal on tap — so the mobile modal is
+   interstitial) that opens the same modal on tap - so the mobile modal is
    click-triggered, not timed. Everything is position:fixed, so it can never
    shift layout (CLS stays at 0). */
 
@@ -296,7 +296,7 @@ img{height:auto}
    1. `.sec-head` is capped at 720px. The stylesheet centres a section head with
       `.center .sec-head` (a DESCENDANT selector), so when `center` sits on the
       .sec-head element itself the text centres inside a 720px box that is still
-      pinned left — which reads as "indented to the right" against the full-width
+      pinned left - which reads as "indented to the right" against the full-width
       cards underneath. Centre the box too. */
 .sec-head.center{margin-left:auto;margin-right:auto}
 
@@ -307,24 +307,24 @@ img{height:auto}
 .photo-card{margin:0 0 18px}
 
 /* `.sec-head` caps itself at 720px and its paragraph at 62ch. This modifier
-   lets a section head run the full width of the wrap — used where the copy is
+   lets a section head run the full width of the wrap - used where the copy is
    the whole section rather than an intro above a grid. */
 .sec-head--wide,
 .sec-head--wide p{max-width:none}
 
 /* The FAQ list was centred (`.faq{margin:0 auto}`) under a centred heading.
-   With the heading left-aligned, the list has to start on the same line —
+   With the heading left-aligned, the list has to start on the same line -
    keeping the 860px reading width, just anchored left instead of centred. */
 #faq .faq{margin-left:0;margin-right:0}
 
 /* `.prose` is centred (`margin:0 auto`) because a blog post reads better as a
-   centred column. Policy pages are reference documents, not reading columns —
+   centred column. Policy pages are reference documents, not reading columns -
    they line up with the breadcrumb and heading above them instead. The 72ch
    measure is kept; only the anchor changes. */
 .prose--left{margin-left:0;margin-right:0}
 
 /* Careers "Apply" block. The section head caps at 720px and its paragraph at
-   62ch, while the form card was 640px — three different measures, all centred,
+   62ch, while the form card was 640px - three different measures, all centred,
    so nothing lined up. Pin the head and the card to the same 640px column. */
 .sec-head--form,
 .sec-head--form p{max-width:640px;margin-left:auto;margin-right:auto}
