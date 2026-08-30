@@ -573,3 +573,39 @@ img{height:auto}
 
 /* The crack is decoration; it should not survive into a printed page. */
 @media print{ .cta-fracture{display:none} }
+
+/* ── Eight-item primary nav ──────────────────────────────────────────────
+   The nav went from six items to eight (Register, Vendors). Two small
+   reclaims keep the row on one line at full width without shrinking the type:
+   the inter-item gap drops 6px -> 2px and the link padding 14px -> 12px, worth
+   about 60px together. Measured at 1440: without them "Why Tristate" wrapped
+   onto two lines inside its own link and the phone block was squeezed from
+   290px to 232px.
+
+   Below ~1240px eight items do not fit beside the lockup and the phone block
+   at any padding, and the header silently wrapped to a second row (94px -> 105px).
+   So the burger now takes over at 1240px instead of 940px. The block below is
+   the approved 940px behaviour re-declared at the wider breakpoint; global.css
+   is untouched, and below 940px nothing changes at all. */
+.nav{gap:2px}
+.nav a{padding:10px 11px;white-space:nowrap}
+.nav a.is-active::after{left:11px;right:11px}
+
+@media (max-width:1240px){
+  .header .wrap{flex-wrap:wrap;position:relative}
+  .burger{display:flex;order:3}
+  .header-cta{order:2;margin-left:auto;margin-right:12px}
+  .nav{
+    order:4;
+    display:none;
+    width:100%;
+    flex-direction:column;
+    align-items:stretch;
+    gap:0;
+    padding:10px 0 16px;
+    border-top:1px solid var(--line);
+  }
+  .nav a{padding:13px 4px;border-bottom:1px solid var(--line);border-radius:0;font-size:1.18rem}
+  .nav a.is-active::after{display:none}
+  .nav-toggle:checked ~ .nav{display:flex}
+}

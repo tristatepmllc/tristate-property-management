@@ -387,9 +387,33 @@ performance stay comparable in the same query. It is deliberately positioned aga
 `/contact/`: contact is a price on one job, registration is a property on file. Without that
 split the two pages compete for the same visitor and neither wins.
 
-Neither page is in `NAV`. The header is a six-item bar that already steps down at 900px;
-an eighth item breaks it. Both are linked from the footer Company column and `/sitemap/`,
-which is enough for crawlers and for the people who go looking.
+Both are in `NAV`, as **Register** and **Vendors**. Fitting eight items took two
+measured changes, both in `additions.css`:
+
+| | Before | After |
+|---|---|---|
+| Nav gap / link padding | 6px / 14px | 2px / 11px, `white-space:nowrap` |
+| Burger takes over at | 940px | 1240px |
+| Nav label for `/why-tristate/` | Why Tristate | Why Us |
+
+`.wrap` caps at `var(--wrap)`, so the row cannot grow past about 1172px of content no
+matter how wide the viewport gets. Eight items at the original padding needed roughly
+1211px. Left alone the browser resolved that silently and badly: "Why Tristate" wrapped to
+two lines inside its own link (48px -> 75px) and the phone block was squeezed from 290px
+to 232px, at every width including 1600. `nowrap` makes that failure impossible rather
+than invisible, and the reclaimed padding plus the shorter label buys the ~65px needed.
+
+Only the nav label changed to "Why Us". The page title, H1, breadcrumb, footer link,
+site index and JSON-LD all still say "Why Tristate" - the nav label is an affordance,
+not the page's identity.
+
+Between 940px and 1240px eight items do not fit beside the lockup and the phone block at
+any padding, so the burger now starts there. Below 940px nothing changed.
+
+Verified at 1600 / 1440 / 1366 / 1280 / 1241 / 1240 / 1180 / 1024 / 900 / 720 / 390: header
+stays 94px (82px under 900px), every nav link stays on one line, the burger flips exactly
+at 1240px, and the open menu lists all eight items. The 6px horizontal overflow at 390px is
+the `.skip-link` and predates this change.
 
 `src/scripts/lead-form.ts` now reads the endpoint from the form's `action` attribute
 (`getAttribute`, not `.action`, which the DOM resolves to an absolute URL) and an optional
