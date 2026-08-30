@@ -89,6 +89,20 @@ npm run check    # astro check — TypeScript across .ts and .astro
 CI (`.github/workflows/ci.yml`) runs `check` then `build` on every push to main and on every
 pull request, so a type error cannot reach production silently again.
 
+**CI must run plain `npm ci`, not `npm ci --legacy-peer-deps`.** `.github/workflows/ci.yml`
+still carries the flag, which makes CI resolve dependencies more permissively than the deploy
+does: a broken lockfile goes green here and then fails on Cloudflare with EUSAGE, and the
+dashboard shows only "No deployment available" with no error. That is the four-failed-deploys
+failure. The fix is deleting nine characters, but it needs a token with `workflow` scope to
+push, so it is left here rather than done silently:
+
+```yaml
+      - run: npm ci          # was: npm ci --legacy-peer-deps
+```
+
+Verified that plain `npm ci` succeeds from a clean `node_modules` on the current lockfile, so
+this change is safe to make now.
+
 **Keep `package-lock.json` in sync with `package.json`.** Cloudflare Pages installs with a plain
 `npm ci`, which hard-fails if the lock file is missing anything the manifest implies — the build
 never even starts, and the dashboard just shows "No deployment available". If you ever install
@@ -172,18 +186,13 @@ token where the web sends a session cookie.
 
 ## Blockers before going live
 
-- [ ] **Location copy still says Jacksonville, FL.** The phone and state are now real
-      (Connecticut), but 54 references across 11 files still describe a Northeast Florida
-      business — page titles, meta descriptions, hero copy, the chat widget's coverage answer,
-      the footer, and one blog post. This is a content rewrite, not a config edit, and it needs
-      the actual towns served before it can be done. **Do not let Google index the site until
-      this is resolved** — a Connecticut business ranking on Jacksonville pages is worse than
-      not ranking at all.
-- [ ] **Old NAP items still placeholder: `(904) 555-0142`, `service@tristatepropertymanagement.com`,
-      `4131 Sunbeam Road`, licence `FL CGC-0000000`, and the lat/lng. All of it lives in
-      `src/data/site.ts` — one file, one edit. It also feeds the JSON-LD, so wrong data here
-      means schema that conflicts with the Google Business Profile. Still empty: `address.city`,
-      `address.postal`, `geo`, `license`, `areaServed`.
+- [x] ~~**Location copy said Jacksonville, FL.**~~ Cleared - zero references to Jacksonville,
+      Florida, `(904) 555-0142` or Sunbeam Road remain anywhere in `src/` or `public/`.
+- [ ] **NAP is incomplete.** Phone and email are real. Still empty in `src/data/site.ts`:
+      `address.city`, `address.postal`, `geo`, `license`, `areaServed`, `social`. It feeds the
+      JSON-LD, so anything wrong here produces schema that disagrees with the Google Business
+      Profile. `areaServed` is the biggest single ranking gain left: fill it and the coverage
+      grids on the homepage and `/contact/` populate themselves.
 - [ ] **Attach the custom domain.** `tristatepropertymanagement.com` currently returns 503, so
       `SITE.url` and `astro.config.mjs` point at the `.pages.dev` host instead. That is deliberate:
       `og:image`, `og:url` and the canonicals are absolute URLs built from that value, and while
@@ -192,10 +201,14 @@ token where the web sends a session cookie.
       commit - a canonical pointing at a host that does not serve the page is worse than none.
       `public/robots.txt` carries the sitemap URL too.
 - [ ] **Google Business Profile** created and matching the NAP exactly.
-- [ ] **Decide on the chat widget.** `src/components/ChatWidget.astro` is the prototype's
-      canned-reply mock — it answers with hardcoded strings. Either wire it to a real inbox or
-      remove it; shipping a fake "Online now" chat is a trust problem, not a technical one.
-- [ ] **`52 services` and `$2M Insured`** claims — confirm they are accurate.
+- [ ] **Remote D1 has no schema.** The binding exists and `/api/health` used to report `ok`
+      because it only ran `SELECT 1`, which succeeds against an empty database. Every form POST
+      and `/api/offers` return 500 in production until `npm run db:remote` is run. Health now
+      returns 503 and names the missing tables.
+- [x] ~~**Decide on the chat widget.**~~ Done - it is real three-step lead capture posting to
+      `/api/leads` with `source = 'chat-widget'`, and the status line says "Messages go straight
+      to dispatch" rather than "Online now". It does still depend on the D1 schema above.
+- [ ] **Unverified claims** - see the inventory below; seven of them, all listed with locations.
 
 ## Blog
 
@@ -305,9 +318,40 @@ than none, because scrapers lay out the card before the image loads.
 Test with Facebook's Sharing Debugger and X's Card Validator after the domain is live; both cache
 aggressively, so scrape once the real content is in place rather than now.
 
+## Unverified claims - inventory
+
+These are asserted on the site and nobody has confirmed them. Each is a factual claim a
+customer could rely on, so each needs a yes or a deletion before the site is indexed. This
+list is the whole set, with every location, so it can be cleared in one pass.
+
+| Claim | Where | Needs |
+|---|---|---|
+| `$2M Insured` | footer badge (every page) | the certificate of insurance |
+| `OSHA 30` | footer badge (every page) | who holds it, and a current card |
+| `Bonded` | footer badge (every page) | the bond |
+| `52 services` | `/services/` H1, `/why-tristate/`, homepage CTA | count the list; if it is not 52, say the real number |
+| `24/7` emergency | utility bar, footer, services chips x8, popup, chat, both form error messages, `/contact/` | someone genuinely answering at 3am, or drop to stated hours |
+| 4-hour emergency response | `/why-tristate/`, `src/data/faq.ts` | a response time the crew can actually hold |
+| Badged, drug-screened, background-checked | `/why-tristate/` x3, `/industries/` x2, homepage x2 | a screening process that exists |
+
+The `24/7` line matters most: it appears in both form failure messages, so a visitor whose
+submission errors is told to call a number that must be answered. It is also the easiest to
+get wrong, because "we usually pick up" is not what it says.
+
 ## Testimonials
 
-`src/data/testimonials.ts` - add an entry and the carousel picks it up, no markup changes.
+`src/data/testimonials.ts` is **empty on purpose**. It previously held seven invented
+testimonials with invented names and job titles. Publishing a testimonial nobody gave is a
+deceptive practice under the FTC's endorsement rules, and there was no SEO upside to offset
+the risk - Google discounts self-hosted review markup, which is why this site emits no
+`AggregateRating`. They were removed rather than annotated, because a comment in a source
+file does not reach the visitor reading the quote.
+
+While the array is empty the homepage reviews section is not rendered at all, and the three
+sections after it flip background so the page keeps alternating white and off-white. Add one
+real quote and the section, the carousel, the dots and the original rhythm all come back with
+no markup changes. Reviews on the Google Business Profile are worth more than anything
+self-hosted here and should come first.
 
 Built on native scroll-snap rather than a transform track, so touch swipe, keyboard scrolling
 and the scrollbar work without extra code, and with JavaScript disabled the section degrades to

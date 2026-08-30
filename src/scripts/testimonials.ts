@@ -3,7 +3,7 @@
  *
  * Built on native scroll-snap rather than a transform track, so touch swipe,
  * keyboard scrolling and the scrollbar all work for free and the cards stay in
- * normal document flow (they remain readable and crawlable with JS disabled —
+ * normal document flow (they remain readable and crawlable with JS disabled -
  * the section degrades to a horizontally scrollable row).
  *
  * Autoplay advances one page every 6s, pauses on hover, focus and when the

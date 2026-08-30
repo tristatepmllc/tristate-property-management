@@ -6,6 +6,14 @@ import { TESTIMONIALS } from '../data/testimonials';
 import { graph, localBusiness, organisation, website, serviceList } from '../lib/schema';
 
 const jsonLd = graph([localBusiness(), organisation(), website(), ...serviceList()]);
+
+// The reviews block only renders when there is something real to put in it.
+// Publishing a testimonial nobody gave is a deceptive practice under the FTC's
+// endorsement rules, and there is no SEO consolation prize either - Google
+// discounts self-hosted review markup, which is why this site emits no
+// AggregateRating. Drop real quotes into src/data/testimonials.ts and the
+// section, the carousel and the page rhythm all come back on their own.
+const hasReviews = TESTIMONIALS.length > 0;
 ---
 <BaseLayout
   title="Property Management in Connecticut - Tristate PM"
@@ -48,7 +56,7 @@ const jsonLd = graph([localBusiness(), organisation(), website(), ...serviceList
       <p class="eyebrow">What we do</p>
       <h2>Eight trades, one phone number</h2>
       <p>
-        Every trade below is handled by our own people. That is why we can quote fast,
+        The trades below are handled by our own people. That is why we can quote fast,
         show up on time and stand behind the work - there is nobody else to blame.
       </p>
     </div>
@@ -348,6 +356,7 @@ const jsonLd = graph([localBusiness(), organisation(), website(), ...serviceList
 </section>
 
 <!-- ================= TESTIMONIALS ================= -->
+{hasReviews && (
 <section class="section">
   <div class="wrap">
     <div class="sec-head">
@@ -383,9 +392,10 @@ const jsonLd = graph([localBusiness(), organisation(), website(), ...serviceList
     </div>
   </div>
 </section>
+)}
 
 <!-- ================= ON SITE ================= -->
-<section class="section section--tight section--paper">
+<section class={`section section--tight${hasReviews ? ' section--paper' : ''}`}>
   <div class="wrap">
     <div class="sec-head">
       <p class="eyebrow">On site this week</p>
@@ -414,7 +424,7 @@ const jsonLd = graph([localBusiness(), organisation(), website(), ...serviceList
 </section>
 
 <!-- ================= COVERAGE ================= -->
-<section class="section section--tight">
+<section class={`section section--tight${hasReviews ? '' : ' section--paper'}`}>
   <div class="wrap">
     <div class="sec-head">
       <p class="eyebrow">Coverage</p>
@@ -430,7 +440,7 @@ const jsonLd = graph([localBusiness(), organisation(), website(), ...serviceList
 </section>
 
 <!-- ================= GET IN TOUCH ================= -->
-<section class="section section--paper" id="quote">
+<section class={`section${hasReviews ? ' section--paper' : ''}`} id="quote">
   <div class="wrap">
     <div class="contact-band">
       <div>

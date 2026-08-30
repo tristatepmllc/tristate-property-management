@@ -46,7 +46,7 @@ export default defineConfig({
 
   // Flatten the build so index.html sits at the ROOT of dist/.
   // By default the Cloudflare adapter emits dist/client + dist/server, which is
-  // why Pages pointed at `dist` returned 404 — there was no index.html there.
+  // why Pages pointed at `dist` returned 404 - there was no index.html there.
   outDir: './dist',
   build: {
     client: './',            // resolved relative to outDir -> dist/

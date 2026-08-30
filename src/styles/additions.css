@@ -615,3 +615,52 @@ img{height:auto}
   .nav a.is-active::after{display:none}
   .nav-toggle:checked ~ .nav{display:flex}
 }
+
+/* ── Mobile overflow: grid items and unbreakable strings ─────────────────
+   Three separate horizontal-scroll bugs on phones, all pre-existing, and two of
+   them share one root cause.
+
+   Grid items default to `min-width:auto`, which means a `1fr` column will NOT
+   shrink below its content's intrinsic minimum - it silently overflows its own
+   container instead. Measured at 390px: `.contact-grid` was 354px wide but its
+   single column resolved to 434px, pushing the whole contact page 62px wide.
+   The floor came from `.field-row`'s two side-by-side inputs, which carry an
+   intrinsic width of their own. At 320px the footer did the same thing, 30px
+   over on every page, this time floored by service@tristatepropertymanagement.com,
+   a 38-character string with no break opportunity in it.
+
+   `min-width:0` lets the column shrink; `overflow-wrap` lets the address break.
+   Below 560px the paired fields stack, because two inputs in 354px is cramped
+   even once it fits. */
+.contact-grid > *,
+.contact-band > *,
+.split > *,
+.footer-top > *,
+.field-row > *,
+.sitemap-grid > *,
+.cards > *,
+.steps > *{min-width:0}
+
+.field input,
+.field select,
+.field textarea{min-width:0;max-width:100%}
+
+/* One 38-character string, service@tristatepropertymanagement.com, was the
+   min-content floor in three different grids: the footer on every page, the
+   contact sidebar, and the homepage quick-facts list. Targeting the link by
+   href fixes it wherever it is placed next, rather than one grid at a time. */
+a[href^="mailto:"]{overflow-wrap:anywhere}
+.footer-contact span,
+.quick-facts .qv,
+.info-row .v{overflow-wrap:anywhere}
+
+@media (max-width:560px){
+  .field-row{grid-template-columns:1fr}
+}
+
+/* The carousel track bleeds 4px each side (`margin:-4px`) so card shadows and
+   focus rings are not clipped by its own scroller. In LTR the left overhang is
+   harmless but the right one leaked into the document, scrolling the homepage
+   6px. `overflow-x:clip` trims it without turning the parent into a scroll
+   container the way `hidden` would. */
+.quotes-carousel{overflow-x:clip}

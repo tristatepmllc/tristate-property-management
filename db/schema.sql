@@ -1,4 +1,4 @@
--- Tristate Property Management LLC — Cloudflare D1 (SQLite)
+-- Tristate Property Management LLC - Cloudflare D1 (SQLite)
 -- apply:  npx wrangler d1 execute tristate-db --local  --file=./db/schema.sql
 --         npx wrangler d1 execute tristate-db --remote --file=./db/schema.sql
 PRAGMA foreign_keys = ON;
