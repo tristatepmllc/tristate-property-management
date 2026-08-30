@@ -1,0 +1,258 @@
+---
+import BaseLayout from '../layouts/BaseLayout.astro';
+import LeadFormExtras from '../components/LeadFormExtras.astro';
+import { SITE, SERVICE_CATEGORIES } from '../data/site';
+import { graph, breadcrumbs } from '../lib/schema';
+
+const jsonLd = graph([
+  breadcrumbs([
+    { name: 'Home', path: '/' },
+    { name: 'Vendor network', path: '/vendor-network/' },
+  ]),
+]);
+
+// Primary specialty list. The eight service categories are the single source of
+// truth so this stays in step with what we actually sell; the extras below are
+// trades we buy in rather than self-perform.
+const TRADES = [
+  ...SERVICE_CATEGORIES.map((c) => c.name),
+  'Roofing',
+  'Snow &amp; ice removal',
+  'Flooring &amp; carpet',
+  'Appliance repair',
+  'Locksmith &amp; door hardware',
+  'Pest control',
+  'Fire &amp; life safety',
+  'Pool &amp; spa',
+  'Other trade',
+];
+---
+<BaseLayout
+  title="Vendor Network - Apply to Join Our Trades"
+  description="Licensed trades and crews across Connecticut: apply to join the Tristate vendor network. Tell us your specialty, your coverage area and how to reach you."
+  path="/vendor-network/"
+  active="/vendor-network/"
+  jsonLd={jsonLd}
+  showPopup={false}
+>
+  <section class="page-hero">
+    <div class="page-hero-bg" style="background-image:url('/images/industries-licensed-technician-on-site-in-safety-gear.webp')"></div>
+    <div class="wrap">
+      <p class="crumb"><a href="/">Home</a> &nbsp;/&nbsp; <span>Vendor network</span></p>
+      <h1>Join our vendor network</h1>
+      <p>
+        We self-perform most maintenance, but there are trades we buy in and buildings where
+        we need extra hands at short notice. If you are licensed, insured and answer the phone,
+        we want you on the list before we need you.
+      </p>
+    </div>
+  </section>
+
+  <!-- ================= WHAT WE LOOK FOR ================= -->
+  <section class="section section--paper">
+    <div class="wrap">
+      <div class="sec-head">
+        <p class="eyebrow">Before you apply</p>
+        <h2>What we ask of every vendor</h2>
+        <p>
+          Nothing unusual, but we check all of it before the first work order. Applying takes a
+          minute; onboarding takes a certificate of insurance and a signed rate sheet.
+        </p>
+      </div>
+
+      <div class="cards">
+        <article class="card">
+          <div class="card-body">
+            <h3>Licence and insurance</h3>
+            <p>
+              Current Connecticut licence for trades that require one, general liability and
+              workers' compensation. We collect certificates before you are dispatched.
+            </p>
+            <ul class="card-list">
+              <li>CT licence where applicable</li>
+              <li>General liability</li>
+              <li>Workers' compensation</li>
+            </ul>
+          </div>
+        </article>
+        <article class="card">
+          <div class="card-body">
+            <h3>Response you can hold to</h3>
+            <p>
+              Most of our work is in occupied buildings, so the schedule matters more than the
+              rate. Tell us honestly what turnaround you can commit to.
+            </p>
+            <ul class="card-list">
+              <li>A phone answered by a person</li>
+              <li>Realistic arrival windows</li>
+              <li>Notice when you will be late</li>
+            </ul>
+          </div>
+        </article>
+        <article class="card">
+          <div class="card-body">
+            <h3>Written pricing</h3>
+            <p>
+              Flat or hourly, both are fine, but it has to be in writing before the work starts.
+              We pass those numbers to owners, so surprises land on us.
+            </p>
+            <ul class="card-list">
+              <li>A published rate sheet</li>
+              <li>Written change orders</li>
+              <li>Invoices with the work described</li>
+            </ul>
+          </div>
+        </article>
+      </div>
+    </div>
+  </section>
+
+  <!-- ================= FORM ================= -->
+  <section class="section">
+    <div class="wrap">
+      <div class="sec-head sec-head--form">
+        <p class="eyebrow">Vendor registration</p>
+        <h2>Tell us what you do</h2>
+        <p>
+          Five required fields. We read every application and reply either way. Prefer to talk
+          first? Call <a href={SITE.telHref}>{SITE.phone}</a>.
+        </p>
+      </div>
+
+      <div class="form-card form-card--narrow">
+        <form
+          action="/api/vendors"
+          method="post"
+          data-lead-form
+          data-source="vendor-network"
+          data-success="Application received. We review every one and reply within five business days."
+          novalidate
+        >
+          <div class="field-row">
+            <div class="field">
+              <label for="v-name">Your name <span class="req">*</span></label>
+              <input type="text" id="v-name" name="name" autocomplete="name" placeholder="Jane Whitfield" required />
+            </div>
+            <div class="field">
+              <label for="v-business">Business name</label>
+              <input type="text" id="v-business" name="business" autocomplete="organization" placeholder="Whitfield Plumbing LLC" />
+            </div>
+          </div>
+
+          <div class="field-row">
+            <div class="field">
+              <label for="v-phone">Phone <span class="req">*</span></label>
+              <input type="tel" id="v-phone" name="phone" autocomplete="tel" placeholder="(203) 000-0000" required />
+            </div>
+            <div class="field">
+              <label for="v-email">Email <span class="req">*</span></label>
+              <input type="email" id="v-email" name="email" autocomplete="email" placeholder="jane@whitfieldplumbing.com" required />
+            </div>
+          </div>
+
+          <div class="field">
+            <label for="v-address">Business address <span class="req">*</span></label>
+            <input type="text" id="v-address" name="address" autocomplete="street-address" placeholder="Street, town, ZIP" required />
+          </div>
+
+          <div class="field">
+            <label for="v-trade">Primary specialty <span class="req">*</span></label>
+            <select id="v-trade" name="trade" required>
+              <option value="">Choose your trade&hellip;</option>
+              {TRADES.map((t) => <option set:html={t} />)}
+            </select>
+          </div>
+
+          <div class="field">
+            <label for="v-trades-other">Other trades you cover</label>
+            <input
+              type="text"
+              id="v-trades-other"
+              name="trades_other"
+              placeholder="Example: drain jetting, backflow testing, water heaters"
+            />
+          </div>
+
+          <div class="field-row">
+            <div class="field">
+              <label for="v-credentials">Licence and insurance <span class="req">*</span></label>
+              <select id="v-credentials" name="credentials" required>
+                <option value="">Choose&hellip;</option>
+                <option>Licensed and insured</option>
+                <option>Insured, no licence required for my trade</option>
+                <option>Licensed, insurance in progress</option>
+                <option>Neither yet</option>
+              </select>
+            </div>
+            <div class="field">
+              <label for="v-years">Years trading</label>
+              <select id="v-years" name="years">
+                <option value="">Choose&hellip;</option>
+                <option>Under 1 year</option>
+                <option>1 - 3 years</option>
+                <option>4 - 9 years</option>
+                <option>10 years or more</option>
+              </select>
+            </div>
+          </div>
+
+          <div class="field">
+            <label for="v-area">Towns or counties you cover</label>
+            <input type="text" id="v-area" name="area" placeholder="Example: Fairfield and New Haven counties" />
+          </div>
+
+          <div class="field">
+            <label for="v-notes">Anything else we should know</label>
+            <textarea
+              id="v-notes"
+              name="notes"
+              placeholder="Crew size, after-hours availability, emergency call-out rate, buildings you already work in."
+            ></textarea>
+          </div>
+
+          <LeadFormExtras source="vendor-network" />
+
+          <button type="submit" class="btn btn--red btn--wide">Submit application</button>
+
+          <p class="form-note">
+            Submitting this form does not create a contract or guarantee work. We keep your
+            details to consider you for jobs and nothing else - see our
+            <a href="/privacy-policy/">privacy policy</a>.
+          </p>
+        </form>
+      </div>
+    </div>
+  </section>
+
+  <!-- ================= WHAT HAPPENS NEXT ================= -->
+  <section class="section section--navy">
+    <div class="wrap">
+      <div class="sec-head">
+        <p class="eyebrow">After you apply</p>
+        <h2>What happens next</h2>
+      </div>
+      <div class="steps">
+        <div class="step">
+          <div class="step-num">01</div>
+          <h3>We read it</h3>
+          <p>Within five business days, whether or not there is a gap in your trade right now.</p>
+        </div>
+        <div class="step">
+          <div class="step-num">02</div>
+          <h3>Documents</h3>
+          <p>Licence where your trade needs one, certificate of insurance and a W-9.</p>
+        </div>
+        <div class="step">
+          <div class="step-num">03</div>
+          <h3>Rate sheet</h3>
+          <p>Your published rates, agreed in writing, so neither of us is negotiating at 2am.</p>
+        </div>
+        <div class="step">
+          <div class="step-num">04</div>
+          <h3>First work order</h3>
+          <p>A small job first. Scope, price and access in writing before anyone is dispatched.</p>
+        </div>
+      </div>
+    </div>
+  </section>
+</BaseLayout>

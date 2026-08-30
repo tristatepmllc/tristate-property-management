@@ -155,6 +155,7 @@ so forms work in development.
 | Method | Route | Notes |
 |---|---|---|
 | POST | `/api/leads` | JSON or form-encoded. Validate → honeypot → Turnstile → **write D1** → email. The DB write precedes the email so a Resend failure never loses a lead. |
+| POST | `/api/vendors` | Vendor network applications. Same pipeline and same anti-spam posture, but writes to `vendors`. |
 | GET | `/api/offers` | public promos, 5-minute cache |
 | GET | `/api/health` | deploy smoke test |
 | GET | `/api/me`, `/api/jobs`, `/api/cashback/*` | 501 stubs for the portal/app phase |
@@ -363,6 +364,39 @@ that get quoted are cheap to add:
 
 Do not add legal specifics without a primary source, and keep the dated disclaimer at the foot of
 any post that states law - rates and statutes change annually.
+
+## Registration pages
+
+Two dedicated capture pages, both reusing the approved `.form-card` / `.field` /
+`.steps` components rather than introducing new UI.
+
+`/vendor-network/` - trade partners applying to work for us. It posts to
+**`/api/vendors`** and writes to the **`vendors`** table, not `leads`. That separation is
+the whole point: a vendor is a supplier, not a customer, and putting them in `leads` would
+inflate every lead count, break `SELECT source, COUNT(*) FROM leads GROUP BY source`, and
+send a notification email that calls a plumber a sales enquiry. Required fields are name,
+phone, email, business address and primary specialty, plus a licence-and-insurance answer -
+one tap, and it is the only question that decides whether the application is worth a call
+back. Everything declared on the form is self-declared; certificates are collected at
+onboarding, and the notification email says so.
+
+`/client-registration/` - property owners opening an ongoing account. This one *is* a lead,
+so it posts to `/api/leads` with `source = "client-registration"` and
+`urgency = "Ongoing contract enquiry"`. No new table, and popup performance and registration
+performance stay comparable in the same query. It is deliberately positioned against
+`/contact/`: contact is a price on one job, registration is a property on file. Without that
+split the two pages compete for the same visitor and neither wins.
+
+Neither page is in `NAV`. The header is a six-item bar that already steps down at 900px;
+an eighth item breaks it. Both are linked from the footer Company column and `/sitemap/`,
+which is enough for crawlers and for the people who go looking.
+
+`src/scripts/lead-form.ts` now reads the endpoint from the form's `action` attribute
+(`getAttribute`, not `.action`, which the DOM resolves to an absolute URL) and an optional
+`data-success` message, so the vendor form reuses the whole submit path - UTM capture,
+honeypot, Turnstile, disabled button, status line - while posting somewhere else. It also
+joins repeated field names with a comma instead of overwriting them; the old behaviour kept
+only the last checkbox in a group.
 
 ## Quote popup
 

@@ -81,3 +81,32 @@ CREATE TABLE IF NOT EXISTS offers (
   created_at INTEGER NOT NULL
 );
 CREATE INDEX IF NOT EXISTS idx_offers_active ON offers(active, is_public);
+
+-- ---------------------------------------------------------------- vendors
+-- Trade partners applying to the vendor network. Deliberately NOT the `leads`
+-- table: a vendor is a supplier, not a customer. Mixing them would corrupt
+-- every lead count, every `GROUP BY source` report and the notification copy.
+-- No UNIQUE on email on purpose - a duplicate application should be a row to
+-- de-duplicate later, not a 500 in the applicant's face.
+CREATE TABLE IF NOT EXISTS vendors (
+  id            TEXT PRIMARY KEY,
+  name          TEXT NOT NULL,
+  business      TEXT,
+  email         TEXT NOT NULL,
+  phone         TEXT NOT NULL,
+  address       TEXT,
+  trade         TEXT NOT NULL,     -- primary specialty
+  trades_other  TEXT,              -- additional trades, free text
+  area          TEXT,              -- towns / counties covered
+  credentials   TEXT,              -- licensed and/or insured, self-declared
+  years         TEXT,
+  notes         TEXT,
+  source        TEXT,
+  referrer      TEXT,
+  status        TEXT NOT NULL DEFAULT 'new',  -- new|reviewing|approved|declined
+  created_at    INTEGER NOT NULL
+);
+CREATE INDEX IF NOT EXISTS idx_vendors_trade      ON vendors(trade);
+CREATE INDEX IF NOT EXISTS idx_vendors_email      ON vendors(email);
+CREATE INDEX IF NOT EXISTS idx_vendors_status     ON vendors(status);
+CREATE INDEX IF NOT EXISTS idx_vendors_created_at ON vendors(created_at DESC);

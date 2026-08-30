@@ -1,0 +1,158 @@
+---
+import BaseLayout from '../layouts/BaseLayout.astro';
+import LeadFormExtras from '../components/LeadFormExtras.astro';
+import { SITE, SERVICE_CATEGORIES } from '../data/site';
+import { graph, breadcrumbs } from '../lib/schema';
+
+const jsonLd = graph([
+  breadcrumbs([
+    { name: 'Home', path: '/' },
+    { name: 'Client registration', path: '/client-registration/' },
+  ]),
+]);
+---
+<BaseLayout
+  title="Client Registration - Register Your Property"
+  description="Register your property with Tristate Property Management. Give us the address and the service you need, then we will call to confirm scope and open the account."
+  path="/client-registration/"
+  active="/client-registration/"
+  jsonLd={jsonLd}
+  showPopup={false}
+>
+  <section class="page-hero">
+    <div class="page-hero-bg" style="background-image:url('/images/home-site-supervisor-reviewing-building-plans-on-.webp')"></div>
+    <div class="wrap">
+      <p class="crumb"><a href="/">Home</a> &nbsp;/&nbsp; <span>Client registration</span></p>
+      <h1>Register your property</h1>
+      <p>
+        This sets up an ongoing account: your property on file, one point of contact and a
+        record of every visit. Just need a price on a single job? The
+        <a href="/contact/">quote form</a> is faster.
+      </p>
+    </div>
+  </section>
+
+  <section class="section">
+    <div class="wrap">
+      <div class="sec-head sec-head--form">
+        <p class="eyebrow">New client</p>
+        <h2>Four fields to get started</h2>
+        <p>
+          Name, number, property address and what you need. Everything else we work out on the
+          call. Would rather talk now? <a href={SITE.telHref}>{SITE.phone}</a>.
+        </p>
+      </div>
+
+      <div class="form-card form-card--narrow">
+        <form
+          action="/api/leads"
+          method="post"
+          data-lead-form
+          data-source="client-registration"
+          data-success="Registered. We will call to confirm the property and the scope, usually the same business day."
+          novalidate
+        >
+          <input type="hidden" name="urgency" value="Ongoing contract enquiry" />
+
+          <div class="field-row">
+            <div class="field">
+              <label for="r-name">Your name <span class="req">*</span></label>
+              <input type="text" id="r-name" name="name" autocomplete="name" placeholder="Jane Whitfield" required />
+            </div>
+            <div class="field">
+              <label for="r-phone">Phone <span class="req">*</span></label>
+              <input type="tel" id="r-phone" name="phone" autocomplete="tel" placeholder="(203) 000-0000" required />
+            </div>
+          </div>
+
+          <div class="field">
+            <label for="r-address">Property address <span class="req">*</span></label>
+            <input type="text" id="r-address" name="address" autocomplete="street-address" placeholder="Street, town, ZIP" required />
+          </div>
+
+          <div class="field">
+            <label for="r-service">Service required <span class="req">*</span></label>
+            <select id="r-service" name="service" required>
+              <option value="">Choose a service&hellip;</option>
+              <option>Full property management</option>
+              {SERVICE_CATEGORIES.map((c) => <option set:html={c.name} />)}
+              <option>Multiple services / not sure yet</option>
+            </select>
+          </div>
+
+          <div class="field-row">
+            <div class="field">
+              <label for="r-email">Email</label>
+              <input type="email" id="r-email" name="email" autocomplete="email" placeholder="jane@company.com" />
+            </div>
+            <div class="field">
+              <label for="r-building">Property type</label>
+              <select id="r-building" name="building">
+                <option value="">Choose&hellip;</option>
+                <option>Single-family rental</option>
+                <option>Multifamily / HOA</option>
+                <option>Office</option>
+                <option>Retail</option>
+                <option>Restaurant</option>
+                <option>Medical / dental</option>
+                <option>Warehouse / industrial</option>
+                <option>Mixed use</option>
+                <option>Other</option>
+              </select>
+            </div>
+          </div>
+
+          <div class="field">
+            <label for="r-details">Anything we should know</label>
+            <textarea
+              id="r-details"
+              name="details"
+              placeholder="Example: eight units, currently self-managed, two tenants turning over in spring, boiler is fifteen years old."
+            ></textarea>
+          </div>
+
+          <LeadFormExtras source="client-registration" />
+
+          <button type="submit" class="btn btn--red btn--wide">Register my property</button>
+
+          <p class="form-note">
+            Registering costs nothing and commits you to nothing. Nothing is scheduled and no
+            fee applies until we have agreed the scope in writing. Your details are never passed
+            to a third party - see our <a href="/privacy-policy/">privacy policy</a>.
+          </p>
+        </form>
+      </div>
+    </div>
+  </section>
+
+  <section class="section section--navy">
+    <div class="wrap">
+      <div class="sec-head">
+        <p class="eyebrow">After you register</p>
+        <h2>What happens next</h2>
+      </div>
+      <div class="steps">
+        <div class="step">
+          <div class="step-num">01</div>
+          <h3>We call you</h3>
+          <p>Usually the same business day, to confirm the property and what you actually need.</p>
+        </div>
+        <div class="step">
+          <div class="step-num">02</div>
+          <h3>Walk-through</h3>
+          <p>We look at the building, note what is due and what is failing, and put it in writing.</p>
+        </div>
+        <div class="step">
+          <div class="step-num">03</div>
+          <h3>Scope and price</h3>
+          <p>A written scope with a flat price. Nothing starts and nothing is billed before you agree it.</p>
+        </div>
+        <div class="step">
+          <div class="step-num">04</div>
+          <h3>One contact</h3>
+          <p>The same coordinator for the property, with every visit and invoice on one record.</p>
+        </div>
+      </div>
+    </div>
+  </section>
+</BaseLayout>

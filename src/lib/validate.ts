@@ -50,3 +50,55 @@ export function validateLead(raw: Record<string, unknown>): { ok: true; value: L
     },
   };
 }
+
+export type VendorInput = {
+  name: string; email: string; phone: string; trade: string;
+  business?: string; address?: string; tradesOther?: string;
+  area?: string; credentials?: string; years?: string; notes?: string;
+  source?: string;
+};
+
+/**
+ * Vendor network applications. Same lenient contact rule as validateLead -
+ * one usable way to reply is enough - but `trade` is hard-required, because a
+ * vendor row without a specialty is not a vendor, it is a name we have to ring
+ * back to ask the only question that mattered.
+ */
+export function validateVendor(raw: Record<string, unknown>): { ok: true; value: VendorInput } | { ok: false; errors: string[] } {
+  const errors: string[] = [];
+  const str = (k: string, max = 2000) => {
+    const v = raw[k];
+    return typeof v === 'string' ? v.trim().slice(0, max) : '';
+  };
+
+  const name = str('name', 120);
+  const email = str('email', 200).toLowerCase();
+  const phone = str('phone', 40);
+  const trade = str('trade', 120);
+
+  const emailOk = EMAIL.test(email);
+  const phoneOk = phone.replace(/\D/g, '').length >= 7;
+
+  if (name.length < 2) errors.push('name');
+  if (email && !emailOk) errors.push('email');
+  if (phone && !phoneOk) errors.push('phone');
+  if (!emailOk && !phoneOk) errors.push('contact');
+  if (!trade) errors.push('trade');
+
+  if (errors.length) return { ok: false, errors };
+
+  return {
+    ok: true,
+    value: {
+      name, email, phone, trade,
+      business: str('business', 160) || undefined,
+      address: str('address', 240) || undefined,
+      tradesOther: str('trades_other', 400) || undefined,
+      area: str('area', 240) || undefined,
+      credentials: str('credentials', 80) || undefined,
+      years: str('years', 40) || undefined,
+      notes: str('notes', 4000) || str('details', 4000) || undefined,
+      source: str('source', 80) || undefined,
+    },
+  };
+}
