@@ -574,24 +574,30 @@ img{height:auto}
 /* The crack is decoration; it should not survive into a printed page. */
 @media print{ .cta-fracture{display:none} }
 
-/* ── Eight-item primary nav ──────────────────────────────────────────────
-   The nav went from six items to eight (Register, Vendors). Two small
-   reclaims keep the row on one line at full width without shrinking the type:
-   the inter-item gap drops 6px -> 2px and the link padding 14px -> 12px, worth
-   about 60px together. Measured at 1440: without them "Why Tristate" wrapped
-   onto two lines inside its own link and the phone block was squeezed from
-   290px to 232px.
+/* ── Seven-item primary nav ──────────────────────────────────────────────
+   Register and Vendors were added and Home was dropped: the logo is already an
+   <a href="/">, so a Home item spends about 65px of a hard-capped row to
+   duplicate a link that is right next to it.
 
-   Below ~1240px eight items do not fit beside the lockup and the phone block
-   at any padding, and the header silently wrapped to a second row (94px -> 105px).
-   So the burger now takes over at 1240px instead of 940px. The block below is
-   the approved 940px behaviour re-declared at the wider breakpoint; global.css
-   is untouched, and below 940px nothing changes at all. */
+   The cap is what makes this tight. `.wrap` is max-width 1220px with a 24px
+   gutter, so the header row can never exceed ~1172px of content however wide
+   the monitor is. Seven items at the original 14px padding need ~1170px, which
+   the browser resolves silently and badly rather than visibly: at 1440 the
+   phone number wrapped onto two lines and the CTA block shrank from 290px to
+   234px. Dropping the gap 6px -> 2px and the link padding 14px -> 11px buys
+   ~70px, and `white-space:nowrap` turns any future overrun into an obvious
+   break instead of a quiet reflow.
+
+   Measured sweep with those reclaims in place: clean at 1180px and above, and
+   at 1150px the phone number starts wrapping (`.header-cta` 290 -> 264). So the
+   burger takes over below 1180px instead of 940px. The block below is the
+   approved 940px behaviour re-declared at the wider breakpoint; global.css is
+   untouched and nothing changes below 940px. */
 .nav{gap:2px}
 .nav a{padding:10px 11px;white-space:nowrap}
 .nav a.is-active::after{left:11px;right:11px}
 
-@media (max-width:1240px){
+@media (max-width:1179px){
   .header .wrap{flex-wrap:wrap;position:relative}
   .burger{display:flex;order:3}
   .header-cta{order:2;margin-left:auto;margin-right:12px}

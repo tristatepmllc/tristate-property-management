@@ -38,10 +38,9 @@ export const SITE = {
 } as const;
 
 export const NAV = [
-  { href: '/',                      label: 'Home' },
   { href: '/services/',             label: 'Services' },
   { href: '/industries/',           label: 'Industries' },
-  { href: '/why-tristate/',         label: 'Why Us' },
+  { href: '/why-tristate/',         label: 'Why Tristate' },
   { href: '/blog/',                 label: 'Blog' },
   { href: '/client-registration/',  label: 'Register' },
   { href: '/vendor-network/',       label: 'Vendors' },
