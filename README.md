@@ -131,8 +131,15 @@ npx wrangler secret put RESEND_API_KEY
 npm run deploy
 ```
 
-Then check `https://<your-domain>/api/health` — it returns `{"ok":true,"db":"ok"}` when the D1
-binding is live.
+Then check `https://<your-domain>/api/health`. It returns `{"ok":true,"db":"ok"}` only when D1
+is reachable **and** every table in `db/schema.sql` exists; anything else is a `503` naming the
+missing tables.
+
+**`npm run db:remote` is not optional and is easy to skip.** A D1 binding added in the Pages
+dashboard makes the site build and deploy cleanly with an entirely empty database. Static pages
+render, so the site looks live, while every form POST and every `/api/offers` read returns 500.
+`/api/health` used to be `SELECT 1`, which succeeds against an empty database - so the one
+endpoint whose job was to catch this reported `ok`. That is why it now checks the schema.
 
 **Deploying via Cloudflare Pages instead:** connect the GitHub repo, build command `npm run build`,
 output directory `dist/client`, and add the D1/R2 bindings plus secrets in the Pages dashboard
