@@ -893,3 +893,28 @@ a[href^="mailto:"]{overflow-wrap:anywhere}
 .nav .mega .mega-item:hover{background:var(--paper)}
 .nav .mega .mega-dl a{color:var(--navy-900)}
 .nav .mega .mega-dl a:hover{color:var(--red)}
+
+/* ── Header trim: no utility bar, no phone in the row ────────────────────
+   The navy utility bar and the "Call the crew" block are both gone. Two
+   consequences worth knowing before anything is added back:
+
+   1. The bar carried the "24/7 Emergency Response" and "Licensed & Insured"
+      claims on every page. Both are on the unverified-claims inventory, so
+      removing the bar quietly cleared two of them from every page at once.
+      The claims still appear elsewhere - see the inventory - so this is a
+      reduction, not a fix.
+   2. `.util-hide` now names a bar that no longer exists. The class still does
+      its job on the two header controls and is declared in global.css, which is
+      frozen, so it keeps the name.
+
+   The Get started button was 58px tall in a 94px bar - 62% of the row height,
+   against 48px nav links and a 43px Login control, which is what made it read
+   as oversized. Trimming the vertical padding 14px -> 8px brings it to ~46px,
+   just under the nav links, and the tighter horizontal padding gives back ~24px
+   of row width on top of the 123px the phone block released. */
+.header .drop-btn.btn{padding:8px 22px;font-size:1rem}
+
+/* `.nav-extra a` is two classes deep, so a bare `.nav-extra-call` loses to it
+   and the call link came out navy like every other row. It leads the menu
+   because it is the emergency action; it should not look like a nav item. */
+.nav-extra a.nav-extra-call{color:var(--red)}

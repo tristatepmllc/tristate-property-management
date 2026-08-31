@@ -29,11 +29,6 @@ const inGetStarted = GET_STARTED.some((i) => i.href === active && i.href !== '/c
     </label>
 
     <div class="header-cta">
-      <a class="header-phone" href={SITE.telHref}>
-        <span class="lbl">Call the crew</span>
-        <span class="num">{SITE.phone}</span>
-      </a>
-
       <div class="drop util-hide" data-drop>
         <button type="button" class="drop-btn drop-btn--plain" aria-expanded="false" aria-controls="menu-login">
           Login<span class="caret" aria-hidden="true"></span>
@@ -93,10 +88,16 @@ const inGetStarted = GET_STARTED.some((i) => i.href === active && i.href !== '/c
 
       {/* Below 720px both header controls are hidden - the old "Get a Quote"
           button carried the same util-hide, and a 390px row cannot hold the
-          logo, the phone number, a button and the burger without wrapping the
-          header to 140px. These flat links put the same destinations inside the
-          menu, with no dropdown and no script. */}
+          logo, a button and the burger without wrapping the header. These flat
+          links put the same destinations inside the menu, with no dropdown and
+          no script.
+
+          The phone number leads, because the header row no longer carries it.
+          Without this entry a phone visitor would need three interactions to
+          call an emergency line - burger, Contact, then the number - on a site
+          whose whole pitch is that someone picks up. */}
       <div class="nav-extra">
+        <a class="nav-extra-call" href={SITE.telHref}>Call {SITE.phone}</a>
         {GET_STARTED.map((i) => <a href={i.href}>{i.label}</a>)}
         {LOGIN.map((i) => <a href={i.href}>{i.label}</a>)}
       </div>

@@ -10,7 +10,6 @@ import '../styles/global.css';
 import '../styles/additions.css';
 
 import { SITE } from '../data/site';
-import UtilityBar from '../components/UtilityBar.astro';
 import Header from '../components/Header.astro';
 import Footer from '../components/Footer.astro';
 import ChatWidget from '../components/ChatWidget.astro';
@@ -82,7 +81,6 @@ const ogAbsolute = new URL(ogImage, SITE.url).href;
 </head>
 <body>
   <a class="skip-link" href="#main">Skip to content</a>
-  <UtilityBar />
   <Header active={active} />
   <main id="main">
     <slot />

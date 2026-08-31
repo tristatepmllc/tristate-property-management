@@ -347,10 +347,11 @@ list is the whole set, with every location, so it can be cleared in one pass.
 | Claim | Where | Needs |
 |---|---|---|
 | `$2M Insured` | footer badge (every page) | the certificate of insurance |
+| `Licensed & Insured` | ~~utility bar~~ - cleared, the bar was removed with the header trim | nothing outstanding here any more |
 | `OSHA 30` | footer badge (every page) | who holds it, and a current card |
 | `Bonded` | footer badge (every page) | the bond |
 | `52 services` | `/services/` H1, `/why-tristate/`, homepage CTA | count the list; if it is not 52, say the real number |
-| `24/7` emergency | utility bar, footer, services chips x8, popup, chat, both form error messages, `/contact/` | someone genuinely answering at 3am, or drop to stated hours |
+| `24/7` emergency | footer, services chips x8, popup, chat, both form error messages, `/contact/`, Contact mega-panel hours line | someone genuinely answering at 3am, or drop to stated hours. The utility bar instance is gone - the bar was removed with the header trim |
 | 4-hour emergency response | `/why-tristate/`, `src/data/faq.ts` | a response time the crew can actually hold |
 | Badged, drug-screened, background-checked | `/why-tristate/` x3, `/industries/` x2, homepage x2 | a screening process that exists |
 
@@ -473,6 +474,29 @@ press inbox - inventing `pr@` gives a journalist a bouncing address), `SITE.news
 empty. Each is wired data-first: fill the field and the block appears with no markup change,
 the same rule `areaServed` and `TESTIMONIALS` already follow.
 
+### Header trim: no utility bar, no phone in the row
+
+The navy utility bar and the "Call the crew" block are both gone, and the Get started button
+was cut from 58px to 46px tall - 62% of a 94px bar, against 48px nav links and a 43px Login
+control, which is what made it read as oversized. The row now holds the logo, five nav items,
+Login and Get started, and `.header-cta` dropped from 413px to 278px.
+
+Two consequences of removing the bar, neither of them cosmetic:
+
+1. **It carried "24/7 Emergency Response" and "Licensed &amp; Insured" on every page.** Both are
+   on the unverified-claims inventory below, so deleting the bar cleared two of them from every
+   page in one move. They still appear elsewhere, so this is a reduction, not a fix.
+2. **`.util-hide` now names a bar that does not exist.** The class still does its job on the two
+   header controls; it is declared in global.css, which is frozen, so it keeps the name.
+
+Removing the phone from the row is the change to watch. On desktop the Contact panel covers it
+in one hover. On a phone both header controls are already hidden below 720px, so the row would
+have been logo plus burger and nothing else - three interactions to call an emergency line on a
+site whose entire pitch is that someone picks up. `.nav-extra` therefore leads with a
+tap-to-call row, in red rather than nav-item navy, so the burger opens straight onto the number.
+If a one-tap call from the header is wanted back, a compact icon button in `.header-cta` is the
+place for it; the row has ~135px of slack now.
+
 ### Five bugs the measurement sweep caught
 
 Every one of these looked fine in the code and only showed up under Playwright.
@@ -498,9 +522,10 @@ Every one of these looked fine in the code and only showed up under Playwright.
    present, 160px wide, and completely invisible. `.drop-btn:not(.btn)` fixes the second.
 
 Verified after the fixes at 1600 / 1440 / 1366 / 1280 / 1220 / 1180 / 1179 / 1150 / 1024 /
-900 / 768 / 560 / 390 / 320: header holds 94px (82px below 900px), the phone number stays on
-one line, the burger flips at 1180px, the mega panel's right edge matches the content wrap,
-and horizontal overflow is 0 at every width with every panel both closed and open.
+900 / 768 / 560 / 390 / 320: header holds 94px (82px below 900px), the Get started button holds
+46px down to 768px and is hidden below 720px, the burger flips at 1180px, the mega panel's right
+edge matches the content wrap, and horizontal overflow is 0 at every width with every panel both
+closed and open.
 
 ## Registration pages
 
