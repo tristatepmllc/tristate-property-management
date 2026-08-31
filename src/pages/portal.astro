@@ -1,0 +1,77 @@
+---
+import BaseLayout from '../layouts/BaseLayout.astro';
+import { SITE } from '../data/site';
+
+/**
+ * Holding page for the Login menu.
+ *
+ * The client and vendor portals do not exist yet - /api/me, /api/jobs and
+ * /api/cashback/* are 501 stubs. A Login control that leads to a 404, or to a
+ * form that cannot authenticate anyone, is worse than no Login control, so both
+ * menu entries land here and this page says plainly what is and is not running.
+ *
+ * `noindex` because there is nothing here to rank, and no popup because someone
+ * looking for their account is not a new lead.
+ *
+ * Replace this file in the same commit that ships auth. Do not soften the copy
+ * in the meantime - "coming soon" without a way to reach a human is the thing
+ * this page exists to avoid.
+ */
+---
+<BaseLayout
+  title="Client and Vendor Portal - Tristate Property Management"
+  description="The Tristate client and vendor portals are not open yet. Here is how to reach us for invoices, work orders, job assignments and payment status in the meantime."
+  path="/portal/"
+  active="/portal/"
+  noindex={true}
+  showPopup={false}
+>
+  <section class="page-hero">
+    <div class="page-hero-bg" style="background-image:url('/images/home-site-supervisor-reviewing-building-plans-on-.webp')"></div>
+    <div class="wrap">
+      <p class="crumb"><a href="/">Home</a> &nbsp;/&nbsp; <span>Portal</span></p>
+      <h1>Portal</h1>
+      <p>Account access is not open yet. Until it is, a person answers the phone.</p>
+    </div>
+  </section>
+
+  <section class="section section--policy">
+    <div class="wrap">
+      <article class="prose prose--left">
+
+        <h2>What is not running yet</h2>
+        <p>
+          There is no client or vendor login today. We would rather say that than put up a
+          sign-in box that cannot sign anyone in. When the portal opens, clients will see work
+          orders, invoices and property history, and vendors will see assigned jobs, photo
+          uploads and payment status.
+        </p>
+
+        <h2>How to reach us in the meantime</h2>
+        <ul>
+          <li>
+            <strong>Existing clients</strong> - call <a href={SITE.telHref}>{SITE.phone}</a> for
+            anything on a job already booked, or email
+            <a href={SITE.mailtoHref}>{SITE.email}</a> for scheduling and invoices.
+          </li>
+          <li>
+            <strong>Vendors</strong> - job assignments and payment questions go to the same
+            number and inbox. If you have not applied yet, start at
+            <a href="/vendor-network/">the vendor network page</a>.
+          </li>
+          <li>
+            <strong>New owners</strong> - <a href="/client-registration/">open an account</a> or
+            <a href="/contact/">ask for a quote on one job</a>.
+          </li>
+        </ul>
+
+        <h2>Want to know when it opens?</h2>
+        <p>
+          Tell us on any of the routes above and we will contact you directly. We are not
+          collecting addresses for a list we do not have yet.
+        </p>
+
+      </article>
+    </div>
+  </section>
+</BaseLayout>

@@ -31,20 +31,67 @@ export const SITE = {
     { days: ['Monday','Tuesday','Wednesday','Thursday','Friday'], opens: '07:00', closes: '18:00' },
   ],
   social: [] as string[],                       // TODO: GBP / Facebook / LinkedIn URLs
+  // Contact channels surfaced in the Contact mega-menu. Same convention as
+  // areaServed and TESTIMONIALS: empty means the entry is not rendered at all,
+  // rather than rendered pointing at an address nobody reads.
+  press: '',                                    // TODO: real press inbox, or leave empty
+  newsletter: false,                            // TODO: true once a list and a signup endpoint exist
   // 1200x630 branded share card. Blog posts override this with their cover.
   defaultOgImage: '/images/og-tristate.jpg',
   defaultOgAlt:
     'Tristate Property Management LLC - property management made easy. Property protection, tenant management, maintenance and repairs, maximise your ROI.',
 } as const;
 
+/**
+ * Primary nav. Five items, not seven.
+ *
+ * Register and Vendors used to sit here; they are now the first two entries of
+ * the "Get started" menu, which is where a visitor looks for them and which is
+ * how the reference site (lessen.com) splits the same two audiences. Keeping
+ * them in both places would duplicate the link and, more concretely, the header
+ * row is capped at ~1172px of content - two nav items plus a Login control plus
+ * a Get started button do not fit alongside seven.
+ *
+ * `menu: 'contact'` marks the item that opens the mega-panel instead of
+ * navigating. Everything inside that panel still links to /contact/.
+ */
 export const NAV = [
-  { href: '/services/',             label: 'Services' },
-  { href: '/industries/',           label: 'Industries' },
-  { href: '/why-tristate/',         label: 'Why Tristate' },
-  { href: '/blog/',                 label: 'Blog' },
-  { href: '/client-registration/',  label: 'Register' },
-  { href: '/vendor-network/',       label: 'Vendors' },
-  { href: '/contact/',              label: 'Contact' },
+  { href: '/services/',     label: 'Services' },
+  { href: '/industries/',   label: 'Industries' },
+  { href: '/why-tristate/', label: 'Why Tristate' },
+  { href: '/blog/',         label: 'Blog' },
+  { href: '/contact/',      label: 'Contact', menu: 'contact' },
+] as const;
+
+/** Routes that live under a menu rather than in NAV, so /sitemap/ and the
+ *  `active` highlight can still resolve them to their parent control. */
+export const GET_STARTED = [
+  {
+    href: '/client-registration/',
+    label: 'Become a client',
+    note: 'Put a property on file and open an ongoing account.',
+  },
+  {
+    href: '/vendor-network/',
+    label: 'Become a vendor',
+    note: 'Licensed trades applying to take our work orders.',
+  },
+  {
+    href: '/contact/',
+    label: 'Request a quote',
+    note: 'One job, one building, one price.',
+  },
+] as const;
+
+/**
+ * Login targets. The portal is not built yet - every entry points at /portal/,
+ * a single honest holding page, rather than at a route that 404s or a form that
+ * cannot authenticate anyone. Split these into real destinations in the same
+ * commit that ships auth, not before.
+ */
+export const LOGIN = [
+  { href: '/portal/', label: 'Client login',  note: 'Invoices, work orders and property history.' },
+  { href: '/portal/', label: 'Vendor login',  note: 'Assigned jobs, photos and payment status.' },
 ] as const;
 
 export const SERVICE_CATEGORIES = [

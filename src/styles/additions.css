@@ -672,3 +672,224 @@ a[href^="mailto:"]{overflow-wrap:anywhere}
    6px. `overflow-x:clip` trims it without turning the parent into a scroll
    container the way `hidden` would. */
 .quotes-carousel{overflow-x:clip}
+
+/* ── Header dropdowns: Contact mega, Login, Get started ──────────────────
+   Three menus replace two nav items and the old "Get a Quote" button. The
+   width arithmetic is the whole reason the nav shrank from seven items to
+   five: the header row is capped at ~1172px of content, seven links already
+   spent ~1170px of it, and a Login control plus a Get started button need
+   roughly 230px more. Register and Vendors moved into "Get started", which is
+   where the reference site puts the same two audiences, and that pays for it.
+
+   The burger stays CSS-only. Only the panels are scripted, and with JS off
+   every panel stays `hidden` - no route is stranded, because /contact/,
+   /client-registration/ and /vendor-network/ are all in the footer and on
+   /sitemap/. */
+
+.drop{position:relative;display:flex;align-items:center}
+
+/* A menu control must be a <button>, not a link - it opens a panel, it does
+   not navigate. These rules make it *look* like the thing it replaced.
+   The `:not(.btn)` matters: a blanket `background:none` here loads after
+   global.css and stripped `.btn--red` of its fill, leaving white text on a
+   white header - the Get started button was present, 160px wide, and
+   completely invisible. */
+.drop-btn{
+  font:inherit;
+  cursor:pointer;
+  display:inline-flex;align-items:center;gap:7px;
+}
+.drop-btn:not(.btn){border:0;background:none}
+.drop-btn.nav-link{
+  font-family:var(--display);
+  font-size:1.05rem;font-weight:600;
+  letter-spacing:.045em;text-transform:uppercase;
+  color:var(--navy-800);
+  padding:10px 11px;border-radius:3px;position:relative;
+  white-space:nowrap;
+  transition:color .16s ease,background .16s ease;
+}
+.drop-btn.nav-link:hover,.drop.is-open .drop-btn.nav-link{color:var(--red);background:var(--paper)}
+.drop-btn.nav-link.is-active{color:var(--red)}
+.drop-btn.nav-link.is-active::after{
+  content:"";position:absolute;left:11px;right:11px;bottom:2px;
+  height:2px;background:var(--red);
+}
+.drop-btn--plain{
+  font-family:var(--display);
+  font-size:1.02rem;font-weight:600;
+  letter-spacing:.045em;text-transform:uppercase;
+  color:var(--navy-800);
+  padding:8px 4px;white-space:nowrap;
+  transition:color .16s ease;
+}
+.drop-btn--plain:hover,.drop.is-open .drop-btn--plain{color:var(--red)}
+.drop-btn.btn{white-space:nowrap}
+
+.caret{
+  width:7px;height:7px;flex:none;
+  border-right:2px solid currentColor;
+  border-bottom:2px solid currentColor;
+  transform:translateY(-2px) rotate(45deg);
+  transition:transform .16s ease;
+}
+.drop.is-open .caret{transform:translateY(1px) rotate(-135deg)}
+
+.drop-panel,.mega{
+  position:absolute;top:100%;left:0;z-index:60;
+  margin-top:10px;
+  background:var(--white);
+  border:1px solid var(--line);
+  border-radius:4px;
+  box-shadow:0 18px 40px rgba(8,21,46,.14);
+  padding:10px;
+}
+.drop-panel--right{left:auto;right:0}
+.drop-panel{width:302px}
+
+.mega-item{
+  display:block;
+  padding:11px 12px;border-radius:3px;
+  transition:background .16s ease;
+}
+.mega-item:hover{background:var(--paper)}
+.mega-item-t{
+  display:block;
+  font-family:var(--display);font-weight:700;font-size:1.02rem;
+  color:var(--navy-900);
+}
+.mega-item:hover .mega-item-t{color:var(--red)}
+.mega-item-d{
+  display:block;margin-top:3px;
+  font-size:.86rem;line-height:1.45;color:var(--steel);
+}
+
+/* The mega-panel is wider than its trigger, so it is pinned to the header wrap
+   rather than to the Contact button - anchoring it to the button pushes it off
+   the right edge at 1180px. The wrap is only `position:relative` inside the
+   1179px block in global.css, so without this the panel resolved against the
+   viewport and sat flush to the window edge instead of lining up with the
+   1220px content column. */
+.header .wrap{position:relative}
+.drop--mega{position:static}
+.mega{left:auto;right:0;width:min(880px,calc(100vw - 48px));padding:22px}
+.mega-inner{
+  display:grid;
+  grid-template-columns:264px 1fr;
+  gap:22px;
+  align-items:start;
+}
+.mega-card{background:var(--paper);border-radius:4px;padding:18px}
+.mega-h{
+  font-family:var(--display);font-weight:700;
+  font-size:.82rem;letter-spacing:.14em;text-transform:uppercase;
+  color:var(--steel);margin:0 0 12px;
+}
+/* `min-width:0` is load-bearing, not defensive. A grid item defaults to
+   `min-width:auto`, so the `1fr` column refuses to shrink below its content's
+   intrinsic width and silently overflows its own container instead - measured
+   at 1440px, .mega-cols resolved to 747px inside a 550px track and pushed the
+   document 66px wide. Same root cause as the .contact-grid overflow documented
+   further down this file. */
+.mega-inner > *{min-width:0}
+.mega-cols{display:grid;grid-template-columns:1fr 1fr;gap:18px;min-width:0}
+.mega-col{min-width:0}
+.mega-col .mega-h{padding-left:12px}
+.mega-dl{margin:0;font-size:.9rem;line-height:1.5}
+.mega-dl dt{
+  font-family:var(--mono);font-size:.62rem;letter-spacing:.16em;
+  text-transform:uppercase;color:var(--steel);margin-top:12px;
+}
+.mega-dl dt:first-child{margin-top:0}
+.mega-dl dd{margin:2px 0 0;color:var(--navy-900);overflow-wrap:anywhere}
+.mega-dl dd a:hover{color:var(--red)}
+.mega-aside{
+  grid-column:1 / -1;
+  display:grid;grid-template-columns:repeat(auto-fit,minmax(210px,1fr));gap:6px;
+  border-top:1px solid var(--line);padding-top:14px;margin-top:4px;
+}
+
+/* Inside the burger the panels are part of the document flow, not overlays.
+   `position:static` on .drop--mega above would otherwise leak the mega panel
+   out of the collapsed menu. */
+@media (max-width:1179px){
+  .drop{display:block}
+  .drop-panel,.mega{
+    position:static;width:auto;
+    margin:0 0 6px;padding:6px 0 10px;
+    border:0;border-radius:0;box-shadow:none;
+    background:transparent;
+  }
+  .drop--mega{position:relative}
+  .drop-btn.nav-link{
+    width:100%;justify-content:space-between;
+    padding:13px 4px;font-size:1.18rem;
+    border-bottom:1px solid var(--line);border-radius:0;
+  }
+  .drop-btn.nav-link.is-active::after{display:none}
+  .mega-inner{grid-template-columns:1fr;gap:14px}
+  .mega-cols{grid-template-columns:1fr;gap:10px}
+  .mega-col .mega-h,.mega-item{padding-left:4px;padding-right:4px}
+  .mega-aside{grid-template-columns:1fr;padding-top:10px}
+  /* The Get started panel sits in .header-cta, which is outside the burger, so
+     it stays an overlay even here. */
+  .header-cta .drop-panel{
+    position:absolute;right:0;width:302px;
+    margin-top:10px;padding:10px;
+    background:var(--white);
+    border:1px solid var(--line);border-radius:4px;
+    box-shadow:0 18px 40px rgba(8,21,46,.14);
+  }
+  .header-cta .drop{position:relative}
+}
+@media (max-width:560px){
+  .header-cta .drop-panel{width:min(302px,calc(100vw - 28px))}
+}
+
+/* Burger-only routes. Hidden by default and above 720px, because between 721px
+   and 1179px the Login and Get started controls are still in the header row. */
+.nav-extra{display:none}
+@media (max-width:720px){
+  /* `.drop{display:flex}` above is a single-class selector in a sheet that
+     loads after global.css, so it silently beat `.util-hide{display:none}` and
+     both controls stayed visible - the header wrapped to 140px at 390px and the
+     phone number went to two lines. Two classes outrank one; global.css is
+     untouched. */
+  .drop.util-hide{display:none}
+
+  .nav-extra{display:flex;flex-direction:column}
+  .nav-extra a{
+    font-family:var(--display);
+    font-size:1.18rem;font-weight:600;
+    letter-spacing:.045em;text-transform:uppercase;
+    color:var(--navy-800);
+    padding:13px 4px;
+    border-bottom:1px solid var(--line);
+  }
+  .nav-extra a:first-child{border-top:1px solid var(--line);margin-top:6px}
+  .nav-extra a:hover{color:var(--red)}
+}
+
+/* The Contact panel lives inside <nav class="nav">, so every link in it
+   inherited `.nav a`: display font, uppercase, .045em tracking, 11px padding
+   and - the damaging one - `white-space:nowrap`. Descriptions printed on top of
+   each other and service@tristatepropertymanagement.com refused to wrap, which
+   is where the last 60px of horizontal overflow came from. Two classes outrank
+   one, so this resets only what is inside a panel; the five nav links keep the
+   approved styling. */
+.nav .mega a,
+.nav .drop-panel a{
+  font:inherit;
+  letter-spacing:normal;
+  text-transform:none;
+  white-space:normal;
+  padding:0;
+  border-radius:0;
+  background:none;
+}
+.nav .mega a:hover,
+.nav .drop-panel a:hover{background:none}
+.nav .mega .mega-item{display:block;padding:11px 12px;border-radius:3px}
+.nav .mega .mega-item:hover{background:var(--paper)}
+.nav .mega .mega-dl a{color:var(--navy-900)}
+.nav .mega .mega-dl a:hover{color:var(--red)}

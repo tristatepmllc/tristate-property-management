@@ -1,7 +1,12 @@
 ---
-import { SITE, NAV } from '../data/site';
+import { SITE, NAV, GET_STARTED, LOGIN } from '../data/site';
+import ContactMenu from './ContactMenu.astro';
+import NavScript from './NavScript.astro';
 interface Props { active?: string }
 const { active = '/' } = Astro.props;
+
+/** A page reached from inside a menu should still light up its parent control. */
+const inGetStarted = GET_STARTED.some((i) => i.href === active && i.href !== '/contact/');
 ---
 <header class="header">
   <div class="wrap">
@@ -28,17 +33,74 @@ const { active = '/' } = Astro.props;
         <span class="lbl">Call the crew</span>
         <span class="num">{SITE.phone}</span>
       </a>
-      <a class="btn btn--red util-hide" href="/contact/">Get a Quote</a>
+
+      <div class="drop util-hide" data-drop>
+        <button type="button" class="drop-btn drop-btn--plain" aria-expanded="false" aria-controls="menu-login">
+          Login<span class="caret" aria-hidden="true"></span>
+        </button>
+        <div class="drop-panel drop-panel--right" id="menu-login" hidden>
+          {LOGIN.map((i) => (
+            <a class="mega-item" href={i.href}>
+              <span class="mega-item-t">{i.label}</span>
+              <span class="mega-item-d">{i.note}</span>
+            </a>
+          ))}
+        </div>
+      </div>
+
+      <div class="drop util-hide" data-drop>
+        <button
+          type="button"
+          class:list={['drop-btn', 'btn', 'btn--red', inGetStarted && 'is-active']}
+          aria-expanded="false"
+          aria-controls="menu-get-started"
+        >
+          Get started<span class="caret" aria-hidden="true"></span>
+        </button>
+        <div class="drop-panel drop-panel--right" id="menu-get-started" hidden>
+          {GET_STARTED.map((i) => (
+            <a class="mega-item" href={i.href}>
+              <span class="mega-item-t">{i.label}</span>
+              <span class="mega-item-d">{i.note}</span>
+            </a>
+          ))}
+        </div>
+      </div>
     </div>
 
     <nav class="nav" aria-label="Primary">
-      {NAV.map((item) => (
-        <a
-          href={item.href}
-          class={active === item.href ? 'is-active' : undefined}
-          aria-current={active === item.href ? 'page' : undefined}
-        >{item.label}</a>
-      ))}
+      {NAV.map((item) =>
+        'menu' in item ? (
+          <div class="drop drop--mega" data-drop>
+            <button
+              type="button"
+              class:list={['drop-btn', 'nav-link', active === item.href && 'is-active']}
+              aria-expanded="false"
+              aria-controls="menu-contact"
+            >
+              {item.label}<span class="caret" aria-hidden="true"></span>
+            </button>
+            <ContactMenu />
+          </div>
+        ) : (
+          <a
+            href={item.href}
+            class={active === item.href ? 'is-active' : undefined}
+            aria-current={active === item.href ? 'page' : undefined}
+          >{item.label}</a>
+        )
+      )}
+
+      {/* Below 720px both header controls are hidden - the old "Get a Quote"
+          button carried the same util-hide, and a 390px row cannot hold the
+          logo, the phone number, a button and the burger without wrapping the
+          header to 140px. These flat links put the same destinations inside the
+          menu, with no dropdown and no script. */}
+      <div class="nav-extra">
+        {GET_STARTED.map((i) => <a href={i.href}>{i.label}</a>)}
+        {LOGIN.map((i) => <a href={i.href}>{i.label}</a>)}
+      </div>
     </nav>
   </div>
 </header>
+<NavScript />

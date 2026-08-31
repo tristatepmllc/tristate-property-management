@@ -1,0 +1,83 @@
+---
+import { SITE } from '../data/site';
+
+/**
+ * The Contact mega-panel.
+ *
+ * Every block is conditional on real data. Press, newsletter and social are
+ * empty in site.ts, so those three blocks do not render at all - the same rule
+ * the reviews section and the coverage grid already follow. Fill the field and
+ * the block appears with no markup change here.
+ */
+const hasPress = SITE.press.length > 0;
+const hasSocial = SITE.social.length > 0;
+const showAside = hasPress || SITE.newsletter || hasSocial;
+---
+<div class="mega" id="menu-contact" hidden>
+  <div class="mega-inner">
+
+    <section class="mega-card">
+      <h3 class="mega-h">Contact us</h3>
+      <dl class="mega-dl">
+        <dt>Phone</dt>
+        <dd><a href={SITE.telHref}>{SITE.phone}</a></dd>
+        <dt>Email</dt>
+        <dd><a href={SITE.mailtoHref}>{SITE.email}</a></dd>
+        <dt>Serving</dt>
+        <dd>{SITE.address.region === 'CT' ? 'Connecticut, USA' : SITE.address.region}<br />Service-area business - we come to you.</dd>
+        <dt>Hours</dt>
+        <dd>Mon-Fri 7:00 AM - 6:00 PM<br />Emergency line answered outside those hours.</dd>
+      </dl>
+    </section>
+
+    <div class="mega-cols">
+      <div class="mega-col">
+        <h3 class="mega-h">New clients</h3>
+        <a class="mega-item" href="/contact/">
+          <span class="mega-item-t">Get started with Tristate</span>
+          <span class="mega-item-d">Tell us about the building and we will walk it with you.</span>
+        </a>
+        <a class="mega-item" href="/client-registration/">
+          <span class="mega-item-t">Open an account</span>
+          <span class="mega-item-d">For owners putting a property on file for ongoing work.</span>
+        </a>
+      </div>
+
+      <div class="mega-col">
+        <h3 class="mega-h">Existing clients</h3>
+        <a class="mega-item" href={SITE.telHref}>
+          <span class="mega-item-t">Call dispatch</span>
+          <span class="mega-item-d">{SITE.phone} - fastest route for a job already booked.</span>
+        </a>
+        <a class="mega-item" href={SITE.mailtoHref}>
+          <span class="mega-item-t">Email the team</span>
+          <span class="mega-item-d">Scheduling, invoices and anything not urgent.</span>
+        </a>
+      </div>
+    </div>
+
+    {showAside && (
+      <div class="mega-aside">
+        {hasPress && (
+          <a class="mega-item" href={`mailto:${SITE.press}`}>
+            <span class="mega-item-t">Press and inquiries</span>
+            <span class="mega-item-d">{SITE.press}</span>
+          </a>
+        )}
+        {SITE.newsletter && (
+          <a class="mega-item" href="/contact/#newsletter">
+            <span class="mega-item-t">Join our newsletter</span>
+            <span class="mega-item-d">Sign up to stay up to date.</span>
+          </a>
+        )}
+        {hasSocial && (
+          <a class="mega-item" href={SITE.social[0]} rel="noopener">
+            <span class="mega-item-t">Connect with us</span>
+            <span class="mega-item-d">Stay up to date by following us on social media.</span>
+          </a>
+        )}
+      </div>
+    )}
+
+  </div>
+</div>

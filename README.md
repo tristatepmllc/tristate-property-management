@@ -436,6 +436,72 @@ that get quoted are cheap to add:
 Do not add legal specifics without a primary source, and keep the dated disclaimer at the foot of
 any post that states law - rates and statutes change annually.
 
+## Header menus
+
+The header carries three dropdowns - Contact (a mega-panel), Login, and Get started -
+replacing two nav items and the old "Get a Quote" button.
+
+**The nav went from seven items to five, and that was forced, not stylistic.** The row is
+capped at ~1172px of content; seven links already spent ~1170px of it, and a Login control
+plus a Get started button need roughly 230px more. Register and Vendors are now the first two
+entries of the Get started menu, which is where a visitor looks for them anyway and how
+lessen.com splits the same two audiences. Keeping them in both places would have duplicated
+the link and broken the row. Both pages are still in the footer and on `/sitemap/`.
+
+| Control | Contents |
+|---|---|
+| Contact (mega) | Contact us panel (phone, email, service area, hours), New clients, Existing clients |
+| Get started | Become a client -> `/client-registration/`, Become a vendor -> `/vendor-network/`, Request a quote -> `/contact/` |
+| Login | Client login, Vendor login - both to `/portal/` until auth exists |
+
+Behaviour lives in `src/scripts/nav.ts`. The burger stays CSS-only, so it still works with
+JavaScript disabled; only the panels are scripted, and with JS off every panel stays `hidden`
+and no route is stranded. Click toggles, Escape closes and returns focus to the control,
+clicking outside closes, and tabbing out of a group closes it. Hover opens on a fine pointer
+only - **and the first click after a hover-open is deliberately absorbed**, because otherwise
+the mouse arriving on the control opens the panel and the click that follows immediately
+closes it, so the menu never appears to open at all.
+
+`/portal/` is a holding page, not a login form. `/api/me`, `/api/jobs` and `/api/cashback/*`
+are 501 stubs, so a Login control that led to a 404 or to a sign-in box that cannot sign
+anyone in would be worse than no Login control. The page says plainly what is not running and
+how to reach a person. Replace it in the same commit that ships auth.
+
+**Press, newsletter and social are absent on purpose.** `SITE.press` is empty (there is no
+press inbox - inventing `pr@` gives a journalist a bouncing address), `SITE.newsletter` is
+`false` (no list, no ESP, no signup endpoint, and no D1 in production), and `SITE.social` is
+empty. Each is wired data-first: fill the field and the block appears with no markup change,
+the same rule `areaServed` and `TESTIMONIALS` already follow.
+
+### Five bugs the measurement sweep caught
+
+Every one of these looked fine in the code and only showed up under Playwright.
+
+1. **Header wrapped to 140px at 390px.** Get started does not fit a phone row next to the
+   logo, the phone number and the burger. The old "Get a Quote" button carried `util-hide`
+   for the same reason; the same rule now applies, and `.nav-extra` puts the same
+   destinations inside the burger as flat links below 720px.
+2. **`.util-hide` stopped working.** `.drop{display:flex}` is a single-class selector in a
+   sheet that loads after global.css, so it beat `.util-hide{display:none}`. `.drop.util-hide`
+   outranks it; global.css is untouched.
+3. **The mega-panel anchored to the viewport.** `.header .wrap` is only `position:relative`
+   inside the 1179px block, so above that the panel sat flush to the window edge instead of
+   lining up with the 1220px content column.
+4. **66px of horizontal overflow with the panel open.** Grid items default to
+   `min-width:auto`, so `.mega-cols` resolved to 747px inside a 550px track. Same root cause
+   as the `.contact-grid` overflow documented below.
+5. **The Contact panel inherited `.nav a`, and Get started was invisible.** The mega lives
+   inside `<nav class="nav">`, so every link in it picked up the display font, uppercase,
+   11px padding and `white-space:nowrap` - descriptions printed over each other and the email
+   address refused to wrap. Separately, a blanket `background:none` on `.drop-btn` stripped
+   `.btn--red` of its fill, leaving white text on a white header: the Get started button was
+   present, 160px wide, and completely invisible. `.drop-btn:not(.btn)` fixes the second.
+
+Verified after the fixes at 1600 / 1440 / 1366 / 1280 / 1220 / 1180 / 1179 / 1150 / 1024 /
+900 / 768 / 560 / 390 / 320: header holds 94px (82px below 900px), the phone number stays on
+one line, the burger flips at 1180px, the mega panel's right edge matches the content wrap,
+and horizontal overflow is 0 at every width with every panel both closed and open.
+
 ## Registration pages
 
 Two dedicated capture pages, both reusing the approved `.form-card` / `.field` /
@@ -458,9 +524,11 @@ performance stay comparable in the same query. It is deliberately positioned aga
 `/contact/`: contact is a price on one job, registration is a property on file. Without that
 split the two pages compete for the same visitor and neither wins.
 
-Both are in `NAV`, as **Register** and **Vendors**, and **Home was dropped**. The logo is
-already an `<a href="/">` two inches to the left, so a Home item spent about 65px of a
-hard-capped row duplicating its own neighbour. That 65px is what pays for the two new items.
+Neither is in `NAV` any more. They were, as **Register** and **Vendors**; they are now the
+first two entries of the **Get started** menu - see "Header menus" above for why the row could
+not hold seven links plus a Login control plus a Get started button. **Home was dropped** and
+stays dropped: the logo is already an `<a href="/">` two inches to the left, so a Home item
+spent about 65px of a hard-capped row duplicating its own neighbour.
 
 The cap is the whole constraint. `.wrap` is `max-width:1220px` with a 24px gutter, so the
 header row can never exceed about 1172px of content however wide the monitor is - a wider
