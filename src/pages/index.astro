@@ -2,7 +2,7 @@
 import BaseLayout from '../layouts/BaseLayout.astro';
 import LeadFormExtras from '../components/LeadFormExtras.astro';
 import { SITE } from '../data/site';
-import { TESTIMONIALS } from '../data/testimonials';
+import { TESTIMONIALS, REVIEWS_NOTE } from '../data/testimonials';
 import Testimonials from '../components/Testimonials.astro';
 import { graph, localBusiness, organisation, website, serviceList } from '../lib/schema';
 
@@ -361,6 +361,7 @@ const hasReviews = TESTIMONIALS.length > 0;
   items={TESTIMONIALS}
   eyebrow="From the people who sign the invoices"
   heading="What property managers say"
+  note={REVIEWS_NOTE}
   ctaLabel="Get a free quote"
   ctaHref="/contact/"
 />

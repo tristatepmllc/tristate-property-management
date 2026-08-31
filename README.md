@@ -209,6 +209,9 @@ token where the web sends a session cookie.
       `/api/leads` with `source = 'chat-widget'`, and the status line says "Messages go straight
       to dispatch" rather than "Online now". It does still depend on the D1 schema above.
 - [ ] **Unverified claims** - see the inventory below; seven of them, all listed with locations.
+- [ ] **Demo reviews are live on the homepage.** Five invented cards, added so the layout could
+      be shown to the owner, labelled on the page as samples. Set `DEMO_REVIEWS` to `false` in
+      `src/data/testimonials.ts` to remove them. This must happen before the site is indexed.
 
 ## Blog
 
@@ -391,8 +394,16 @@ homepage passes `TESTIMONIALS` with a "Get a free quote" CTA, and `/vendor-netwo
 purpose - a vendor is a supplier, not a customer, and one shared list would put a contractor's
 quote on a page selling to building owners.
 
-**`TESTIMONIALS` is still empty and the homepage still renders no reviews section.** Nothing has
-been invented to fill it; see the note in the data file.
+**The homepage is currently running DEMO CONTENT and it has to come out before the site is
+indexed.** Five invented cards were added so the layout could be shown to the owner. Every name
+is literally "Sample", and the section renders a visible line above the cards saying the entries
+are not real client quotes - a comment in a source file does not reach the visitor reading the
+card, which is the whole reason the previous seven fabricated testimonials were a problem.
+
+**To clear it: set `DEMO_REVIEWS` to `false` in `src/data/testimonials.ts`.** That is the entire
+revert. `TESTIMONIALS` goes back to empty, `REVIEWS_NOTE` becomes `undefined`, the section stops
+rendering and the page rhythm restores itself, and no stale disclaimer is left behind. Do not
+half-remove it by deleting the note and keeping the cards.
 
 **`PARTNER_TESTIMONIALS` holds seven real contractor quotes that were given about Divisions and
 DMG, not about Tristate.** Common ownership is why they can appear on this site at all; it is

@@ -51,7 +51,79 @@ export type Testimonial = {
  *     initials: 'FN',
  *   }
  */
-export const TESTIMONIALS: Testimonial[] = [];
+/* ═══════════════════════════════════════════════════════════════════════
+   DEMO CONTENT - REMOVE BEFORE THE SITE IS INDEXED
+   ───────────────────────────────────────────────────────────────────────
+   Added so the layout could be shown to the owner. These are NOT quotes
+   anybody gave. Every name is literally "Sample", the companies are
+   invented, and the section renders a visible line above the cards saying
+   so, because a comment in a source file does not reach the visitor
+   reading the card.
+
+   To clear it: set DEMO_REVIEWS to false. That is the whole revert - the
+   section stops rendering and the page rhythm goes back on its own.
+
+   Replace with real client quotes, with permission. Publishing a
+   testimonial nobody gave is a deceptive practice under 16 CFR Part 255,
+   and unlabelled demo copy that nobody remembers to delete is how a site
+   ends up doing that by accident rather than on purpose.
+   ═══════════════════════════════════════════════════════════════════════ */
+const DEMO: Testimonial[] = [
+  {
+    quote:
+      'They took over four buildings for us in the same month and we have not had to chase a single work order since. One number, one invoice, and the same two technicians every time so nobody has to be shown the boiler room twice.',
+    name: 'Sample Name One',
+    role: 'Facilities Director',
+    company: 'Sample Property Group',
+    initials: 'S1',
+  },
+  {
+    quote:
+      'The written quote matched the final invoice to the dollar. After the last contractor that is the part I care about most.',
+    name: 'Sample Name Two',
+    role: 'Owner',
+    company: 'Sample Retail Holdings',
+    initials: 'S2',
+  },
+  {
+    quote:
+      'A pipe went in the ceiling at half past ten at night. Someone answered, someone was on site, and the tenants opened on time the next morning. That is the entire reason we moved everything across to them.',
+    name: 'Sample Name Three',
+    role: 'Regional Manager',
+    company: 'Sample Management Co',
+    initials: 'S3',
+  },
+  {
+    quote:
+      'We used to hold five separate vendor contracts for one building. Now there is one, and my month end takes an afternoon instead of a week.',
+    name: 'Sample Name Four',
+    role: 'Operations Lead',
+    company: 'Sample Industrial Partners',
+    initials: 'S4',
+  },
+  {
+    quote:
+      'They walked the property before quoting and found two things we had not asked about. Both would have cost us far more in six months.',
+    name: 'Sample Name Five',
+    role: 'Property Manager',
+    company: 'Sample Multifamily LLC',
+    initials: 'S5',
+  },
+];
+
+/** The single switch. Set to false and the homepage reviews section is gone. */
+export const DEMO_REVIEWS = true;
+
+export const TESTIMONIALS: Testimonial[] = DEMO_REVIEWS ? DEMO : [];
+
+/**
+ * Passed to the section as its `note`, so the label is on the page rather than
+ * only in this file. Becomes undefined the moment DEMO_REVIEWS is false, which
+ * means there is no stale disclaimer left behind once real quotes go in.
+ */
+export const REVIEWS_NOTE: string | undefined = DEMO_REVIEWS
+  ? 'Sample entries, shown so the layout can be reviewed. These are not real client quotes and will be replaced before this page goes live.'
+  : undefined;
 
 /**
  * Contractor quotes for /vendor-network/. Kept separate from TESTIMONIALS

@@ -1006,3 +1006,14 @@ a[href^="mailto:"]{overflow-wrap:anywhere}
   .carousel-btn--side{position:static;transform:none;box-shadow:none}
   .quotes-carousel--centred .quotes-track .quote{flex-basis:100%}
 }
+
+/* The demo-content label. It has to be readable at a glance, because its whole
+   job is stopping someone - including whoever ships this - from mistaking five
+   invented cards for five real ones. It disappears with the demo data: the note
+   is undefined once DEMO_REVIEWS is false, and the component only renders the
+   paragraph when a note is passed. */
+.reviews .sec-head p:not(.eyebrow){
+  color:var(--steel);
+  border-left:3px solid var(--red);
+  padding-left:14px;
+}
