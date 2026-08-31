@@ -242,39 +242,59 @@ components, so the blog inherits the design rather than introducing new UI; only
 
 ## Logo assets
 
-Source artwork already ships with a real alpha channel, so it is used as-is — no cutout step.
-Verified: of ~71,000 semi-transparent edge pixels only 2 are near-white, so there is no halo on
-the navy footer.
+The current artwork is the square TS monogram plus a two-line "PROPERTY MANAGEMENT" wordmark.
+It ships with a real alpha channel, so it is used as-is - no cutout step. Verified on the new
+source: of 5,607 semi-transparent edge pixels, zero are near-white, so there is no halo on the
+navy footer. The artwork uses exactly two flat colours, navy `#050A31` and red `#C90F14`. Those
+are close to but not identical to the stylesheet tokens (`--navy-900:#08152E`, `--red:#D8232A`);
+the supplied file is left untouched rather than recoloured to match, because `global.css` is
+frozen and the brand file is the client's.
 
 | File | Use |
 |---|---|
 | `/images/logo-tristate.{avif,webp,png}` | header — dark ink, for the white background |
-| `/images/logo-tristate-light.{avif,webp,png}` | footer — supplied as a separate white-ink artwork, used as-is (no algorithmic recolouring) |
+| `/images/logo-tristate-light.{avif,webp,png}` | footer — navy ink mapped to white, red kept. This is the one algorithmic recolour in the repo, and it is safe here because the artwork is two flat colours: pixels are classified by `r > b` and nothing is blended. It reproduces the treatment of the previous supplied light artwork, which also kept its red. |
 | `/favicon.ico`, `/favicon-32.png`, `/icon-192.png`, `/icon-512.png` | favicons, from the circular T-and-roof mark |
 | `/icon-maskable-512.png` | Android maskable - mark at 72% on white, inside the circle safe zone |
 | `/apple-touch-icon.png` | 180x180 opaque white plate (iOS flattens transparency to black) |
 
-The favicon uses the circular mark, not the horizontal lockup. Aspect ratio decides how large a
-mark can render inside a square icon: the lockup is 3.5:1 and shrank to a thin band, the disc is
-0.99:1 and fills the tile completely. It is also self-contained - it carries its own white disc
-and red ring, so it reads on light, dark and grey tab bars with no background plate behind it.
+**The six favicon files still carry the previous circular T-and-roof mark and no longer match
+the header.** They were deliberately not regenerated in the logo swap. The new monogram is a
+clean 1.00:1 and would tile well, but it is navy on transparent with no self-contained plate, so
+it disappears against a dark tab bar - the exact property the circular mark was chosen for.
+Fixing it properly means deciding on a background plate, which is a brand call, not a build one.
+Until then the icons are stale but functional; `/images/og-tristate.jpg` carries the old lockup
+for the same reason and needs the same decision.
 
 Regenerate from the source disc if the artwork changes. `apple-touch-icon.png` and the maskable
 icon need opaque backgrounds; the rest keep their transparency.
 
-Served through `<picture>`: header AVIF 18 KB / WebP 31 KB / PNG 33 KB, footer AVIF 28 KB /
-WebP 38 KB / PNG 49 KB. The header copy
+Served through `<picture>`: header AVIF 7 KB / WebP 12 KB / PNG 18 KB, footer AVIF 7 KB /
+WebP 10 KB / PNG 16 KB - roughly a third of the previous lockup's weight. The header copy
 carries `fetchpriority="high"`; the footer copy is lazy. `icon-512.png` is also the
 `Organization.logo` in the JSON-LD.
 
-The header grew from a 78px to a 94px minimum so the lockup's "PROFESSIONAL · RELIABLE ·
-COMMITTED" line stays legible at 68px tall; nav and CTA keep their approved positions, and the
-header steps down to 82px below 900px wide and shrinks further on phones.
+The header holds a 94px minimum, stepping down to 82px below 900px. The previous lockup needed
+that height to keep its "PROFESSIONAL · RELIABLE · COMMITTED" microline legible; the current
+artwork has no microtext, so the bar keeps 94px purely for the nav and CTA and has more
+breathing room. Dropping it back to the original 78px is now possible but was not done, because
+it changes the approved proportions for no functional gain.
 
-To regenerate after an artwork change, re-run the cutout against the new source and re-emit at
-460px wide — roughly 2.5x the largest rendered size (68px tall), so anything bigger is wasted
-bytes. The two files have slightly different aspect ratios (header 2.63, footer 2.67), so their
-`width`/`height` attributes differ — update them whenever the artwork changes, or CLS returns.
+To regenerate after an artwork change, crop the source to its own ink bounding box and re-emit
+at 460px wide, roughly 2.5x the largest rendered size, so anything bigger is wasted bytes. Both
+files are 460x119, aspect **3.866**; keep the `width`/`height` attributes in step or CLS returns.
+
+**The files are cropped to the ink, so `height x 3.866` is the rendered width - there is no
+padding to absorb a mistake.** The header row is capped at ~1172px of content and seven nav
+items already spend ~1170px of it, so the logo's width budget is 178px, which is exactly what
+the previous lockup rendered at. `.logo img{height:46px}` is that budget divided by the aspect
+ratio, and it is not a round number by accident. Measured with Playwright at 1600 / 1440 / 1366
+/ 1280 / 1220 / 1180 / 1179 / 1150 / 1024 / 900 / 768 / 390: at **48px (186px wide) the phone
+number wraps onto two lines at 1180px** - the widest viewport that still shows the full nav, and
+the exact failure mode the nav-gap reclaim was done to fix. At 46px the row is clean at every
+width: header 94/82px, `.header-cta` holds 290px, the phone number stays on one line, the burger
+flips at 1180px, and horizontal overflow is 0 everywhere including 390px. Re-run the sweep before
+changing this value.
 
 Policy pages carry no "last updated" date. If you materially change one, say so in the page
 text itself rather than reintroducing a date stamp that nobody remembers to bump - a stale

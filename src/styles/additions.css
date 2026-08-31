@@ -234,29 +234,37 @@ img{height:auto}
    capped so the 78px header keeps its approved proportions. */
 
 .logo picture{display:block;line-height:0}
+/* The artwork is cropped to its own ink, so height x 3.866 IS the rendered
+   width - there is no padding to absorb a mistake. The header row is capped at
+   ~1172px and seven nav items already spend ~1170px of it, so the logo has a
+   hard width budget of 178px - the exact width the previous lockup rendered at.
+   46px is that budget divided by the aspect ratio. Measured: 48px (186px wide)
+   wraps the phone number onto two lines at 1180px, the widest viewport that
+   still shows the full nav. Do not raise this without re-running the sweep. */
 .logo img{
   display:block;
-  height:68px;width:auto;
+  height:46px;width:auto;
   max-width:min(360px, 50vw);
   object-fit:contain;
 }
-/* the header grows a little to carry the lockup without shrinking the tagline
-   into illegibility; nav and CTA keep their approved positions */
+/* The previous lockup carried a "PROFESSIONAL - RELIABLE - COMMITTED" microline
+   and needed 94px to keep it legible. This artwork has no microtext, so the bar
+   holds its approved 94px purely for the nav and CTA, with more breathing room. */
 .header .wrap{min-height:94px}
 
-.footer .logo img{height:86px;max-width:320px}
+.footer .logo img{height:58px;max-width:320px}
 .footer .logo{margin-bottom:6px}
 
 @media (max-width:900px){
-  .logo img{height:56px}
+  .logo img{height:40px}
   .header .wrap{min-height:82px}
 }
 @media (max-width:720px){
-  .logo img{height:50px;max-width:60vw}
-  .footer .logo img{height:64px}
+  .logo img{height:38px;max-width:60vw}
+  .footer .logo img{height:44px}
 }
 @media (max-width:420px){
-  .logo img{height:42px;max-width:56vw}
+  .logo img{height:32px;max-width:56vw}
 }
 
 /* 404 + site index + chat additions */
