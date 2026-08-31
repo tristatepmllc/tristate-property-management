@@ -254,20 +254,31 @@ frozen and the brand file is the client's.
 |---|---|
 | `/images/logo-tristate.{avif,webp,png}` | header — dark ink, for the white background |
 | `/images/logo-tristate-light.{avif,webp,png}` | footer — navy ink mapped to white, red kept. This is the one algorithmic recolour in the repo, and it is safe here because the artwork is two flat colours: pixels are classified by `r > b` and nothing is blended. It reproduces the treatment of the previous supplied light artwork, which also kept its red. |
-| `/favicon.ico`, `/favicon-32.png`, `/icon-192.png`, `/icon-512.png` | favicons, from the circular T-and-roof mark |
-| `/icon-maskable-512.png` | Android maskable - mark at 72% on white, inside the circle safe zone |
-| `/apple-touch-icon.png` | 180x180 opaque white plate (iOS flattens transparency to black) |
+| `/favicon.ico` (16/32/48), `/favicon-32.png`, `/icon-192.png`, `/icon-512.png` | favicons, from the square TS monogram source, flattened opaque |
+| `/icon-maskable-512.png` | Android maskable - mark at 72% on navy, inside the circle safe zone |
+| `/apple-touch-icon.png` | 180x180, full-bleed and opaque - iOS flattens transparency to black and applies its own squircle |
 
-**The six favicon files still carry the previous circular T-and-roof mark and no longer match
-the header.** They were deliberately not regenerated in the logo swap. The new monogram is a
-clean 1.00:1 and would tile well, but it is navy on transparent with no self-contained plate, so
-it disappears against a dark tab bar - the exact property the circular mark was chosen for.
-Fixing it properly means deciding on a background plate, which is a brand call, not a build one.
-Until then the icons are stale but functional; `/images/og-tristate.jpg` carries the old lockup
-for the same reason and needs the same decision.
+All six favicon files are generated from a dedicated square source, `Favicon.png` - the TS
+monogram on a full-bleed navy field with red lower corners. It is 1.00:1 and self-contained, so
+it reads on light, dark and grey tab bars without a background plate. Verified legible at 16 /
+20 / 24 / 32 / 48 / 64 / 96px against both a light and a dark chrome strip.
 
-Regenerate from the source disc if the artwork changes. `apple-touch-icon.png` and the maskable
-icon need opaque backgrounds; the rest keep their transparency.
+**The source ships the letterforms as transparent holes, not white pixels** - 424,334 of them.
+On a white page that looks identical to white ink, which is why it is easy to miss, but as a
+favicon the browser chrome would have shown through the T and the S and the mark would have
+collapsed into a navy blob on any dark tab bar. Every icon is therefore composited onto white
+first and saved fully opaque. Re-flatten after any artwork change; do not ship the source as-is.
+
+`icon-maskable-512.png` is the one that is not full-bleed. Android may crop a maskable icon to a
+circle of 80% diameter, and a square mark run to the edges loses its corners to that. The mark
+sits at 72% on its own navy field instead, so the glyph clears the safe zone and the field
+covers whatever the mask keeps. Verified against a simulated circular mask.
+
+`/images/og-tristate.jpg` still carries the previous horizontal lockup and is the last asset out
+of step with the brand.
+
+Regenerate all six from the square source if the artwork changes. Every one of them is opaque -
+the previous set kept transparency on four files, which the current source cannot afford.
 
 Served through `<picture>`: header AVIF 7 KB / WebP 12 KB / PNG 18 KB, footer AVIF 7 KB /
 WebP 10 KB / PNG 16 KB - roughly a third of the previous lockup's weight. The header copy
