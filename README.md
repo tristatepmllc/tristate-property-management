@@ -387,10 +387,26 @@ self-hosted here and should come first.
 
 The section is a reusable component, `src/components/Testimonials.astro`, mounted twice: the
 homepage passes `TESTIMONIALS` with a "Get a free quote" CTA, and `/vendor-network/` passes
-`PARTNER_TESTIMONIALS` with an "Apply to the vendor network" CTA. Both arrays are empty, so
-neither renders anything today. They are separate arrays on purpose - a vendor is a supplier,
-not a customer, and one shared list would put a plumber's quote on a page selling to building
-owners.
+`PARTNER_TESTIMONIALS` with an "Apply to the vendor network" CTA. They are separate arrays on
+purpose - a vendor is a supplier, not a customer, and one shared list would put a contractor's
+quote on a page selling to building owners.
+
+**`TESTIMONIALS` is still empty and the homepage still renders no reviews section.** Nothing has
+been invented to fill it; see the note in the data file.
+
+**`PARTNER_TESTIMONIALS` holds seven real contractor quotes that were given about Divisions and
+DMG, not about Tristate.** Common ownership is why they can appear on this site at all; it is
+not what makes them accurate. Two name the platform inside the quote - "the DMG app", "working
+for Divisions" - and one names Fred Smith, a Divisions contact. The section therefore carries a
+`note` under the heading saying where they came from. With the note they are accurate; without
+it they are misattributed, and someone searching a line of one would find the source in a
+second. Do not remove the note, do not edit the brand names out of the quotes, and do not move
+them to the homepage: a facility manager buying janitorial work has no use for a contractor
+praising a job-dispatch app.
+
+`role` and `company` are both optional on the type. None of the seven arrived with a job title,
+and "Owner" guessed seven times would be seven fabrications sitting beside seven real quotes.
+One arrived as a business name with no individual, so it publishes as the business.
 
 Card layout: a round face at the top (an image if the entry has `avatar`, otherwise the
 initials), then the name, the company in red and linked when `companyUrl` is set, the role, and
@@ -407,6 +423,12 @@ the company read as the larger of the two and the hierarchy inverted; the name c
 to compensate. And `.quotes-carousel` has `overflow-x:clip` applied further up `additions.css`,
 so arrows positioned outside the box would be clipped by it - they are positioned against the
 padded carousel instead.
+
+The carousel script ships with the component, not from a page. It was imported only by
+`index.astro`, which is fine while one route mounts a carousel and silently wrong the moment a
+second does - `/vendor-network/` rendered static cards and no dots, with no error anywhere. The
+script also now initialises every `[data-carousel]` on the page rather than the first one it
+finds, so a second instance cannot fail the same way again.
 
 Built on native scroll-snap rather than a transform track, so touch swipe, keyboard scrolling
 and the scrollbar work without extra code, and with JavaScript disabled the section degrades to

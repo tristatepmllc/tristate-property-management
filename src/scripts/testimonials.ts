@@ -12,10 +12,7 @@
 
 const INTERVAL_MS = 6000;
 
-function init(): void {
-  const root = document.querySelector<HTMLElement>('[data-carousel]');
-  if (!root) return;
-
+function init(root: HTMLElement): void {
   const track = root.querySelector<HTMLElement>('.quotes-track');
   const prev = root.querySelector<HTMLButtonElement>('[data-carousel-prev]');
   const next = root.querySelector<HTMLButtonElement>('[data-carousel-next]');
@@ -164,6 +161,9 @@ function init(): void {
   start();
 }
 
-init();
+/* Every carousel on the page, not just the first. The section is a component
+   now and is mounted on more than one route; a single querySelector would have
+   left any second instance dead with no error to show for it. */
+document.querySelectorAll<HTMLElement>('[data-carousel]').forEach(init);
 
 export {};

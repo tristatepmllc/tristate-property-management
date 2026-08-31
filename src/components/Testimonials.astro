@@ -7,11 +7,14 @@ interface Props {
   heading: string;
   ctaLabel?: string;
   ctaHref?: string;
+  /** Shown under the heading. Use it to say where the quotes came from when
+   *  that is not obvious from the page they sit on. */
+  note?: string;
   /** off-white band instead of white; the homepage alternates these. */
   paper?: boolean;
 }
 
-const { items, eyebrow, heading, ctaLabel, ctaHref, paper = false } = Astro.props;
+const { items, eyebrow, heading, ctaLabel, ctaHref, note, paper = false } = Astro.props;
 ---
 {items.length > 0 && (
 <section class={`section reviews${paper ? ' section--paper' : ''}`}>
@@ -19,6 +22,7 @@ const { items, eyebrow, heading, ctaLabel, ctaHref, paper = false } = Astro.prop
     <div class="sec-head">
       <p class="eyebrow">{eyebrow}</p>
       <h2>{heading}</h2>
+      {note && <p>{note}</p>}
     </div>
 
     <div class="quotes-carousel quotes-carousel--centred" data-carousel>
@@ -27,18 +31,20 @@ const { items, eyebrow, heading, ctaLabel, ctaHref, paper = false } = Astro.prop
           <article class="quote quote--centred">
             <div class="quote-face">
               {t.avatar ? (
-                <img src={t.avatar} alt={t.avatarAlt ?? `${t.company} logo`} width="128" height="128" loading="lazy" decoding="async" />
+                <img src={t.avatar} alt={t.avatarAlt ?? `${t.company ?? t.name} logo`} width="128" height="128" loading="lazy" decoding="async" />
               ) : (
                 <span class="quote-face-initials" aria-hidden="true">{t.initials}</span>
               )}
             </div>
             <p class="quote-name">{t.name}</p>
-            <p class="quote-org">
-              {t.companyUrl
-                ? <a href={t.companyUrl} rel="noopener nofollow">{t.company}</a>
-                : t.company}
-            </p>
-            <p class="quote-role">{t.role}</p>
+            {t.company && (
+              <p class="quote-org">
+                {t.companyUrl
+                  ? <a href={t.companyUrl} rel="noopener nofollow">{t.company}</a>
+                  : t.company}
+              </p>
+            )}
+            {t.role && <p class="quote-role">{t.role}</p>}
             <blockquote>{t.quote}</blockquote>
           </article>
         ))}
@@ -63,3 +69,10 @@ const { items, eyebrow, heading, ctaLabel, ctaHref, paper = false } = Astro.prop
   </div>
 </section>
 )}
+
+<script>
+  /* Shipped with the component rather than from a page, so every route that
+     mounts a carousel gets its behaviour. It used to be imported only by
+     index.astro, which left the vendor page with static cards and no dots. */
+  import '../scripts/testimonials';
+</script>
