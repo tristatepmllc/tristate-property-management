@@ -1,0 +1,65 @@
+---
+import type { Testimonial } from '../data/testimonials';
+
+interface Props {
+  items: readonly Testimonial[];
+  eyebrow: string;
+  heading: string;
+  ctaLabel?: string;
+  ctaHref?: string;
+  /** off-white band instead of white; the homepage alternates these. */
+  paper?: boolean;
+}
+
+const { items, eyebrow, heading, ctaLabel, ctaHref, paper = false } = Astro.props;
+---
+{items.length > 0 && (
+<section class={`section reviews${paper ? ' section--paper' : ''}`}>
+  <div class="wrap">
+    <div class="sec-head">
+      <p class="eyebrow">{eyebrow}</p>
+      <h2>{heading}</h2>
+    </div>
+
+    <div class="quotes-carousel quotes-carousel--centred" data-carousel>
+      <div class="quotes-track">
+        {items.map((t) => (
+          <article class="quote quote--centred">
+            <div class="quote-face">
+              {t.avatar ? (
+                <img src={t.avatar} alt={t.avatarAlt ?? `${t.company} logo`} width="128" height="128" loading="lazy" decoding="async" />
+              ) : (
+                <span class="quote-face-initials" aria-hidden="true">{t.initials}</span>
+              )}
+            </div>
+            <p class="quote-name">{t.name}</p>
+            <p class="quote-org">
+              {t.companyUrl
+                ? <a href={t.companyUrl} rel="noopener nofollow">{t.company}</a>
+                : t.company}
+            </p>
+            <p class="quote-role">{t.role}</p>
+            <blockquote>{t.quote}</blockquote>
+          </article>
+        ))}
+      </div>
+
+      <div class="carousel-controls">
+        <button type="button" class="carousel-btn carousel-btn--side carousel-btn--prev" data-carousel-prev aria-label="Previous reviews">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M15 18 9 12l6-6"/></svg>
+        </button>
+        <div class="carousel-dots" data-carousel-dots></div>
+        <button type="button" class="carousel-btn carousel-btn--side carousel-btn--next" data-carousel-next aria-label="Next reviews">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m9 18 6-6-6-6"/></svg>
+        </button>
+      </div>
+    </div>
+
+    {ctaLabel && ctaHref && (
+      <div class="reviews-cta">
+        <a class="btn btn--red" href={ctaHref}>{ctaLabel}</a>
+      </div>
+    )}
+  </div>
+</section>
+)}

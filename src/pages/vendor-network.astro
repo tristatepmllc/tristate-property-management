@@ -1,5 +1,7 @@
 ---
 import BaseLayout from '../layouts/BaseLayout.astro';
+import Testimonials from '../components/Testimonials.astro';
+import { PARTNER_TESTIMONIALS } from '../data/testimonials';
 import LeadFormExtras from '../components/LeadFormExtras.astro';
 import { SITE, SERVICE_CATEGORIES } from '../data/site';
 import { graph, breadcrumbs } from '../lib/schema';
@@ -108,7 +110,7 @@ const TRADES = [
   </section>
 
   <!-- ================= FORM ================= -->
-  <section class="section">
+  <section class="section" id="apply">
     <div class="wrap">
       <div class="sec-head sec-head--form">
         <p class="eyebrow">Vendor registration</p>
@@ -223,6 +225,16 @@ const TRADES = [
       </div>
     </div>
   </section>
+
+  <!-- ================= PARTNER REVIEWS ================= -->
+  <Testimonials
+    items={PARTNER_TESTIMONIALS}
+    eyebrow="From the crews who take our work orders"
+    heading="Hear from our partners"
+    ctaLabel="Apply to the vendor network"
+    ctaHref="#apply"
+    paper={true}
+  />
 
   <!-- ================= WHAT HAPPENS NEXT ================= -->
   <section class="section section--navy">

@@ -918,3 +918,91 @@ a[href^="mailto:"]{overflow-wrap:anywhere}
    and the call link came out navy like every other row. It leads the menu
    because it is the emergency action; it should not look like a nav item. */
 .nav-extra a.nav-extra-call{color:var(--red)}
+
+/* ── Reviews carousel: centred cards, side arrows, CTA ───────────────────
+   Card layout follows the reference: a round face at the top, then name,
+   company, role and the quote, all centred. The red top border stays, because
+   that is what a card looks like on this site - the reference's plain drop
+   shadow would have read as a foreign component.
+
+   Rendering is unchanged when TESTIMONIALS is empty: the component returns
+   nothing at all, so there is no empty band to style around. */
+
+.quote--centred{
+  text-align:center;
+  align-items:center;
+  padding:32px 26px 30px;
+}
+.quote-face{
+  width:112px;height:112px;
+  border-radius:50%;
+  overflow:hidden;
+  background:var(--paper);
+  border:1px solid var(--line);
+  display:grid;place-items:center;
+  flex:none;
+  margin-bottom:18px;
+}
+.quote-face img{width:100%;height:100%;object-fit:cover;display:block}
+.quote-face-initials{
+  font-family:var(--display);font-weight:700;font-size:2.2rem;
+  color:var(--navy-700);letter-spacing:.02em;
+}
+/* The name is set in the condensed display face and the company in the body
+   face, so matching their point sizes does not match their optical weight - at
+   1.12rem / 0.95rem the company read as the larger of the two and the hierarchy
+   inverted. The name carries the extra size to compensate. */
+.quote-name{
+  font-family:var(--display);font-weight:700;font-size:1.34rem;
+  letter-spacing:.01em;
+  color:var(--navy-900);margin:0;
+}
+.quote-org{margin:4px 0 0;font-size:.9rem;color:var(--red);font-weight:600}
+.quote-org a{color:inherit}
+.quote-org a:hover{text-decoration:underline}
+.quote-role{
+  margin:2px 0 0;
+  font-family:var(--mono);font-size:.68rem;letter-spacing:.14em;
+  text-transform:uppercase;color:var(--steel);
+}
+.quote--centred blockquote{
+  margin:16px 0 0;
+  font-size:.95rem;line-height:1.7;color:#33425C;
+}
+
+/* Side arrows. `.quotes-carousel` carries `overflow-x:clip` further up this
+   file - it exists to stop the track's 4px bleed leaking into the document -
+   and anything positioned outside the box would be clipped by it. So the
+   arrows are positioned against the section wrap instead, and the carousel is
+   given side padding at widths where there is room for them. */
+.quotes-carousel--centred{position:relative;padding:0 64px}
+.carousel-btn--side{
+  position:absolute;top:50%;transform:translateY(-50%);
+  z-index:2;
+  width:46px;height:46px;
+  box-shadow:0 2px 10px rgba(8,21,46,.08);
+}
+.carousel-btn--prev{left:0}
+.carousel-btn--next{right:0}
+.reviews .carousel-controls{margin-top:24px}
+.reviews-cta{display:flex;justify-content:center;margin-top:26px}
+
+/* Three cards fit inside the padded track, so the flex-basis has to account for
+   the 128px the arrows take out of the row - without this the third card is
+   clipped and the dots report a page that cannot be reached. */
+.quotes-carousel--centred .quotes-track .quote{flex:0 0 calc((100% - 44px) / 3)}
+
+@media (max-width:980px){
+  .quotes-carousel--centred{padding:0 52px}
+  .quotes-carousel--centred .quotes-track .quote{flex-basis:calc((100% - 22px) / 2)}
+}
+@media (max-width:720px){
+  /* Below 720px a 46px arrow either overlaps the card or eats a quarter of the
+     row, so they drop back into the controls row either side of the dots -
+     where they were before this layout, and where a thumb expects them. Both
+     buttons are already inside `.carousel-controls` in the markup; above this
+     width absolute positioning simply lifts them out of it. */
+  .quotes-carousel--centred{padding:0}
+  .carousel-btn--side{position:static;transform:none;box-shadow:none}
+  .quotes-carousel--centred .quotes-track .quote{flex-basis:100%}
+}

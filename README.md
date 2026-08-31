@@ -374,6 +374,29 @@ real quote and the section, the carousel, the dots and the original rhythm all c
 no markup changes. Reviews on the Google Business Profile are worth more than anything
 self-hosted here and should come first.
 
+The section is a reusable component, `src/components/Testimonials.astro`, mounted twice: the
+homepage passes `TESTIMONIALS` with a "Get a free quote" CTA, and `/vendor-network/` passes
+`PARTNER_TESTIMONIALS` with an "Apply to the vendor network" CTA. Both arrays are empty, so
+neither renders anything today. They are separate arrays on purpose - a vendor is a supplier,
+not a customer, and one shared list would put a plumber's quote on a page selling to building
+owners.
+
+Card layout: a round face at the top (an image if the entry has `avatar`, otherwise the
+initials), then the name, the company in red and linked when `companyUrl` is set, the role, and
+the quote - all centred. The red top border stays; a plain drop shadow would have read as a
+component borrowed from another site. Arrows sit either side of the track above 720px and drop
+back into the controls row beside the dots below it, because a 46px arrow on a phone either
+overlaps the card or eats a quarter of the row. Both buttons live inside `.carousel-controls`
+in the markup and are lifted out of flow by absolute positioning on wider screens, which is why
+one set of markup serves both layouts.
+
+Two sizing notes worth keeping. The name is set in the condensed display face and the company
+in the body face, so equal point sizes do not give equal optical weight - at 1.12rem / 0.95rem
+the company read as the larger of the two and the hierarchy inverted; the name carries 1.34rem
+to compensate. And `.quotes-carousel` has `overflow-x:clip` applied further up `additions.css`,
+so arrows positioned outside the box would be clipped by it - they are positioned against the
+padded carousel instead.
+
 Built on native scroll-snap rather than a transform track, so touch swipe, keyboard scrolling
 and the scrollbar work without extra code, and with JavaScript disabled the section degrades to
 a scrollable row instead of showing one card. Three cards per view on desktop, two under 980px,
