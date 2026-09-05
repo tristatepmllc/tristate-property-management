@@ -13,9 +13,12 @@
   "observability": { "enabled": true },
 
   // --- D1 -------------------------------------------------------------
-  // npx wrangler d1 create tristate-db   -> paste the id below
+  // Schema lives in ./db/schema.sql and is idempotent (CREATE TABLE IF NOT
+  // EXISTS throughout), so re-running it against a live database is safe.
+  //   npx wrangler d1 execute tristate-db --remote --file=./db/schema.sql
+  // GET /api/health reports which tables the binding can actually see.
   "d1_databases": [
-    { "binding": "DB", "database_name": "tristate-db", "database_id": "REPLACE_WITH_DATABASE_ID" }
+    { "binding": "DB", "database_name": "tristate-db", "database_id": "693e64bc-7f00-4254-92b9-53e614c10a45" }
   ],
 
   // --- R2 (scaffolded for future job photos) --------------------------
