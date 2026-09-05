@@ -85,7 +85,7 @@ export const POST: APIRoute = async ({ request }) => {
       .map(([k, v]) => `<tr><td style="padding:4px 12px 4px 0;color:#5D6E85">${k}</td><td>${escapeHtml(String(v))}</td></tr>`)
       .join('');
 
-    await sendEmail({
+    const sent = await sendEmail({
       apiKey: env.RESEND_API_KEY,
       from: env.LEAD_NOTIFY_FROM,
       to: env.LEAD_NOTIFY_TO,
@@ -96,6 +96,19 @@ export const POST: APIRoute = async ({ request }) => {
              <table style="font-family:Arial;font-size:14px;border-collapse:collapse">${rows}</table>
              <p style="color:#8798AC;font-size:12px">Lead ID ${id}</p>`,
     });
+
+    // sendEmail deliberately never throws, because the lead is already saved and
+    // a notification failure must not turn a successful submission into a 500.
+    // But discarding the result made the failure invisible: an unverified sending
+    // domain, a revoked key or a Resend outage would drop every notification with
+    // nothing anywhere to show for it, while the visitor saw a success message.
+    // The lead would sit in D1 unread. Logging it surfaces the failure in
+    // observability, which wrangler.jsonc already has enabled.
+    if (!sent.ok) console.error('lead_notify_failed', { id, error: sent.error });
+  } else {
+    // No key configured at all is a different failure and worth distinguishing:
+    // nothing is broken, nothing was attempted, and nobody has been told.
+    console.warn('lead_notify_skipped', { id, reason: 'RESEND_API_KEY or LEAD_NOTIFY_TO not set' });
   }
 
   return json({ ok: true, id, status }, 201);

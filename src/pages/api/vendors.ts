@@ -82,7 +82,7 @@ export const POST: APIRoute = async ({ request }) => {
       .map(([k, val]) => `<tr><td style="padding:4px 12px 4px 0;color:#5D6E85">${k}</td><td>${escapeHtml(String(val))}</td></tr>`)
       .join('');
 
-    await sendEmail({
+    const sent = await sendEmail({
       apiKey: env.RESEND_API_KEY,
       from: env.LEAD_NOTIFY_FROM,
       to: env.LEAD_NOTIFY_TO,
@@ -93,6 +93,13 @@ export const POST: APIRoute = async ({ request }) => {
              <table style="font-family:Arial;font-size:14px;border-collapse:collapse">${rows}</table>
              <p style="color:#8798AC;font-size:12px">Vendor ID ${id}. Licence and insurance above are self-declared - collect certificates before the first job.</p>`,
     });
+
+    // Same reasoning as the lead route: the send is best-effort and must never
+    // fail the request, but a silently dropped notification is indistinguishable
+    // from no application having arrived.
+    if (!sent.ok) console.error('vendor_notify_failed', { id, error: sent.error });
+  } else {
+    console.warn('vendor_notify_skipped', { id, reason: 'RESEND_API_KEY or LEAD_NOTIFY_TO not set' });
   }
 
   return json({ ok: true, id, status }, 201);
