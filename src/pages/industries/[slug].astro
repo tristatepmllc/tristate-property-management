@@ -1,0 +1,195 @@
+---
+import { getCollection, render } from 'astro:content';
+import type { CollectionEntry } from 'astro:content';
+import type { GetStaticPaths } from 'astro';
+import BaseLayout from '../../layouts/BaseLayout.astro';
+import { SITE, SERVICE_CATEGORIES, SERVED_SENTENCE } from '../../data/site';
+import { graph, breadcrumbs, industryService, faqPage } from '../../lib/schema';
+
+/**
+ * One page per building type.
+ *
+ * Keyed on `data.sector` rather than the filename, same as the service route -
+ * the zod enum restricts the value and this keeps the URL, the card on
+ * /industries/ and the schema pointing at the same thing.
+ */
+export const getStaticPaths: GetStaticPaths = async () => {
+  const entries = await getCollection('industries', ({ data }) => !data.draft);
+  return entries
+    .sort((a, b) => a.data.order - b.data.order)
+    .map((entry) => ({ params: { slug: entry.data.sector }, props: { entry } }));
+};
+
+type Props = { entry: CollectionEntry<'industries'> };
+const { entry } = Astro.props as Props;
+const { Content } = await render(entry);
+const d = entry.data;
+const path = `/industries/${d.sector}/`;
+
+// The trades that run in this building, resolved to their catalogue names so
+// the link text and the service page always agree.
+const trades = d.services.map((slug) => ({
+  slug,
+  name: SERVICE_CATEGORIES.find((c) => c.slug === slug)!.name,
+}));
+
+const all = (await getCollection('industries', ({ data }) => !data.draft)).sort(
+  (a, b) => a.data.order - b.data.order
+);
+const others = all.filter((e) => e.data.sector !== d.sector);
+
+const jsonLd = graph([
+  breadcrumbs([
+    { name: 'Home', path: '/' },
+    { name: 'Industries', path: '/industries/' },
+    { name: d.name, path },
+  ]),
+  industryService({
+    slug: d.sector,
+    name: `Facility maintenance for ${d.name.toLowerCase()}`,
+    audience: d.name,
+    serviceTypes: trades.map((t) => t.name),
+  }),
+  faqPage(d.faqs),
+]);
+---
+<BaseLayout
+  title={d.title}
+  description={d.description}
+  path={path}
+  active="/industries/"
+  ogImage={d.cover}
+  ogAlt={d.coverAlt}
+  preloadImage={d.cover}
+  jsonLd={jsonLd}
+>
+  <section class="page-hero">
+    <div class="page-hero-bg" style={`background-image:url('${d.cover}')`}></div>
+    <div class="wrap">
+      <p class="crumb">
+        <a href="/">Home</a> &nbsp;/&nbsp; <a href="/industries/">Industries</a> &nbsp;/&nbsp; <span>{d.tag}</span>
+      </p>
+      <h1>{d.h1}</h1>
+      <p>{d.summary}</p>
+      <div class="hero-actions" style="margin-top:24px">
+        <a class="btn btn--red" href="/contact/">Request a quote</a>
+        <a class="btn btn--ghost" href={SITE.telHref}>Call {SITE.phone}</a>
+      </div>
+    </div>
+  </section>
+
+  <!-- ============ WHAT BREAKS / WHAT CONSTRAINS ============ -->
+  <section class="section section--tight">
+    <div class="wrap">
+      <div class="sec-head">
+        <p class="eyebrow">{d.tag}</p>
+        <h2>What breaks here, and what we plan around</h2>
+        <p>
+          Every building type fails in its own places and has its own rules about when
+          anyone can touch them. Both sides are published so you can tell whether we have
+          actually worked in a building like yours.
+        </p>
+      </div>
+      <div class="scope-cols">
+        <div class="scope-col">
+          <h3 class="scope-h scope-h--in">What breaks</h3>
+          <ul class="scope-list">
+            {d.breaks.map((i) => <li>{i}</li>)}
+          </ul>
+        </div>
+        <div class="scope-col">
+          <h3 class="scope-h scope-h--out">What we plan around</h3>
+          <ul class="scope-list scope-list--out">
+            {d.constraints.map((i) => <li>{i}</li>)}
+          </ul>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ============ BODY ============ -->
+  <section class="section section--paper">
+    <div class="wrap">
+      <article class="prose prose--full">
+        <Content />
+      </article>
+    </div>
+  </section>
+
+  <!-- ============ TRADES ============ -->
+  <section class="section section--tight">
+    <div class="wrap">
+      <div class="sec-head">
+        <p class="eyebrow">In-house trades</p>
+        <h2>What we run in this building</h2>
+        <p>
+          Every one of these is our own crew rather than a subcontractor, across
+          {' '}{SERVED_SENTENCE}.
+        </p>
+      </div>
+      <div class="areas">
+        {trades.map((t) => <span class="area"><a href={`/services/${t.slug}/`}>{t.name}</a></span>)}
+        <span class="area area--wide"><a href="/services/">See all 52 services</a></span>
+      </div>
+    </div>
+  </section>
+
+  <!-- ============ FAQ ============ -->
+  <section class="section section--paper" id="faq">
+    <div class="wrap">
+      <div class="sec-head">
+        <p class="eyebrow">Straight answers</p>
+        <h2>Questions we get asked first</h2>
+      </div>
+      <div class="faq">
+        {d.faqs.map((f) => (
+          <details>
+            <summary>{f.q}</summary>
+            <div class="answer">{f.a}</div>
+          </details>
+        ))}
+      </div>
+    </div>
+  </section>
+
+  <!-- ============ OTHER SECTORS ============ -->
+  <section class="section section--tight">
+    <div class="wrap">
+      <div class="sec-head">
+        <p class="eyebrow">Other buildings</p>
+        <h2>Sectors we service weekly</h2>
+      </div>
+      <div class="areas">
+        {others.map((o) => (
+          <span class="area"><a href={`/industries/${o.data.sector}/`}>{o.data.name}</a></span>
+        ))}
+      </div>
+    </div>
+  </section>
+
+  <section class="cta-band cta-band--photo cta-band--fractured">
+    <div class="cta-bg" style="background-image:url('/images/home-crew-carrying-ladders-on-a-commercial-job-si.webp')"></div>
+    <svg class="cta-fracture" viewBox="0 0 1440 400" preserveAspectRatio="none" aria-hidden="true" focusable="false">
+      <polygon class="frac-plate" points="0,400 1440,400 1440,362 1306,382 1178,344 1012,370 872,322 706,346 566,300 432,324 268,270 176,292 0,262" />
+      <path class="frac-line" d="M0,262 L176,292 L268,270 L432,324 L566,300 L706,346 L872,322 L1012,370 L1178,344 L1306,382 L1440,362" />
+      <path class="frac-branch" d="M432,324 L466,262 L450,222" />
+      <path class="frac-branch" d="M872,322 L842,380 L860,400" />
+      <path class="frac-branch" d="M176,292 L152,350" />
+      <path class="frac-branch" d="M1178,344 L1206,296" />
+      <path class="frac-branch frac-branch--fine" d="M706,346 L680,394" />
+      <path class="frac-branch frac-branch--fine" d="M566,300 L588,254" />
+    </svg>
+    <div class="wrap">
+      <div class="cta-inner">
+        <div>
+          <h2>Get a written price</h2>
+          <p>Tell us the building and what it needs. A flat, written quote comes back - not an hourly estimate.</p>
+        </div>
+        <div class="cta-actions">
+          <a class="btn btn--red" href="/contact/">Request a quote</a>
+          <a class="btn btn--ghost" href={SITE.telHref}>Call {SITE.phone}</a>
+        </div>
+      </div>
+    </div>
+  </section>
+</BaseLayout>

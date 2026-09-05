@@ -147,6 +147,33 @@ export function service(slug: string) {
   return found;
 }
 
+/**
+ * The Service node for one industry page.
+ *
+ * Modelled as a Service with an `audience`, not as a second LocalBusiness or a
+ * duplicate of the trade Services. The trades are what we do; an industry page
+ * is the same provider serving a particular kind of customer, and `audience`
+ * is the property that says so. `serviceType` names the trades that actually
+ * run in that building so the node is not just a label with no substance.
+ */
+export function industryService(opts: {
+  slug: string;
+  name: string;
+  audience: string;
+  serviceTypes: string[];
+}) {
+  return {
+    '@type': 'Service',
+    '@id': `${SITE.url}/industries/${opts.slug}/`,
+    name: opts.name,
+    url: `${SITE.url}/industries/${opts.slug}/`,
+    serviceType: opts.serviceTypes,
+    audience: { '@type': 'BusinessAudience', name: opts.audience },
+    provider: { '@id': BIZ_ID },
+    areaServed: areaServed(),
+  };
+}
+
 export function faqPage(qa: { q: string; a: string }[]) {
   return {
     '@type': 'FAQPage',

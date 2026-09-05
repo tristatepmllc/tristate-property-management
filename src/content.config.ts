@@ -65,4 +65,54 @@ const services = defineCollection({
   }),
 });
 
-export const collections = { blog, services };
+/**
+ * Industry detail pages.
+ *
+ * Same reasoning as `services`, and the same failure to avoid. The eight cards
+ * on /industries/ say what we do in each building type. These pages have to say
+ * something the card cannot: what actually breaks in that building, what the
+ * compliance regime is, and when work can physically happen. A page that only
+ * expands its card into paragraphs is duplicate content.
+ *
+ * `constraints` is required and is the field that makes these pages different
+ * from each other. Every building type has hours you cannot work, a rule you
+ * cannot break, and a failure that costs more there than anywhere else - a
+ * clinic and a warehouse do not share one of them. Making it mandatory stops
+ * the page collapsing into generic facility-maintenance copy.
+ *
+ * `services` links each building back to the trades that run in it, which is
+ * where the internal linking between the two collections comes from.
+ */
+const industries = defineCollection({
+  loader: glob({ base: './src/content/industries', pattern: '**/*.md' }),
+  schema: z.object({
+    title: z.string().min(39).max(60),
+    description: z.string().min(70).max(160),
+    /** Stable slug for the route. */
+    sector: z.enum([
+      'offices', 'retail', 'restaurants', 'medical',
+      'warehouse', 'schools', 'multifamily', 'dealerships',
+    ]),
+    /** Matches the card tag on /industries/ so the two pages agree. */
+    tag: z.string(),
+    name: z.string(),
+    h1: z.string(),
+    summary: z.string(),
+    cover: z.string(),
+    coverAlt: z.string(),
+    /** What goes wrong in this building type specifically. */
+    breaks: z.array(z.string()).min(3),
+    /** Hours, rules and risks unique to it. The anti-generic field. */
+    constraints: z.array(z.string()).min(2),
+    /** SERVICE_CATEGORIES slugs that run most often here. */
+    services: z.array(z.enum([
+      'cleaning', 'plumbing', 'electrical', 'hvac',
+      'handyman', 'painting', 'grounds', 'projects',
+    ])).min(3),
+    faqs: z.array(z.object({ q: z.string(), a: z.string() })).min(3),
+    order: z.number(),
+    draft: z.boolean().default(false),
+  }),
+});
+
+export const collections = { blog, services, industries };
