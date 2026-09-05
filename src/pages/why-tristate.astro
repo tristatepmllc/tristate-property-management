@@ -1,6 +1,6 @@
 ---
 import BaseLayout from '../layouts/BaseLayout.astro';
-import { SITE } from '../data/site';
+import { SITE, SERVED_SENTENCE } from '../data/site';
 import { graph, breadcrumbs, faqPage } from '../lib/schema';
 import { FAQ } from '../data/faq';
 
@@ -47,7 +47,7 @@ const jsonLd = graph([breadcrumbs([{ name: 'Home', path: '/' }, { name: 'Why Tri
           in translation, and nobody can point at somebody else when it goes wrong twice.
         </p>
         <p style="color:var(--steel)">
-          Today we cover 52 services for buildings across Connecticut, USA - all
+          Today we cover 52 services for buildings across {SERVED_SENTENCE} - all
           of it with technicians on our own payroll, in our own vans. One team, one schedule,
           one name to hold responsible.
         </p>

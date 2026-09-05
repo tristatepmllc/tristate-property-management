@@ -1,5 +1,5 @@
 ---
-import { SITE } from '../data/site';
+import { SITE, SERVED_SENTENCE, SERVED_ABBR } from '../data/site';
 const year = new Date().getFullYear();
 ---
 <footer class="footer">
@@ -20,7 +20,7 @@ const year = new Date().getFullYear();
         <p>
           A full-service facility maintenance company. Our own technicians, our own vans
           and one team responsible for the whole building - cleaning, trades, grounds
-          and restoration across Connecticut, USA.
+          and restoration across {SERVED_SENTENCE}.
         </p>
         <div class="badges">
           <span class="badge">Licensed</span>
@@ -48,6 +48,7 @@ const year = new Date().getFullYear();
         <h4>Company</h4>
         <ul class="footer-links">
           <li><a href="/why-tristate/">Why Tristate</a></li>
+          <li><a href="/team/">Our team</a></li>
           <li><a href="/industries/">Industries we serve</a></li>
           <li><a href="/services/">Full service list</a></li>
           <li><a href="/contact/">Request a quote</a></li>
@@ -68,7 +69,7 @@ const year = new Date().getFullYear();
             <span>
               {SITE.address.street
                 ? <>{SITE.address.street}<br />{SITE.address.city}, {SITE.address.region} {SITE.address.postal}</>
-                : <>Connecticut, USA<br />Service-area business - we come to you</>}
+                : <>{SERVED_ABBR}<br />Service-area business - we come to you</>}
             </span>
           </li>
           <li><span class="k">Hours</span><span>Mon&ndash;Fri 7:00 AM &ndash; 6:00 PM<br>Emergency: 24/7/365</span></li>

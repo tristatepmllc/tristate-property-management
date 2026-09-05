@@ -1,3 +1,10 @@
+/** One state in the service footprint, with the towns inside it we actually cover. */
+export type AreaServed = {
+  state: string;
+  abbr: string;
+  cities: string[];
+};
+
 export const SITE = {
   name: 'Tristate Property Management',
   legalName: 'Tristate Property Management LLC',
@@ -19,14 +26,41 @@ export const SITE = {
   address: {
     street: '',                                 // TODO: street, if there is a visitable office
     city: '',                                   // TODO: town - required for GBP and local ranking
-    region: 'CT',
+    // The HQ state, NOT the service footprint - that is `areaServed`, and it is
+    // five states wide. Nothing may read this field to describe coverage.
+    region: 'CT',                               // TODO: confirm which state the base is in
     postal: '',                                 // TODO
     country: 'US',
   },
   geo: null as { lat: number; lng: number } | null,   // TODO: set once the town is known
-  license: '',                                  // TODO: CT licence number (currently hidden when empty)
-  // TODO: replace with the actual Connecticut towns served.
-  areaServed: [] as string[],
+  license: '',                                  // TODO: licence number(s) - hidden while empty. See note on areaServed.
+  /**
+   * Where the vans actually go.
+   *
+   * Shaped as state -> cities rather than a flat list of towns, because the
+   * footprint crosses five states and Schema.org needs the two levels to mean
+   * different things: a state is an `AdministrativeArea`, a town is a `City`.
+   * The previous flat `string[]` was mapped to `City` unconditionally, so
+   * putting "Florida" in it would have published a City named Florida.
+   *
+   * `cities` is the half that earns rankings. Nobody searches "Arkansas
+   * property management"; they search "Little Rock property management". Until
+   * a state has cities, it contributes a state-level schema entry and a single
+   * chip in the coverage grid, and no local-intent query.
+   *
+   * NOTE ON LICENSING: managing rentals for an owner for compensation is
+   * regulated real estate activity in CT, FL, IL and AR (MA is the exception).
+   * `services` records what is actually sold in each state so the site never
+   * implies licensed brokerage where only facility work is performed. Leave it
+   * empty until confirmed - nothing reads it yet, so nothing is claimed.
+   */
+  areaServed: [
+    { state: 'Connecticut',   abbr: 'CT', cities: [] as string[] },   // TODO: 3-8 metros
+    { state: 'Massachusetts', abbr: 'MA', cities: [] as string[] },   // TODO
+    { state: 'Illinois',      abbr: 'IL', cities: [] as string[] },   // TODO
+    { state: 'Florida',       abbr: 'FL', cities: [] as string[] },   // TODO
+    { state: 'Arkansas',      abbr: 'AR', cities: [] as string[] },   // TODO
+  ] as AreaServed[],
   hours: [
     { days: ['Monday','Tuesday','Wednesday','Thursday','Friday'], opens: '07:00', closes: '18:00' },
   ],
@@ -41,6 +75,37 @@ export const SITE = {
   defaultOgAlt:
     'Tristate Property Management LLC - property management made easy. Property protection, tenant management, maintenance and repairs, maximise your ROI.',
 } as const;
+
+/**
+ * Coverage helpers.
+ *
+ * One place builds the prose sentence, so the homepage, /contact/ and the
+ * Contact mega-panel cannot drift apart when a state is added or dropped -
+ * which is exactly how "We cover Connecticut" survived on the homepage after
+ * the footprint had already grown past it.
+ */
+export const SERVED_STATES: readonly string[] = SITE.areaServed.map((a) => a.state);
+
+/** "Connecticut, Massachusetts, Illinois, Florida and Arkansas" */
+export const SERVED_SENTENCE: string =
+  SERVED_STATES.length <= 1
+    ? SERVED_STATES[0] ?? ''
+    : `${SERVED_STATES.slice(0, -1).join(', ')} and ${SERVED_STATES[SERVED_STATES.length - 1]}`;
+
+/**
+ * "CT, MA, IL, FL and AR" - for the narrow key/value rows in the footer, the
+ * Contact panel and the homepage quick-facts list. The full sentence is 58
+ * characters and wraps to three lines in a 302px column, which is why those
+ * spots previously carried a hardcoded "Connecticut, USA" instead of reading
+ * the data. Prose keeps `SERVED_SENTENCE`; tight columns use this.
+ */
+export const SERVED_ABBR: string = (() => {
+  const a = SITE.areaServed.map((s) => s.abbr);
+  return a.length <= 1 ? a[0] ?? '' : `${a.slice(0, -1).join(', ')} and ${a[a.length - 1]}`;
+})();
+
+/** True once at least one state has towns listed - gates the town-level grid. */
+export const HAS_CITIES: boolean = SITE.areaServed.some((a) => a.cities.length > 0);
 
 /**
  * Primary nav. Five items, not seven.
@@ -58,9 +123,42 @@ export const SITE = {
 export const NAV = [
   { href: '/services/',     label: 'Services' },
   { href: '/industries/',   label: 'Industries' },
-  { href: '/why-tristate/', label: 'Why Tristate' },
+  { href: '/why-tristate/', label: 'About',   menu: 'about' },
   { href: '/blog/',         label: 'Blog' },
   { href: '/contact/',      label: 'Contact', menu: 'contact' },
+] as const;
+
+/**
+ * The About menu.
+ *
+ * "Why Tristate" became "About" rather than gaining a sixth sibling. The header
+ * row is capped at roughly 1172px of content (`.wrap` is 1220px with a 24px
+ * gutter), and seven items already overran it once - silently, by wrapping the
+ * phone number and squeezing `.header-cta` from 290px to 234px at 1440. A sixth
+ * item would have pushed the burger breakpoint above 1180px and handed the menu
+ * button to more laptops. "About" is also two characters shorter than "Why
+ * Tristate", so the row gained width instead of losing it.
+ *
+ * `/careers/` gains a home here. It was previously reachable only from the
+ * footer and /sitemap/, which is a poor place for a page meant to attract
+ * applicants.
+ */
+export const ABOUT = [
+  {
+    href: '/why-tristate/',
+    label: 'Why Tristate',
+    note: 'How we work, what we commit to, and what happens after your call.',
+  },
+  {
+    href: '/team/',
+    label: 'Our team',
+    note: 'The people running operations, client service and the field crews.',
+  },
+  {
+    href: '/careers/',
+    label: 'Careers',
+    note: 'Licensed trades and maintenance roles across our service area.',
+  },
 ] as const;
 
 /** Routes that live under a menu rather than in NAV, so /sitemap/ and the

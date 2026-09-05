@@ -1,0 +1,25 @@
+---
+import { ABOUT } from '../data/site';
+
+/**
+ * The About panel.
+ *
+ * Deliberately a plain `.drop-panel` and not a `.mega` like Contact. Contact
+ * carries four blocks of contact detail and needs the full-width panel; About
+ * carries three links, and a full-width panel for three links reads as a
+ * mistake. This reuses the exact markup the Login and Get started panels
+ * already use, so it inherits their styling, their open/close behaviour from
+ * `nav.ts`, and their `hidden`-by-default no-JavaScript fallback.
+ *
+ * Left-aligned rather than `.drop-panel--right`: this control sits in the nav
+ * on the left of the row, not in `.header-cta` on the right.
+ */
+---
+<div class="drop-panel drop-panel--nav" id="menu-about" hidden>
+  {ABOUT.map((i) => (
+    <a class="mega-item" href={i.href}>
+      <span class="mega-item-t">{i.label}</span>
+      <span class="mega-item-d">{i.note}</span>
+    </a>
+  ))}
+</div>

@@ -1,7 +1,8 @@
 ---
 import BaseLayout from '../layouts/BaseLayout.astro';
 import LeadFormExtras from '../components/LeadFormExtras.astro';
-import { SITE } from '../data/site';
+import { SITE, SERVED_SENTENCE, SERVED_ABBR } from '../data/site';
+import Coverage from '../components/Coverage.astro';
 import { graph, breadcrumbs } from '../lib/schema';
 
 const jsonLd = graph([breadcrumbs([{ name: 'Home', path: '/' }, { name: 'Contact', path: '/contact/' }])]);
@@ -160,7 +161,7 @@ const jsonLd = graph([breadcrumbs([{ name: 'Home', path: '/' }, { name: 'Contact
             <span class="v">
               {SITE.address.street
                 ? <>{SITE.address.street}<br />{SITE.address.city}, {SITE.address.region} {SITE.address.postal}</>
-                : <>Connecticut, USA<br />We come to you - no walk-in office</>}
+                : <>{SERVED_ABBR}<br />We come to you - no walk-in office</>}
             </span>
           </div>
         </div>
@@ -176,13 +177,9 @@ const jsonLd = graph([breadcrumbs([{ name: 'Home', path: '/' }, { name: 'Contact
         <div class="info-block">
           <h3>Coverage</h3>
           <p style="font-size:.9rem;color:var(--steel);margin-bottom:14px">
-            We cover:
+            We cover {SERVED_SENTENCE}:
           </p>
-          <div class="areas" style="grid-template-columns:1fr 1fr">
-            {SITE.areaServed.length
-              ? SITE.areaServed.map((town) => <span class="area">{town}</span>)
-              : <span class="area area--wide">Connecticut, USA</span>}
-          </div>
+          <Coverage columns="1fr 1fr" />
         </div>
       </div>
 

@@ -1,7 +1,8 @@
 ---
 import BaseLayout from '../layouts/BaseLayout.astro';
 import LeadFormExtras from '../components/LeadFormExtras.astro';
-import { SITE } from '../data/site';
+import { SITE, SERVED_SENTENCE, SERVED_ABBR } from '../data/site';
+import Coverage from '../components/Coverage.astro';
 import { TESTIMONIALS, REVIEWS_NOTE } from '../data/testimonials';
 import Testimonials from '../components/Testimonials.astro';
 import { graph, localBusiness, organisation, website, serviceList } from '../lib/schema';
@@ -17,8 +18,8 @@ const jsonLd = graph([localBusiness(), organisation(), website(), ...serviceList
 const hasReviews = TESTIMONIALS.length > 0;
 ---
 <BaseLayout
-  title="Property Management in Connecticut - Tristate PM"
-  description="Full-service property management and building maintenance across Connecticut. Our own licensed crews, one number to call, one invoice, 24/7 emergency response."
+  title="Property Management and Building Maintenance - Tristate"
+  description="Full-service property management and building maintenance in CT, MA, IL, FL and AR. Our own crews, one number to call, one invoice, 24/7 emergency response."
   path="/"
   active="/"
   jsonLd={jsonLd}
@@ -372,7 +373,7 @@ const hasReviews = TESTIMONIALS.length > 0;
     <div class="sec-head">
       <p class="eyebrow">On site this week</p>
       <h2>Our crews, your buildings</h2>
-      <p>A sample of what our technicians were working on across Connecticut, USA over the last seven days.</p>
+      <p>A sample of what our technicians were working on across our service area over the last seven days.</p>
     </div>
     <div class="gallery">
       <figure>
@@ -401,13 +402,9 @@ const hasReviews = TESTIMONIALS.length > 0;
     <div class="sec-head">
       <p class="eyebrow">Coverage</p>
       <h2>Where our vans go</h2>
-      <p>We cover Connecticut. If you are just outside, ask anyway - we will tell you honestly whether we can cover you properly.</p>
+      <p>We cover {SERVED_SENTENCE}. If you are just outside, ask anyway - we will tell you honestly whether we can cover you properly.</p>
     </div>
-    <div class="areas">
-      {SITE.areaServed.length
-        ? SITE.areaServed.map((town) => <span class="area">{town}</span>)
-        : <span class="area area--wide">Connecticut, USA</span>}
-    </div>
+    <Coverage />
   </div>
 </section>
 
@@ -438,12 +435,12 @@ const hasReviews = TESTIMONIALS.length > 0;
           </li>
           <li>
             <span class="qk">Serving</span>
-            <span class="qv">Connecticut, USA
+            <span class="qv">{SERVED_ABBR}
               <span>Mon&ndash;Fri 7:00 AM &ndash; 6:00 PM &middot; Emergency 24/7</span></span>
           </li>
           <li>
             <span class="qk">Coverage</span>
-            <span class="qv">Connecticut, USA
+            <span class="qv">{SERVED_ABBR}
               <span>Service-area business - our crews come to your building</span></span>
           </li>
         </ul>

@@ -1,12 +1,14 @@
 ---
-import { SITE, NAV, GET_STARTED, LOGIN } from '../data/site';
+import { SITE, NAV, GET_STARTED, LOGIN, ABOUT } from '../data/site';
 import ContactMenu from './ContactMenu.astro';
+import AboutMenu from './AboutMenu.astro';
 import NavScript from './NavScript.astro';
 interface Props { active?: string }
 const { active = '/' } = Astro.props;
 
 /** A page reached from inside a menu should still light up its parent control. */
 const inGetStarted = GET_STARTED.some((i) => i.href === active && i.href !== '/contact/');
+const inAbout = ABOUT.some((i) => i.href === active);
 ---
 <header class="header">
   <div class="wrap">
@@ -66,16 +68,25 @@ const inGetStarted = GET_STARTED.some((i) => i.href === active && i.href !== '/c
     <nav class="nav" aria-label="Primary">
       {NAV.map((item) =>
         'menu' in item ? (
-          <div class="drop drop--mega" data-drop>
+          /* Two menus hang off the nav row now, so the panel is chosen by
+             `item.menu` rather than hardcoded. Contact opens the full-width
+             mega-panel; About opens a three-link dropdown. `drop--mega` is only
+             applied to the one that actually is one - putting it on About would
+             stretch a three-item list across the viewport. */
+          <div class:list={['drop', item.menu === 'contact' && 'drop--mega']} data-drop>
             <button
               type="button"
-              class:list={['drop-btn', 'nav-link', active === item.href && 'is-active']}
+              class:list={[
+                'drop-btn',
+                'nav-link',
+                (active === item.href || (item.menu === 'about' && inAbout)) && 'is-active',
+              ]}
               aria-expanded="false"
-              aria-controls="menu-contact"
+              aria-controls={item.menu === 'about' ? 'menu-about' : 'menu-contact'}
             >
               {item.label}<span class="caret" aria-hidden="true"></span>
             </button>
-            <ContactMenu />
+            {item.menu === 'about' ? <AboutMenu /> : <ContactMenu />}
           </div>
         ) : (
           <a
@@ -98,6 +109,12 @@ const inGetStarted = GET_STARTED.some((i) => i.href === active && i.href !== '/c
           whose whole pitch is that someone picks up. */}
       <div class="nav-extra">
         <a class="nav-extra-call" href={SITE.telHref}>Call {SITE.phone}</a>
+        {/* About is NOT repeated here. Inside the burger `.drop-panel` becomes
+            static and renders its three links in flow, so /team/ and /careers/
+            are already visible; listing them again below would print the same
+            two links twice on one screen. Get started and Login do belong here,
+            because their controls live in `.header-cta`, which is outside the
+            burger and hidden below 720px. */}
         {GET_STARTED.map((i) => <a href={i.href}>{i.label}</a>)}
         {LOGIN.map((i) => <a href={i.href}>{i.label}</a>)}
       </div>

@@ -1,7 +1,35 @@
 import { SITE, SERVICE_CATEGORIES } from '../data/site';
+import { TEAM } from '../data/team';
 
 const ORG_ID = `${SITE.url}/#organization`;
 const BIZ_ID = `${SITE.url}/#localbusiness`;
+
+/**
+ * areaServed, at both levels.
+ *
+ * A state is an `AdministrativeArea` and a town is a `City`; the previous
+ * version mapped a flat string list to `City` unconditionally, which would have
+ * published a City named "Florida" the moment the footprint stopped being one
+ * state. Each state also carries `containedInPlace` on its towns, so the two
+ * levels read as a hierarchy rather than a bag of unrelated place names.
+ *
+ * There is no Connecticut fallback any more. It was there when the site served
+ * one state, and it silently contradicted the other four the moment they were
+ * added - a fallback that lies is worse than an empty field.
+ */
+function areaServed() {
+  return SITE.areaServed.flatMap((a) => {
+    const state = { '@type': 'State', name: a.state };
+    return [
+      state,
+      ...a.cities.map((c) => ({
+        '@type': 'City',
+        name: c,
+        containedInPlace: state,
+      })),
+    ];
+  });
+}
 
 export function localBusiness() {
   return {
@@ -31,9 +59,7 @@ export function localBusiness() {
     ...(SITE.geo
       ? { geo: { '@type': 'GeoCoordinates', latitude: SITE.geo.lat, longitude: SITE.geo.lng } }
       : {}),
-    areaServed: SITE.areaServed.length
-      ? SITE.areaServed.map((n) => ({ '@type': 'City', name: n }))
-      : [{ '@type': 'AdministrativeArea', name: 'Connecticut' }],
+    areaServed: areaServed(),
     openingHoursSpecification: SITE.hours.map((h) => ({
       '@type': 'OpeningHoursSpecification',
       dayOfWeek: h.days, opens: h.opens, closes: h.closes,
@@ -43,6 +69,29 @@ export function localBusiness() {
   };
 }
 
+/**
+ * One named person. `@id` is the anchor they render at on /team/, so the blog
+ * author box and the Organization node can both point at the same entity
+ * instead of describing them twice.
+ */
+export function person(m: (typeof TEAM)[number]) {
+  return {
+    '@type': 'Person',
+    '@id': `${SITE.url}/team/#${m.slug}`,
+    name: m.name,
+    jobTitle: m.role,
+    description: m.bio,
+    worksFor: { '@id': ORG_ID },
+    url: `${SITE.url}/team/#${m.slug}`,
+    ...(m.avatar ? { image: `${SITE.url}/images/team/${m.avatar}.jpg` } : {}),
+    ...(m.sameAs?.length ? { sameAs: m.sameAs } : {}),
+  };
+}
+
+export function teamPeople() {
+  return TEAM.map(person);
+}
+
 export function organisation() {
   return {
     '@type': 'Organization',
@@ -50,6 +99,13 @@ export function organisation() {
     name: SITE.name,
     url: SITE.url,
     logo: `${SITE.url}/icon-512.png`,
+    // Named people are the strongest trust signal this site can emit, and the
+    // only one Google does not discount for being self-hosted the way it
+    // discounts self-serving review markup. Referenced by @id so the full
+    // Person nodes live once, on /team/, rather than being inlined on every page.
+    ...(TEAM.length
+      ? { employee: TEAM.map((m) => ({ '@id': `${SITE.url}/team/#${m.slug}` })) }
+      : {}),
   };
 }
 
@@ -73,9 +129,7 @@ export function serviceList() {
     name: c.name,
     serviceType: c.name,
     provider: { '@id': BIZ_ID },
-    areaServed: SITE.areaServed.length
-      ? SITE.areaServed.map((n) => ({ '@type': 'City', name: n }))
-      : [{ '@type': 'AdministrativeArea', name: 'Connecticut' }],
+    areaServed: areaServed(),
   }));
 }
 

@@ -1017,3 +1017,104 @@ a[href^="mailto:"]{overflow-wrap:anywhere}
   border-left:3px solid var(--red);
   padding-left:14px;
 }
+
+/* ---------- About menu (nav dropdown) ----------
+   A plain `.drop-panel`, not a `.mega`: three links do not need a full-width
+   panel. It hangs off a control in the middle of the nav row rather than off
+   `.header-cta`, so it opens left-aligned and needs a guard against running
+   past the right edge of the viewport on a narrow desktop. Inside the burger
+   the shared `.drop-panel` rule at 1179px already flattens it into flow, so
+   nothing here needs a mobile counterpart. */
+.drop-panel--nav{max-width:calc(100vw - 32px)}
+
+/* ---------- Coverage, grouped by state ----------
+   The footprint spans five states, so the flat chip grid gained a heading row
+   per state. `.area-state` is the label; `.areas` underneath is the original
+   chip grid, unchanged, so a state with towns and a state without render with
+   the same component. */
+.coverage-states{display:grid;gap:22px}
+.coverage-state{display:block}
+.area-state{
+  font-family:var(--display,inherit);
+  font-size:.82rem;font-weight:700;letter-spacing:.09em;text-transform:uppercase;
+  color:var(--steel);
+  margin:0 0 10px;
+  display:flex;align-items:center;gap:9px;
+}
+.area-state::after{
+  content:"";height:1px;flex:1;background:var(--line);
+}
+/* A state with no towns listed yet is one wide chip carrying the state name,
+   rather than an empty grid under a heading that promises rows. */
+.area--state{grid-column:1 / -1;font-weight:600}
+@media (max-width:940px){
+  .coverage-states{gap:18px}
+}
+
+/* ---------- Team cards ----------
+   Deliberately the same visual vocabulary as `.quote--centred`: round face on
+   top, initials fallback, red top border, centred text. Two card styles for
+   "a person with a photo and a paragraph" would read as two different sites.
+   Three across on desktop, two under 980px, one under 720px - matching the
+   review carousel's own breakpoints so the two sections never disagree on what
+   counts as a narrow screen. */
+/* `stretch`, not `start`: bios differ in length and ragged card bottoms in a
+   three-across row read as a rendering fault rather than as a design. */
+.team-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:22px;align-items:stretch}
+.team-card{
+  background:var(--white);
+  border:1px solid var(--line);
+  border-top:3px solid var(--red);
+  border-radius:var(--radius);
+  padding:32px 26px 30px;
+  text-align:center;
+  display:flex;flex-direction:column;align-items:center;
+  scroll-margin-top:120px; /* the header is fixed; /team/#slug must clear it */
+}
+.team-face{
+  width:132px;height:132px;
+  border-radius:50%;
+  overflow:hidden;
+  background:var(--paper);
+  border:1px solid var(--line);
+  display:grid;place-items:center;
+  flex:none;
+  margin-bottom:18px;
+}
+.team-face img{width:100%;height:100%;object-fit:cover;display:block}
+.team-face-initials{
+  font-family:var(--display);font-weight:700;font-size:2.6rem;
+  color:var(--navy-700);letter-spacing:.02em;
+}
+.team-name{
+  font-family:var(--display);font-weight:700;font-size:1.34rem;
+  letter-spacing:.01em;color:var(--navy-900);margin:0;
+}
+.team-role{
+  margin:3px 0 0;
+  font-family:var(--mono);font-size:.68rem;letter-spacing:.14em;
+  text-transform:uppercase;color:var(--red);font-weight:600;
+}
+.team-bio{
+  margin:16px 0 0;
+  font-size:.95rem;line-height:1.7;color:#33425C;
+}
+/* The quote is the person's own voice, so it is set apart from the prose bio
+   above it rather than running on as a fourth paragraph. */
+.team-quote{
+  margin:16px 0 0;
+  padding-top:16px;
+  border-top:1px solid var(--line);
+  font-size:.95rem;line-height:1.7;color:var(--navy-800);
+  font-style:italic;
+}
+.team-quote::before{content:"\201C"}
+.team-quote::after{content:"\201D"}
+@media (max-width:980px){
+  .team-grid{grid-template-columns:1fr 1fr;gap:18px}
+}
+@media (max-width:720px){
+  .team-grid{grid-template-columns:1fr}
+  .team-card{padding:28px 22px 26px}
+  .team-face{width:116px;height:116px}
+}

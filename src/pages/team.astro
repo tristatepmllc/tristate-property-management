@@ -1,0 +1,108 @@
+---
+import BaseLayout from '../layouts/BaseLayout.astro';
+import TeamGrid from '../components/TeamGrid.astro';
+import { SITE, SERVED_SENTENCE } from '../data/site';
+import { graph, breadcrumbs, teamPeople } from '../lib/schema';
+
+/**
+ * The Person nodes live here and nowhere else. Organization references them by
+ * `@id`, so this page has to emit them or those references dangle.
+ *
+ * `active` points at /why-tristate/ because that is the href on the About
+ * control in NAV; Header also checks membership of the ABOUT list, so the
+ * control lights up either way. Keeping it explicit means the highlight does
+ * not depend on which of the two checks fires first.
+ */
+const jsonLd = graph([
+  breadcrumbs([
+    { name: 'Home', path: '/' },
+    { name: 'Our team', path: '/team/' },
+  ]),
+  ...teamPeople(),
+]);
+---
+<BaseLayout
+  title="Meet Our Team - The People Behind Tristate"
+  description="The people running Tristate Property Management - operations, client service and the field crews. Real names and roles, so you know who handles your building."
+  path="/team/"
+  active="/why-tristate/"
+  jsonLd={jsonLd}
+>
+  <section class="page-hero">
+    <div class="page-hero-bg" style="background-image:url('/images/home-site-supervisor-reviewing-building-plans-on-.webp')"></div>
+    <div class="wrap">
+      <p class="crumb"><a href="/">Home</a> &nbsp;/&nbsp; <span>Our team</span></p>
+      <h1>The people behind the work</h1>
+      <p>
+        Property management is a business of follow-through, and follow-through belongs to
+        people rather than to a ticketing system. These are the people accountable for
+        yours, and they are the same names on the second call as on the first.
+      </p>
+    </div>
+  </section>
+
+  <section class="section">
+    <div class="wrap">
+      <div class="sec-head">
+        <p class="eyebrow">Leadership</p>
+        <h2>Who you will be dealing with</h2>
+        <p>
+          A small team by design. Between them they cover operations, client service and
+          the field crews across {SERVED_SENTENCE}.
+        </p>
+      </div>
+      <TeamGrid />
+    </div>
+  </section>
+
+  <section class="section section--tight section--paper">
+    <div class="wrap">
+      <div class="sec-head">
+        <p class="eyebrow">Behind them</p>
+        <h2>Crews, not a contractor lottery</h2>
+        <p>
+          Leadership is only half of it. The technicians who arrive at your building are
+          assigned to a route rather than rotated randomly, so the person who fixed it last
+          time is usually the person who knows why it broke.
+        </p>
+      </div>
+      <div class="areas">
+        <span class="area">Janitorial and cleaning</span>
+        <span class="area">Plumbing and drains</span>
+        <span class="area">Electrical and lighting</span>
+        <span class="area">HVAC and refrigeration</span>
+        <span class="area">Handyman and repairs</span>
+        <span class="area">Painting and finishes</span>
+        <span class="area">Grounds and exterior</span>
+        <span class="area">Restoration and build-out</span>
+        <span class="area area--wide"><a href="/vendor-network/">Vetted trade partners for specialist and overflow work</a></span>
+      </div>
+    </div>
+  </section>
+
+  <section class="cta-band cta-band--photo cta-band--fractured">
+    <div class="cta-bg" style="background-image:url('/images/home-crew-carrying-ladders-on-a-commercial-job-si.webp')"></div>
+    <svg class="cta-fracture" viewBox="0 0 1440 400" preserveAspectRatio="none" aria-hidden="true" focusable="false">
+      <polygon class="frac-plate" points="0,400 1440,400 1440,362 1306,382 1178,344 1012,370 872,322 706,346 566,300 432,324 268,270 176,292 0,262" />
+      <path class="frac-line" d="M0,262 L176,292 L268,270 L432,324 L566,300 L706,346 L872,322 L1012,370 L1178,344 L1306,382 L1440,362" />
+      <path class="frac-branch" d="M432,324 L466,262 L450,222" />
+      <path class="frac-branch" d="M872,322 L842,380 L860,400" />
+      <path class="frac-branch" d="M176,292 L152,350" />
+      <path class="frac-branch" d="M1178,344 L1206,296" />
+      <path class="frac-branch frac-branch--fine" d="M706,346 L680,394" />
+      <path class="frac-branch frac-branch--fine" d="M566,300 L588,254" />
+    </svg>
+    <div class="wrap">
+      <div class="cta-inner">
+        <div>
+          <h2>Talk to one of us</h2>
+          <p>No call centre in the middle. Tell us about the building and one of the people above picks it up.</p>
+        </div>
+        <div class="cta-actions">
+          <a class="btn btn--red" href="/contact/">Request a quote</a>
+          <a class="btn btn--ghost" href={SITE.telHref}>Call {SITE.phone}</a>
+        </div>
+      </div>
+    </div>
+  </section>
+</BaseLayout>

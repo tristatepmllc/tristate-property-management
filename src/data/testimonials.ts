@@ -112,7 +112,7 @@ const DEMO: Testimonial[] = [
 ];
 
 /** The single switch. Set to false and the homepage reviews section is gone. */
-export const DEMO_REVIEWS = true;
+export const DEMO_REVIEWS = false;
 
 export const TESTIMONIALS: Testimonial[] = DEMO_REVIEWS ? DEMO : [];
 

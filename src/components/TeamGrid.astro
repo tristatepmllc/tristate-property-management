@@ -1,0 +1,45 @@
+---
+import { TEAM } from '../data/team';
+
+/**
+ * The leadership cards.
+ *
+ * Built from the same pieces as `Testimonials.astro` - round face on top,
+ * initials fallback, red top border, centred text - rather than a new card
+ * style, so the two sections read as one site. No carousel: three cards fit a
+ * row on desktop and stack cleanly below it, and a carousel for three items
+ * hides two thirds of the content behind an interaction for no benefit.
+ *
+ * Each card carries `id={slug}` because the Person schema `@id` and the blog
+ * author link both resolve to `/team/#slug`. Renaming a slug breaks both, so
+ * they live in one place in `data/team.ts`.
+ */
+---
+{TEAM.length > 0 && (
+  <div class="team-grid">
+    {TEAM.map((m) => (
+      <article class="team-card" id={m.slug}>
+        <div class="team-face">
+          {m.avatar ? (
+            <picture>
+              <source srcset={`/images/team/${m.avatar}.webp`} type="image/webp" />
+              <img
+                src={`/images/team/${m.avatar}.jpg`}
+                alt={`${m.name}, ${m.role} at Tristate Property Management`}
+                width="400" height="400"
+                loading="lazy" decoding="async"
+              />
+            </picture>
+          ) : (
+            <span class="team-face-initials" aria-hidden="true">{m.initials}</span>
+          )}
+        </div>
+
+        <h3 class="team-name">{m.name}</h3>
+        <p class="team-role">{m.role}</p>
+        <p class="team-bio">{m.bio}</p>
+        {m.quote && <blockquote class="team-quote">{m.quote}</blockquote>}
+      </article>
+    ))}
+  </div>
+)}

@@ -1,0 +1,36 @@
+---
+import { SITE } from '../data/site';
+
+/**
+ * The coverage grid.
+ *
+ * Extracted into a component because the same block was duplicated in
+ * `index.astro` and `contact.astro`. Two copies of a list is how "We cover
+ * Connecticut" survived on the homepage after the footprint had grown to five
+ * states - the second copy was never edited.
+ *
+ * Two states of rendering, decided per state, not globally:
+ *   - state with `cities`  -> a heading and one chip per town
+ *   - state with none yet  -> a single wide chip carrying the state name
+ *
+ * So the block is correct today with states only, and fills itself in with no
+ * markup change the moment towns are added to `SITE.areaServed`.
+ */
+interface Props {
+  /** `.areas` grid override, used by the narrow column on /contact/. */
+  columns?: string;
+}
+const { columns } = Astro.props;
+---
+<div class="coverage-states">
+  {SITE.areaServed.map((a) => (
+    <div class="coverage-state">
+      {a.cities.length > 0 && <p class="area-state">{a.state}</p>}
+      <div class="areas" style={columns ? `grid-template-columns:${columns}` : undefined}>
+        {a.cities.length > 0
+          ? a.cities.map((town) => <span class="area">{town}</span>)
+          : <span class="area area--state">{a.state}</span>}
+      </div>
+    </div>
+  ))}
+</div>

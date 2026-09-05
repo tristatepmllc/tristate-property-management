@@ -1,5 +1,5 @@
 ---
-import { SITE } from '../data/site';
+import { SITE, SERVED_ABBR } from '../data/site';
 
 /**
  * The Contact mega-panel.
@@ -24,7 +24,7 @@ const showAside = hasPress || SITE.newsletter || hasSocial;
         <dt>Email</dt>
         <dd><a href={SITE.mailtoHref}>{SITE.email}</a></dd>
         <dt>Serving</dt>
-        <dd>{SITE.address.region === 'CT' ? 'Connecticut, USA' : SITE.address.region}<br />Service-area business - we come to you.</dd>
+        <dd>{SERVED_ABBR}<br />Service-area business - we come to you.</dd>
         <dt>Hours</dt>
         <dd>Mon-Fri 7:00 AM - 6:00 PM<br />Emergency line answered outside those hours.</dd>
       </dl>
