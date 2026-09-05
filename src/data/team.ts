@@ -33,6 +33,14 @@ export type TeamMember = {
   slug: string;
   name: string;
   role: string;
+  /**
+   * The abbreviation, when the title has one people actually use. Rendered in
+   * brackets after the full title and emitted alongside it in `jobTitle`,
+   * because a person is searched for as "Antonio Spicer CEO", not as "Antonio
+   * Spicer Chief Executive Officer". Leave unset when there is no real
+   * abbreviation - inventing one for a title nobody shortens is noise.
+   */
+  roleShort?: string;
   /** Third person, 2-4 sentences. Feeds the card and the schema description. */
   bio: string;
   /** First person, one paragraph. Optional. */
@@ -49,6 +57,7 @@ export const TEAM: TeamMember[] = [
     slug: 'antonio-spicer',
     name: 'Antonio Spicer',
     role: 'Chief Executive Officer',
+    roleShort: 'CEO',
     bio:
       'Antonio leads Tristate Property Management, bringing more than a decade of experience in property maintenance, preservation and field services built across Massachusetts, Connecticut and Rhode Island. He has spent that career building and running professional field teams, and his approach pairs hands-on trade knowledge with a focus on accountability, efficiency and quality control. Under his leadership the company works to earn long-term partnerships through dependable service, transparent communication and professional execution.',
     quote:

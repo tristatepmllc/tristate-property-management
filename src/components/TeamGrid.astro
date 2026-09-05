@@ -36,7 +36,7 @@ import { TEAM } from '../data/team';
         </div>
 
         <h3 class="team-name">{m.name}</h3>
-        <p class="team-role">{m.role}</p>
+        <p class="team-role">{m.role}{m.roleShort && <span class="team-role-abbr"> ({m.roleShort})</span>}</p>
         <p class="team-bio">{m.bio}</p>
         {m.quote && <blockquote class="team-quote">{m.quote}</blockquote>}
       </article>

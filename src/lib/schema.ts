@@ -79,7 +79,9 @@ export function person(m: (typeof TEAM)[number]) {
     '@type': 'Person',
     '@id': `${SITE.url}/team/#${m.slug}`,
     name: m.name,
-    jobTitle: m.role,
+    // Schema.org allows repeated jobTitle values. Both forms are emitted so the
+    // entity matches a query for either the spelled-out title or the initialism.
+    jobTitle: m.roleShort ? [m.role, m.roleShort] : m.role,
     description: m.bio,
     worksFor: { '@id': ORG_ID },
     url: `${SITE.url}/team/#${m.slug}`,

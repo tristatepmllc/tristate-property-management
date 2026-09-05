@@ -1118,3 +1118,10 @@ a[href^="mailto:"]{overflow-wrap:anywhere}
   .team-card{padding:28px 22px 26px}
   .team-face{width:116px;height:116px}
 }
+
+/* The abbreviation is a lookup aid, not a second title, so it sits a shade
+   back from the spelled-out role rather than competing with it. The role line
+   is mono at .68rem with .14em tracking, which is wide for its size - keeping
+   the brackets lighter stops "CHIEF EXECUTIVE OFFICER (CEO)" reading as two
+   equally weighted job titles. */
+.team-role-abbr{opacity:.72}
