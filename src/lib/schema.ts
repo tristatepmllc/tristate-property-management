@@ -127,12 +127,24 @@ export function breadcrumbs(trail: { name: string; path: string }[]) {
 export function serviceList() {
   return SERVICE_CATEGORIES.map((c) => ({
     '@type': 'Service',
-    '@id': `${SITE.url}/services/#${c.slug}`,
+    '@id': `${SITE.url}/services/${c.slug}/`,
     name: c.name,
     serviceType: c.name,
+    // Each category now has a page of its own, so `url` points at a document
+    // rather than at an anchor on the catalogue. An @id that resolves to a real
+    // page is what lets the Service node be referenced from that page too,
+    // instead of the same service being described twice as two entities.
+    url: `${SITE.url}/services/${c.slug}/`,
     provider: { '@id': BIZ_ID },
     areaServed: areaServed(),
   }));
+}
+
+/** The Service node for one category, used on its own detail page. */
+export function service(slug: string) {
+  const found = serviceList().find((s) => s['@id'] === `${SITE.url}/services/${slug}/`);
+  if (!found) throw new Error(`service(): no SERVICE_CATEGORIES entry for slug "${slug}"`);
+  return found;
 }
 
 export function faqPage(qa: { q: string; a: string }[]) {

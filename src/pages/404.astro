@@ -46,7 +46,7 @@ import { SITE, SERVICE_CATEGORIES } from '../data/site';
       </div>
       <ul class="notfound-links">
         {SERVICE_CATEGORIES.map((c) => (
-          <li><a href={`/services/#${c.slug}`}>{c.name}</a></li>
+          <li><a href={`/services/${c.slug}/`}>{c.name}</a></li>
         ))}
       </ul>
     </div>

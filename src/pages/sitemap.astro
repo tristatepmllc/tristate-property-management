@@ -52,7 +52,7 @@ const jsonLd = graph([breadcrumbs([{ name: 'Home', path: '/' }, { name: 'Site in
           <h2>Services</h2>
           <ul class="footer-links">
             {SERVICE_CATEGORIES.map((c) => (
-              <li><a href={`/services/#${c.slug}`}>{c.name}</a></li>
+              <li><a href={`/services/${c.slug}/`}>{c.name}</a></li>
             ))}
           </ul>
         </div>
