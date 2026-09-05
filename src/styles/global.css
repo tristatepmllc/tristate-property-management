@@ -450,7 +450,7 @@ p:last-child{margin-bottom:0}
   padding:6px 12px;
 }
 .card-body{padding:22px 22px 24px;flex:1;display:flex;flex-direction:column}
-.card-body h3{
+.card-body h2,.card-body h3{
   font-size:1.42rem;
   text-transform:uppercase;
   letter-spacing:.02em;
@@ -856,15 +856,15 @@ p:last-child{margin-bottom:0}
 .compare-col{padding:26px 24px}
 .compare-col.is-bad{background:var(--paper);border-right:1px solid var(--line)}
 .compare-col.is-good{background:var(--white)}
-.compare-col h4{
+.compare-col h3,.compare-col h4{
   font-size:1.15rem;
   text-transform:uppercase;
   letter-spacing:.04em;
   margin-bottom:14px;
   display:flex;align-items:center;gap:9px;
 }
-.compare-col.is-bad h4{color:var(--steel)}
-.compare-col.is-good h4{color:var(--red)}
+.compare-col.is-bad h3,.compare-col.is-bad h4{color:var(--steel)}
+.compare-col.is-good h3,.compare-col.is-good h4{color:var(--red)}
 .compare-col li{
   font-size:.89rem;
   padding:8px 0 8px 22px;
@@ -1342,7 +1342,7 @@ p:last-child{margin-bottom:0}
   gap:44px;
   padding:64px 0 48px;
 }
-.footer h4{
+.footer h3,.footer h4{
   color:#fff;
   font-size:1.05rem;
   text-transform:uppercase;

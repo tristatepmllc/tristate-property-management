@@ -49,7 +49,7 @@ const fmt = (d: Date) =>
                 <span class="card-tag">{post.data.category}</span>
               </div>
               <div class="card-body">
-                <h3><a href={`/blog/${post.id}/`}>{post.data.title}</a></h3>
+                <h2><a href={`/blog/${post.id}/`}>{post.data.title}</a></h2>
                 <p class="post-meta">
                   <time datetime={post.data.publishedAt.toISOString()}>{fmt(post.data.publishedAt)}</time>
                 </p>

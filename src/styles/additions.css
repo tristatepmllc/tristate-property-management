@@ -44,8 +44,8 @@ img{height:auto}
 }
 .page-hero .post-meta{color:#A9BAD2}
 
-.card-body h3 a{color:inherit}
-.card-body h3 a:hover{color:var(--red)}
+.card-body h2 a,.card-body h3 a{color:inherit}
+.card-body h2 a:hover,.card-body h3 a:hover{color:var(--red)}
 
 .prose{
   max-width:72ch;

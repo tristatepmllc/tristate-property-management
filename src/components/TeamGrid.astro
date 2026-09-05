@@ -13,11 +13,17 @@ import { TEAM } from '../data/team';
  * Each card carries `id={slug}` because the Person schema `@id` and the blog
  * author link both resolve to `/team/#slug`. Renaming a slug breaks both, so
  * they live in one place in `data/team.ts`.
+ *
+ * The first row loads eagerly. The grid is three across on desktop and these
+ * faces sit above the fold on /team/, so `loading="lazy"` there does not save
+ * a request - it just makes the browser wait for layout before starting one,
+ * which delays the largest paint on the page. Anything past the first row
+ * stays lazy, which is what the attribute is actually for.
  */
 ---
 {TEAM.length > 0 && (
   <div class="team-grid">
-    {TEAM.map((m) => (
+    {TEAM.map((m, i) => (
       <article class="team-card" id={m.slug}>
         <div class="team-face">
           {m.avatar ? (
@@ -27,7 +33,8 @@ import { TEAM } from '../data/team';
                 src={`/images/team/${m.avatar}.jpg`}
                 alt={`${m.name}, ${m.role} at Tristate Property Management`}
                 width="400" height="400"
-                loading="lazy" decoding="async"
+                loading={i < 3 ? 'eager' : 'lazy'} decoding="async"
+                fetchpriority={i === 0 ? 'high' : undefined}
               />
             </picture>
           ) : (
