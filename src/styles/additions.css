@@ -1205,3 +1205,27 @@ a[href^="mailto:"]{overflow-wrap:anywhere}
   text-decoration:underline;text-underline-offset:2px;
 }
 .link-btn:hover{color:var(--red-dark)}
+
+/* Admin leads table. No new brand colors invented - reuses the existing
+   navy/red/steel palette so status pills don't read as a different app. */
+.admin-table-wrap{overflow-x:auto;border:1px solid var(--line);border-radius:var(--radius)}
+.admin-table{width:100%;border-collapse:collapse;font-size:.9rem;background:var(--white)}
+.admin-table th,.admin-table td{
+  padding:12px 14px;text-align:left;vertical-align:top;border-bottom:1px solid var(--line);
+}
+.admin-table th{
+  font-family:var(--mono);font-size:.68rem;letter-spacing:.1em;text-transform:uppercase;
+  color:var(--navy-700);background:var(--paper);white-space:nowrap;
+}
+.admin-table tbody tr:last-child td{border-bottom:0}
+.admin-table a{color:var(--navy-700)}
+.admin-muted{color:var(--steel-light);font-size:.82rem}
+.admin-message{max-width:320px;color:var(--navy-800)}
+.admin-status{
+  display:inline-block;padding:3px 9px;border-radius:99px;font-size:.74rem;font-weight:600;
+  text-transform:capitalize;white-space:nowrap;
+}
+.admin-status--new{background:var(--red-soft);color:var(--red-dark)}
+.admin-status--contacted,.admin-status--quoted{background:var(--paper-2);color:var(--navy-700)}
+.admin-status--won{background:var(--navy-900);color:var(--white)}
+.admin-status--lost{background:var(--paper);color:var(--steel-light)}

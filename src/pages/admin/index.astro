@@ -1,0 +1,112 @@
+---
+export const prerender = false;
+
+import { env } from 'cloudflare:workers';
+import BaseLayout from '../../layouts/BaseLayout.astro';
+import { requireAdmin } from '../../lib/require-admin';
+
+/**
+ * Admin dashboard. First feature: read-only leads list.
+ *
+ * Role-gate: no session, or session with role client/vendor, both redirect
+ * to /portal/ with no distinguishing message - a vendor probing for an
+ * admin panel should see the same thing as someone not signed in at all.
+ * There is no admin sign-up; the only way to become admin is a hand-run
+ * SQL UPDATE against D1 (see docs/ops-context.md), by design.
+ *
+ * Route note: /admin and /admin/* must stay in astro.config.mjs's
+ * ROUTES_TO_WORKER - see that file's comment for why a missing entry
+ * 404s in production while looking fine in every local test (this bit
+ * /portal/ once already).
+ */
+const admin = await requireAdmin(Astro.request.headers);
+if (!admin) return Astro.redirect('/portal/', 302);
+
+type Lead = {
+  id: string;
+  name: string;
+  email: string;
+  phone: string;
+  company: string | null;
+  service: string | null;
+  urgency: string | null;
+  status: string;
+  source: string | null;
+  message: string | null;
+  created_at: number;
+};
+
+// No pagination yet - fine at current volume (single digits as of
+// 2026-09-06). Revisit once this list is long enough to scroll past a
+// screen; LIMIT below is a guardrail, not a feature.
+const LEADS_LIMIT = 200;
+const { results: leads } = await env.DB.prepare(
+  `SELECT id, name, email, phone, company, service, urgency, status, source, message, created_at
+   FROM leads ORDER BY created_at DESC LIMIT ?1`
+)
+  .bind(LEADS_LIMIT)
+  .all<Lead>();
+
+const fmtDate = (ms: number) =>
+  new Date(ms).toLocaleString('en-US', {
+    dateStyle: 'medium',
+    timeStyle: 'short',
+    timeZone: 'America/New_York',
+  });
+---
+<BaseLayout
+  title="Admin - Tristate Property Management"
+  description="Internal admin dashboard."
+  path="/admin/"
+  noindex={true}
+  showPopup={false}
+>
+  <section class="page-hero">
+    <div class="wrap">
+      <p class="crumb"><a href="/portal/">Portal</a> &nbsp;/&nbsp; <span>Admin</span></p>
+      <h1>Admin</h1>
+      <p>Signed in as {admin.name || admin.email}.</p>
+    </div>
+  </section>
+
+  <section class="section">
+    <div class="wrap">
+      <div class="sec-head sec-head--form">
+        <p class="eyebrow">Leads</p>
+        <h2>{leads.length} total</h2>
+        <p>Newest first. Read-only for now - status changes and vendor/job actions are next.</p>
+      </div>
+
+      {leads.length === 0 ? (
+        <p class="form-note">No leads yet.</p>
+      ) : (
+        <div class="admin-table-wrap">
+          <table class="admin-table">
+            <thead>
+              <tr>
+                <th>Received</th>
+                <th>Name</th>
+                <th>Contact</th>
+                <th>Service</th>
+                <th>Status</th>
+                <th>Message</th>
+              </tr>
+            </thead>
+            <tbody>
+              {leads.map((lead) => (
+                <tr>
+                  <td>{fmtDate(lead.created_at)}</td>
+                  <td>{lead.name}{lead.company ? <><br /><span class="admin-muted">{lead.company}</span></> : null}</td>
+                  <td><a href={`mailto:${lead.email}`}>{lead.email}</a><br /><a href={`tel:${lead.phone}`}>{lead.phone}</a></td>
+                  <td>{lead.service || '—'}{lead.urgency ? <><br /><span class="admin-muted">{lead.urgency}</span></> : null}</td>
+                  <td><span class={`admin-status admin-status--${lead.status}`}>{lead.status}</span></td>
+                  <td class="admin-message">{lead.message || '—'}</td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      )}
+    </div>
+  </section>
+</BaseLayout>

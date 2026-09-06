@@ -24,7 +24,7 @@
   // --- R2 (scaffolded for future job photos) --------------------------
   // npx wrangler r2 bucket create tristate-media
   "r2_buckets": [
-    { "binding": "MEDIA", "bucket_name": "tristate-media" }
+    { "binding": "MEDIA", "bucket_name": "tristate-media-new" }
   ],
 
   // Secrets are NOT stored here:

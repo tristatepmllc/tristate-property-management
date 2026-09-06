@@ -139,7 +139,7 @@ honeypot returns 200 and writes nothing; bad input returns 422 with the failing 
 ```bash
 npx wrangler login
 npx wrangler d1 create tristate-db          # paste database_id into wrangler.jsonc
-npx wrangler r2 bucket create tristate-media
+npx wrangler r2 bucket create tristate-media-new
 npm run db:remote                          # apply db/schema.sql
 npx wrangler secret put TURNSTILE_SECRET_KEY
 npx wrangler secret put RESEND_API_KEY

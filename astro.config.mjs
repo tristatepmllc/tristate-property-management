@@ -28,7 +28,7 @@ import { writeFile } from 'node:fs/promises';
  * `export const prerender = false` - there is no build-time check that
  * catches a missing one, only this comment.
  */
-const ROUTES_TO_WORKER = ['/api/*', '/portal', '/portal/*'];
+const ROUTES_TO_WORKER = ['/api/*', '/portal', '/portal/*', '/admin', '/admin/*'];
 
 function cloudflarePagesCompat() {
   return {
