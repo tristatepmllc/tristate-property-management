@@ -5,7 +5,10 @@ import { json } from '../../lib/http';
 export const prerender = false;
 
 /** Tables the site cannot function without. */
-const REQUIRED = ['leads', 'vendors', 'offers', 'accounts', 'jobs', 'cashback_ledger'] as const;
+const REQUIRED = [
+  'leads', 'vendors', 'offers', 'accounts', 'jobs', 'cashback_ledger',
+  'auth_credentials', 'session', 'verification',
+] as const;
 
 /**
  * GET /api/health - deploy smoke test.
@@ -42,7 +45,14 @@ export const GET: APIRoute = async () => {
       ok,
       db,
       connection,
-      ...(missing.length ? { missing, fix: 'npm run db:remote' } : {}),
+      ...(missing.length
+        ? {
+            missing,
+            fix: missing.every((t) => ['auth_credentials', 'session', 'verification'].includes(t))
+              ? 'npm run db:migrate:auth' // existing deploy, pre-dates auth
+              : 'npm run db:remote',       // fresh install, nothing applied yet
+          }
+        : {}),
       ts: Date.now(),
     },
     ok ? 200 : 503

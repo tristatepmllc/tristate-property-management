@@ -1169,3 +1169,39 @@ a[href^="mailto:"]{overflow-wrap:anywhere}
   color:var(--red);font-weight:600;white-space:nowrap;
 }
 .cat-more:hover{text-decoration:underline}
+
+/* -------------------------------------------------------- /portal/ ------ */
+/* Two form-cards side by side (sign in / create account, or two dashboard
+   stat cards) - a plain grid rather than a new component, since .form-card
+   is already the approved container. */
+.portal-grid{
+  display:grid;grid-template-columns:1fr 1fr;gap:24px;margin-bottom:28px;
+}
+@media (max-width:780px){
+  .portal-grid{grid-template-columns:1fr;gap:20px}
+}
+.portal-figure{
+  font-family:var(--display);font-size:2.4rem;font-weight:700;color:var(--navy-900);
+  margin:4px 0 10px;
+}
+
+/* fieldset used for the sign-up role choice. Legend takes the same treatment
+   as .field label so it does not read as a stray browser default. */
+.field fieldset{border:0;padding:0;margin:0}
+.field legend{
+  display:block;font-family:var(--mono);font-size:.68rem;letter-spacing:.14em;
+  text-transform:uppercase;color:var(--navy-700);margin-bottom:7px;font-weight:500;padding:0;
+}
+.field fieldset label{
+  display:flex;align-items:center;gap:8px;font-family:var(--body);font-size:.92rem;
+  text-transform:none;letter-spacing:normal;color:var(--navy-800);margin-bottom:8px;font-weight:400;
+}
+.field fieldset input[type="radio"]{width:auto;flex:none}
+
+/* Plain-text "Forgot your password?" toggle - a link, styled as one, not a
+   second red button competing with the submit button above it. */
+.link-btn{
+  background:none;border:0;padding:0;font:inherit;color:var(--red);cursor:pointer;
+  text-decoration:underline;text-underline-offset:2px;
+}
+.link-btn:hover{color:var(--red-dark)}

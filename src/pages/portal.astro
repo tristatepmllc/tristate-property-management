@@ -1,26 +1,57 @@
 ---
+export const prerender = false;
+
+import { env } from 'cloudflare:workers';
 import BaseLayout from '../layouts/BaseLayout.astro';
 import { SITE } from '../data/site';
+import { getAuth } from '../lib/auth';
 
 /**
- * Holding page for the Login menu.
+ * Real login, registration and a dashboard - replacing the holding page.
+ * See README ("Header menus") for why a holding page existed at all: a Login
+ * control that led to a form that could not authenticate anyone was worse
+ * than no Login control.
  *
- * The client and vendor portals do not exist yet - /api/me, /api/jobs and
- * /api/cashback/* are 501 stubs. A Login control that leads to a 404, or to a
- * form that cannot authenticate anyone, is worse than no Login control, so both
- * menu entries land here and this page says plainly what is and is not running.
+ * Session check runs server-side (this page is `prerender = false`, same as
+ * the API routes) so the dashboard never flashes then disappears - the HTML
+ * that reaches the browser already reflects whether anyone is signed in.
  *
- * `noindex` because there is nothing here to rank, and no popup because someone
- * looking for their account is not a new lead.
- *
- * Replace this file in the same commit that ships auth. Do not soften the copy
- * in the meantime - "coming soon" without a way to reach a human is the thing
- * this page exists to avoid.
+ * `?reset=<token>` switches the page into "set a new password" mode. That
+ * token comes from the email `sendResetPassword` in src/lib/auth.ts sends;
+ * it is single-use and expires in one hour, both enforced by Better Auth.
  */
+const session = await getAuth().api.getSession({ headers: Astro.request.headers });
+const resetToken = Astro.url.searchParams.get('reset');
+
+type Role = 'client' | 'vendor' | 'admin';
+const user = session?.user as (typeof session extends null ? never : NonNullable<typeof session>['user']) & {
+  role?: Role;
+  company?: string | null;
+  phone?: string | null;
+} | undefined;
+
+let balanceCents = 0;
+let jobCount = 0;
+
+if (session) {
+  const [balanceRow, jobsRow] = await Promise.all([
+    env.DB.prepare(`SELECT COALESCE(SUM(amount_cents), 0) AS cents FROM cashback_ledger WHERE account_id = ?1`)
+      .bind(session.user.id)
+      .first<{ cents: number }>(),
+    env.DB.prepare(`SELECT COUNT(*) AS n FROM jobs WHERE account_id = ?1`)
+      .bind(session.user.id)
+      .first<{ n: number }>(),
+  ]);
+  balanceCents = balanceRow?.cents ?? 0;
+  jobCount = jobsRow?.n ?? 0;
+}
+
+const balance = (balanceCents / 100).toLocaleString('en-US', { style: 'currency', currency: 'USD' });
+const roleLabel = user?.role === 'vendor' ? 'Vendor' : user?.role === 'admin' ? 'Admin' : 'Client';
 ---
 <BaseLayout
   title="Client and Vendor Portal - Tristate Property Management"
-  description="The Tristate client and vendor portals are not open yet. Here is how to reach us for invoices, work orders, job assignments and payment status in the meantime."
+  description="Sign in to your Tristate account for job history and cashback balance, or register a new client or vendor account."
   path="/portal/"
   active="/portal/"
   noindex={true}
@@ -31,47 +62,149 @@ import { SITE } from '../data/site';
     <div class="wrap">
       <p class="crumb"><a href="/">Home</a> &nbsp;/&nbsp; <span>Portal</span></p>
       <h1>Portal</h1>
-      <p>Account access is not open yet. Until it is, a person answers the phone.</p>
+      <p>
+        {session
+          ? `Signed in as ${user?.name || user?.email}.`
+          : 'Sign in to an existing account, or register a new one below.'}
+      </p>
     </div>
   </section>
 
-  <section class="section section--policy">
+  {session ? (
+    <section class="section">
+      <div class="wrap">
+        <div class="sec-head sec-head--form">
+          <p class="eyebrow">{roleLabel} account</p>
+          <h2>{user?.name || user?.email}</h2>
+          <p>{user?.email}{user?.company ? ` \u00b7 ${user.company}` : ''}</p>
+        </div>
+
+        <div class="portal-grid">
+          <div class="form-card">
+            <h3>Cashback balance</h3>
+            <p class="portal-figure">{balance}</p>
+            <p class="form-note">
+              Running total from the earn/redeem ledger. Nothing has posted to it yet for most
+              accounts - that is expected until a completed job earns cashback.
+            </p>
+          </div>
+          <div class="form-card">
+            <h3>Jobs on file</h3>
+            <p class="portal-figure">{jobCount}</p>
+            <p class="form-note">
+              {jobCount === 0
+                ? 'No jobs recorded yet. This fills in once work is scheduled against your account.'
+                : `${jobCount} job${jobCount === 1 ? '' : 's'} on record.`}
+            </p>
+          </div>
+        </div>
+
+        <form id="logout-form" data-logout-form>
+          <button type="submit" class="btn btn--outline">Sign out</button>
+        </form>
+      </div>
+    </section>
+  ) : resetToken ? (
+    <section class="section">
+      <div class="wrap">
+        <div class="form-card form-card--narrow">
+          <h2>Set a new password</h2>
+          <form data-reset-form novalidate>
+            <input type="hidden" name="token" value={resetToken} />
+            <div class="field">
+              <label for="p-new">New password <span class="req">*</span></label>
+              <input type="password" id="p-new" name="password" autocomplete="new-password" minlength="10" required />
+            </div>
+            <button type="submit" class="btn btn--red btn--wide">Set password</button>
+            <p class="form-status" role="status" aria-live="polite" hidden></p>
+          </form>
+        </div>
+      </div>
+    </section>
+  ) : (
+    <section class="section">
+      <div class="wrap">
+        <div class="portal-grid">
+
+          <div class="form-card">
+            <h2>Sign in</h2>
+            <form data-signin-form novalidate>
+              <div class="field">
+                <label for="si-email">Email <span class="req">*</span></label>
+                <input type="email" id="si-email" name="email" autocomplete="email" required />
+              </div>
+              <div class="field">
+                <label for="si-password">Password <span class="req">*</span></label>
+                <input type="password" id="si-password" name="password" autocomplete="current-password" required />
+              </div>
+              <button type="submit" class="btn btn--red btn--wide">Sign in</button>
+              <p class="form-note">
+                <button type="button" class="link-btn" data-forgot-toggle>Forgot your password?</button>
+              </p>
+              <p class="form-status" role="status" aria-live="polite" hidden></p>
+            </form>
+
+            <form data-forgot-form hidden novalidate>
+              <div class="field">
+                <label for="fp-email">Email <span class="req">*</span></label>
+                <input type="email" id="fp-email" name="email" autocomplete="email" required />
+              </div>
+              <button type="submit" class="btn btn--outline btn--wide">Email me a reset link</button>
+              <p class="form-status" role="status" aria-live="polite" hidden></p>
+            </form>
+          </div>
+
+          <div class="form-card">
+            <h2>Create an account</h2>
+            <form data-signup-form novalidate>
+              <div class="field">
+                <label for="su-name">Name <span class="req">*</span></label>
+                <input type="text" id="su-name" name="name" autocomplete="name" required />
+              </div>
+              <div class="field">
+                <label for="su-email">Email <span class="req">*</span></label>
+                <input type="email" id="su-email" name="email" autocomplete="email" required />
+              </div>
+              <div class="field">
+                <label for="su-password">Password <span class="req">*</span></label>
+                <input type="password" id="su-password" name="password" autocomplete="new-password" minlength="10" required />
+                <p class="form-note">At least 10 characters.</p>
+              </div>
+              <fieldset class="field">
+                <legend>I am a...</legend>
+                <label><input type="radio" name="role" value="client" checked /> Property owner (client)</label>
+                <label><input type="radio" name="role" value="vendor" /> Trade partner (vendor)</label>
+              </fieldset>
+              <button type="submit" class="btn btn--red btn--wide">Create account</button>
+              <p class="form-note">
+                Registering here creates portal login credentials. It does not submit a job
+                request or a vendor application - do that first at
+                <a href="/client-registration/">client registration</a> or the
+                <a href="/vendor-network/">vendor network page</a> if you have not already.
+              </p>
+              <p class="form-status" role="status" aria-live="polite" hidden></p>
+            </form>
+          </div>
+
+        </div>
+      </div>
+    </section>
+  )}
+
+  <section class="section section--navy">
     <div class="wrap">
-      <article class="prose prose--left">
-
-        <h2>What is not running yet</h2>
-        <p>
-          There is no client or vendor login today. We would rather say that than put up a
-          sign-in box that cannot sign anyone in. When the portal opens, clients will see work
-          orders, invoices and property history, and vendors will see assigned jobs, photo
-          uploads and payment status.
-        </p>
-
-        <h2>How to reach us in the meantime</h2>
-        <ul>
-          <li>
-            <strong>Existing clients</strong> - call <a href={SITE.telHref}>{SITE.phone}</a> for
-            anything on a job already booked, or email
-            <a href={SITE.mailtoHref}>{SITE.email}</a> for scheduling and invoices.
-          </li>
-          <li>
-            <strong>Vendors</strong> - job assignments and payment questions go to the same
-            number and inbox. If you have not applied yet, start at
-            <a href="/vendor-network/">the vendor network page</a>.
-          </li>
-          <li>
-            <strong>New owners</strong> - <a href="/client-registration/">open an account</a> or
-            <a href="/contact/">ask for a quote on one job</a>.
-          </li>
-        </ul>
-
-        <h2>Want to know when it opens?</h2>
-        <p>
-          Tell us on any of the routes above and we will contact you directly. We are not
-          collecting addresses for a list we do not have yet.
-        </p>
-
-      </article>
+      <div class="sec-head">
+        <p class="eyebrow">Prefer a person</p>
+        <h2>Reach us directly</h2>
+      </div>
+      <p class="prose prose--left">
+        Call <a href={SITE.telHref}>{SITE.phone}</a> for anything on a job already booked, or
+        email <a href={SITE.mailtoHref}>{SITE.email}</a> for scheduling and invoices.
+      </p>
     </div>
   </section>
 </BaseLayout>
+
+<script>
+  import '../scripts/auth';
+</script>

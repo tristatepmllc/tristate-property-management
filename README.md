@@ -11,9 +11,10 @@ original one, unmodified except for the change documented below.
 | Framework | Astro 7 (`output: 'static'` + Cloudflare adapter) |
 | Hosting | Cloudflare Workers static assets (Pages also works — see below) |
 | API | `src/pages/api/*` (`export const prerender = false`) |
-| Database | Cloudflare D1 (`leads`, `accounts`, `jobs`, `cashback_ledger`, `offers`) |
+| Database | Cloudflare D1 (`accounts`, `auth_credentials`, `session`, `verification`, `leads`, `jobs`, `cashback_ledger`, `offers`, `vendors`) |
 | Storage | Cloudflare R2 (`MEDIA` binding, scaffolded — not used yet) |
 | Anti-spam | Cloudflare Turnstile + honeypot field |
+| Auth | Better Auth (email/password), D1-backed via Kysely + `kysely-d1` |
 | Email | Resend |
 | Fonts | self-hosted via Fontsource (no Google Fonts CDN) |
 
@@ -165,7 +166,8 @@ output directory `dist/client`, and add the D1/R2 bindings plus secrets in the P
 |---|---|---|
 | `PUBLIC_TURNSTILE_SITE_KEY` | build-time env | Turnstile widget (public) |
 | `TURNSTILE_SECRET_KEY` | Worker secret | server-side challenge verification |
-| `RESEND_API_KEY` | Worker secret | lead notification email |
+| `RESEND_API_KEY` | Worker secret | lead notification email, password-reset email |
+| `BETTER_AUTH_SECRET` | Worker secret | signs and verifies portal session cookies - `npx wrangler secret put BETTER_AUTH_SECRET` |
 | `LEAD_NOTIFY_TO` / `LEAD_NOTIFY_FROM` | `wrangler.jsonc` vars | notification addresses |
 
 Without `PUBLIC_TURNSTILE_SITE_KEY` the widget falls back to Cloudflare's always-passes test key,
@@ -179,7 +181,10 @@ so forms work in development.
 | POST | `/api/vendors` | Vendor network applications. Same pipeline and same anti-spam posture, but writes to `vendors`. |
 | GET | `/api/offers` | public promos, 5-minute cache |
 | GET | `/api/health` | deploy smoke test |
-| GET | `/api/me`, `/api/jobs`, `/api/cashback/*` | 501 stubs for the portal/app phase |
+| ALL | `/api/auth/*` | Better Auth - sign-up/sign-in/sign-out, password reset, session. See "Auth & portal" below |
+| GET | `/api/me` | current account profile - 401 without a session |
+| GET | `/api/jobs` | job history for the signed-in account - 401 without a session |
+| GET | `/api/cashback/balance`, `/api/cashback/ledger` | cashback ledger for the signed-in account - 401 without a session |
 
 The same endpoints serve the website and the future React Native app — the app will send a Bearer
 token where the web sends a session cookie.
@@ -205,6 +210,12 @@ token where the web sends a session cookie.
       because it only ran `SELECT 1`, which succeeds against an empty database. Every form POST
       and `/api/offers` return 500 in production until `npm run db:remote` is run. Health now
       returns 503 and names the missing tables.
+- [ ] **Remote D1 predates the auth tables.** `accounts` was deployed before Better Auth shipped
+      (see "Auth & portal"), so it has the old five columns, not the current nine, and
+      `auth_credentials`/`session`/`verification` do not exist yet. `npm run db:remote` will not
+      add them - `CREATE TABLE IF NOT EXISTS` cannot add a column to a table that already exists.
+      Run `npm run db:migrate:auth` once, after `db:remote`. `/api/health`'s `fix` field says
+      which one is needed.
 - [x] ~~**Decide on the chat widget.**~~ Done - it is real three-step lead capture posting to
       `/api/leads` with `source = 'chat-widget'`, and the status line says "Messages go straight
       to dispatch" rather than "Online now". It does still depend on the D1 schema above.
@@ -530,10 +541,11 @@ only - **and the first click after a hover-open is deliberately absorbed**, beca
 the mouse arriving on the control opens the panel and the click that follows immediately
 closes it, so the menu never appears to open at all.
 
-`/portal/` is a holding page, not a login form. `/api/me`, `/api/jobs` and `/api/cashback/*`
-are 501 stubs, so a Login control that led to a 404 or to a sign-in box that cannot sign
-anyone in would be worse than no Login control. The page says plainly what is not running and
-how to reach a person. Replace it in the same commit that ships auth.
+`/portal/` is real now, not a holding page - sign-up, sign-in, sign-out and password reset
+all work end to end, backed by Better Auth. See "Auth & portal" below for the full design.
+Both Login entries still point at the same `/portal/` URL: the page reads the signed-in
+account's role from the server-side session and shows the right dashboard, so client and
+vendor never needed separate routes.
 
 **Press, newsletter and social are absent on purpose.** `SITE.press` is empty (there is no
 press inbox - inventing `pr@` gives a journalist a bouncing address), `SITE.newsletter` is
@@ -658,6 +670,88 @@ every inner page, and `/sitemap/`.
 honeypot, Turnstile, disabled button, status line - while posting somewhere else. It also
 joins repeated field names with a comma instead of overwriting them; the old behaviour kept
 only the last checkbox in a group.
+
+## Auth & portal
+
+Better Auth (email/password), backed by the same D1 database as everything else via
+`kysely-d1`. Replaces the `/portal/` holding page and the four `PHASE 4 STUB` API routes that
+predated it (`/api/me`, `/api/jobs`, `/api/cashback/balance`, `/api/cashback/ledger`) - those
+stub comments already named the intended shape ("httpOnly session cookie on web, Bearer access
+token on mobile") and this implementation follows it, including the `bearer()` plugin for the
+future app.
+
+**`accounts` doubles as Better Auth's `user` table** rather than a parallel `users` table. It
+was an unused placeholder before this shipped - nothing wrote to it - so there was nothing to
+migrate around, and a second identity table next to the business-meaning one would be a
+standing invitation to join the wrong one. `role` (`client` | `vendor` | `admin`), `email_verified`,
+`image` and `updated_at` were added to it; see `src/lib/auth.ts` for the full field mapping and
+`db/schema.sql` for the column-level shape. Better Auth's own `account` model (password hashes,
+future OAuth tokens) is a separate table on purpose, named `auth_credentials` rather than
+`account`/`accounts` - this codebase already has a business-meaning `accounts` table, and a
+second one spelled almost the same is exactly the kind of thing nobody notices until the wrong
+join runs.
+
+**`role` cannot be set to `admin` through the public sign-up form**, even with a hand-built
+request. `input: true` lets the form send `client` or `vendor`; a `databaseHooks.user.create.before`
+hook independently forces anything else - including `admin` - down to `client`. Both were
+tested with curl before this shipped: a sign-up POSTing `role: "admin"` comes back
+`"role":"client"`. There is no staff UI yet, so admin is granted with a direct
+`UPDATE accounts SET role = 'admin' WHERE id = ...` - clumsy, but honest, and the right amount
+of ceremony for a role nothing reads yet.
+
+**Registration here is deliberately separate from `/client-registration/` and
+`/vendor-network/`.** Those two post to `leads`/`vendors` and are reviewed by a person before
+any work is scheduled - that vetting step (certificates, background) is the whole reason the
+vendor table exists as its own thing. `/portal/`'s "Create an account" form only creates portal
+*login credentials*; it does not submit a job request or a vendor application, and says so under
+the button. Gating portal sign-up behind an approved lead - "here is your invite" rather than
+open self-service - is a reasonable next step, but it needs a staff-facing approval screen to
+send that invite from, which does not exist yet. Open self-service is the honest MVP until it
+does, not a shortcut nobody noticed.
+
+**The dashboard shows real, currently-empty data, not a mock-up.** Nothing in this repo writes
+to `jobs` or `cashback_ledger` yet - there is no scheduling flow - so every new account correctly
+shows `$0.00` and "0 jobs on file" against a real query, not a placeholder string. That is the
+same posture the empty `TESTIMONIALS` array takes: an honest empty state, not invented content
+to make the layout look finished. The cashback balance is `SUM(amount_cents)` over the
+append-only ledger, computed fresh on every load - there is no `balance` column anywhere that
+could drift out of sync with the ledger that is supposed to explain it.
+
+**Password reset works end to end**, using the existing Resend `sendEmail()` helper - a
+one-hour, single-use token, requested at `/portal/` ("Forgot your password?"), delivered by
+email, consumed at `/portal/?reset=<token>`. If `RESEND_API_KEY` is not configured the link is
+logged instead of lost, the same graceful-degradation posture `/api/leads` already uses for its
+notification email. Email *verification* is off (`requireEmailVerification: false`): the sending
+inbox behind `LEAD_NOTIFY_FROM` has not been confirmed live yet (see the NAP/email TODO in
+`src/data/site.ts`), and a portal that refuses to let anyone in until they receive an email from
+an unconfirmed address is worse than one that does not ask. Turn it on once that inbox is real.
+
+**`validateSchema: false` is not a shortcut past checking the database.** Better Auth's default
+startup check introspects the schema through Kysely's generic `SqliteIntrospector`, which queries
+`sqlite_master` directly - a class of query D1's sandboxed SQLite rejects outright with
+`not authorized: SQLITE_AUTH`, schema correct or not. `GET /api/health` already does the real
+version of this check (see `src/pages/api/health.ts`) with a query D1 does allow, so nothing is
+actually going unverified by turning Better Auth's own copy off - it could not have passed
+either way.
+
+**`trustedOrigins` lists `SITE.url` plus three local wrangler ports.** Requests whose `Origin`
+header does not match one of these are rejected - confirmed with curl: a sign-out from
+`http://localhost:8787` 403s as `INVALID_ORIGIN` in the same way a `redirectTo` outside this list
+403s on password reset. The local ports are a small, understood trade-off rather than a security
+hole: Better Auth's session cookies are scoped to the domain that actually set them, so a
+production cookie is never sent to localhost and a local one is useless against the live site -
+listing these origins only lets a local dev server talk to itself. Add the custom domain here in
+the same commit that `SITE.url` switches to it (see "Attach the custom domain" above); nothing
+else needs to change, since this reads `SITE.url` rather than a second hardcoded value.
+
+**One remote-database step remains and cannot be done from here.** `accounts` was deployed
+before this shipped, with the old five-column shape, and `auth_credentials`/`session`/
+`verification` do not exist on the remote D1 at all - `db/migrations/0001_auth.sql` covers both.
+Applying it requires a Cloudflare API token, which this environment does not have (git push
+access only) - run `npm run db:migrate:auth` once. `GET /api/health` already distinguishes
+this case from a totally fresh install (`missing` will list exactly `auth_credentials`,
+`session`, `verification`, and its `fix` field says which command to run) so this is easy to
+tell apart from a database that was never touched at all.
 
 ## Quote popup
 
