@@ -12,6 +12,7 @@
     "db:local": "wrangler d1 execute tristate-db --local --file=./db/schema.sql",
     "db:remote": "wrangler d1 execute tristate-db --remote --file=./db/schema.sql",
     "db:migrate:auth": "wrangler d1 execute tristate-db --remote --file=./db/migrations/0001_auth.sql",
+    "db:migrate:profiles": "wrangler d1 execute tristate-db --remote --file=./db/migrations/0002_profiles.sql",
     "types": "wrangler types"
   },
   "dependencies": {

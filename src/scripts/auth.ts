@@ -47,6 +47,32 @@ async function post(path: string, body: Record<string, unknown>): Promise<{ ok: 
   }
 }
 
+/**
+ * PATCH /api/me, not /api/auth/* - a different endpoint (src/pages/api/me.ts)
+ * from everything else in this file, so it gets its own small helper rather
+ * than being forced through `post()`'s Better-Auth-shaped error parsing.
+ */
+async function patchProfile(body: Record<string, unknown>): Promise<{ ok: boolean; message?: string }> {
+  try {
+    const res = await fetch('/api/me', {
+      method: 'PATCH',
+      headers: { 'content-type': 'application/json' },
+      body: JSON.stringify(body),
+    });
+    if (res.ok) return { ok: true };
+    let message = 'Could not save your profile. Please try again.';
+    try {
+      const data = (await res.json()) as { error?: string };
+      if (data.error === 'no_fields') message = 'Nothing changed.';
+    } catch {
+      /* non-JSON error body - keep the generic message */
+    }
+    return { ok: false, message };
+  } catch {
+    return { ok: false, message: 'Network problem. Please try again, or call us instead.' };
+  }
+}
+
 function withBusyButton(form: HTMLFormElement, run: () => Promise<void>): void {
   form.addEventListener('submit', async (event) => {
     event.preventDefault();
@@ -78,6 +104,7 @@ function init(): void {
   const forgotToggle = document.querySelector<HTMLButtonElement>('[data-forgot-toggle]');
   const reset = document.querySelector<HTMLFormElement>('[data-reset-form]');
   const logout = document.querySelector<HTMLFormElement>('[data-logout-form]');
+  const profile = document.querySelector<HTMLFormElement>('[data-profile-form]');
 
   forgotToggle?.addEventListener('click', () => {
     if (!signIn || !forgot) return;
@@ -170,6 +197,28 @@ function init(): void {
     });
     location.href = '/portal/';
   });
+
+  if (profile) {
+    withBusyButton(profile, async () => {
+      const fd = new FormData(profile);
+      const body: Record<string, unknown> = {};
+      for (const [key, value] of fd.entries()) {
+        // Checkboxes handled explicitly below - FormData silently omits an
+        // unchecked box's key entirely rather than sending false, which
+        // would make "uncheck this" a no-op server-side (api/me.ts only
+        // updates a field when its key is present in the request body).
+        if (key === 'insuranceOnFile' || key === 'emergencyAvailable') continue;
+        body[key] = value;
+      }
+      const insurance = profile.querySelector<HTMLInputElement>('[name="insuranceOnFile"]');
+      if (insurance) body.insuranceOnFile = insurance.checked;
+      const emergency = profile.querySelector<HTMLInputElement>('[name="emergencyAvailable"]');
+      if (emergency) body.emergencyAvailable = emergency.checked;
+
+      const result = await patchProfile(body);
+      say(profile, result.ok ? 'Saved.' : (result.message ?? 'Could not save your profile.'));
+    });
+  }
 }
 
 init();

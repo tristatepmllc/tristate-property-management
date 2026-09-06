@@ -20,6 +20,30 @@ CREATE TABLE IF NOT EXISTS accounts (
   role           TEXT NOT NULL DEFAULT 'client',   -- client|vendor|admin
   email_verified INTEGER NOT NULL DEFAULT 0,
   image          TEXT,
+
+  -- Client profile fields. Meaningless for role='vendor', but not enforced
+  -- at the DB level (D1/SQLite has no partial-column-per-role constraint
+  -- worth building for a two-role system) - enforced instead in
+  -- src/pages/api/me.ts, which only writes the fields matching the
+  -- account's own role no matter what a PATCH body contains.
+  address        TEXT,              -- property street address
+  city           TEXT,
+  state          TEXT,
+  zip            TEXT,
+  property_type  TEXT,              -- single_family|multifamily|commercial|mixed_use|other
+  preferred_contact TEXT,           -- email|phone|text
+  notes          TEXT,              -- client preferences / access instructions
+
+  -- Vendor profile fields. See the same enforcement note above.
+  trade          TEXT,              -- primary specialty - matches /services/* categories
+  trades_other   TEXT,              -- secondary specialties, free text
+  service_area   TEXT,              -- towns / zip codes covered
+  license_number TEXT,
+  license_expires INTEGER,          -- unix ms; nullable, not all trades require one
+  insurance_on_file INTEGER NOT NULL DEFAULT 0,  -- 0/1 - status only, no document yet
+  years_in_business TEXT,
+  emergency_available INTEGER NOT NULL DEFAULT 0, -- 0/1
+
   created_at     INTEGER NOT NULL,
   updated_at     INTEGER NOT NULL
 );

@@ -81,6 +81,31 @@ function buildAuth() {
         role: { type: 'string', required: false, defaultValue: 'client', input: true },
         company: { type: 'string', required: false, input: true },
         phone: { type: 'string', required: false, input: true },
+
+        // Profile fields added after auth launch - see db/migrations/0002_profiles.sql.
+        // All `input: false`: none of these are settable at sign-up or via
+        // Better Auth's own update-user machinery. They exist here only so
+        // getSession()/api/me's `session.user` includes them at all - Better
+        // Auth selects the fields it knows about, not every column in the
+        // row. Writes go through the dedicated PATCH /api/me handler below,
+        // which enforces "only your own role's fields, nothing else" - a
+        // rule Better Auth's generic additionalFields has no way to express.
+        address: { type: 'string', required: false, input: false },
+        city: { type: 'string', required: false, input: false },
+        state: { type: 'string', required: false, input: false },
+        zip: { type: 'string', required: false, input: false },
+        propertyType: { type: 'string', required: false, input: false, fieldName: 'property_type' },
+        preferredContact: { type: 'string', required: false, input: false, fieldName: 'preferred_contact' },
+        notes: { type: 'string', required: false, input: false },
+
+        trade: { type: 'string', required: false, input: false },
+        tradesOther: { type: 'string', required: false, input: false, fieldName: 'trades_other' },
+        serviceArea: { type: 'string', required: false, input: false, fieldName: 'service_area' },
+        licenseNumber: { type: 'string', required: false, input: false, fieldName: 'license_number' },
+        licenseExpires: { type: 'date', required: false, input: false, fieldName: 'license_expires' },
+        insuranceOnFile: { type: 'boolean', required: false, defaultValue: false, input: false, fieldName: 'insurance_on_file' },
+        yearsInBusiness: { type: 'string', required: false, input: false, fieldName: 'years_in_business' },
+        emergencyAvailable: { type: 'boolean', required: false, defaultValue: false, input: false, fieldName: 'emergency_available' },
       },
     },
 

@@ -1229,3 +1229,13 @@ a[href^="mailto:"]{overflow-wrap:anywhere}
 .admin-status--contacted,.admin-status--quoted{background:var(--paper-2);color:var(--navy-700)}
 .admin-status--won{background:var(--navy-900);color:var(--white)}
 .admin-status--lost{background:var(--paper);color:var(--steel-light)}
+
+/* Profile form inside the logged-in portal dashboard. */
+.form-card--wide{grid-column:1/-1}
+.field--wide{grid-column:1/-1}
+.field--checkbox label{
+  display:flex;align-items:center;gap:8px;font-family:var(--body);font-size:.92rem;
+  text-transform:none;letter-spacing:normal;color:var(--navy-800);font-weight:400;
+  margin-top:28px; /* aligns roughly with sibling fields' input boxes, since this field has no separate label above the control */
+}
+.field--checkbox input[type="checkbox"]{width:auto;flex:none}
