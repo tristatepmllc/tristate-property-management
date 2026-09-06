@@ -10,10 +10,26 @@ import { writeFile } from 'node:fs/promises';
  *   _worker.js/index.js  – Pages looks for `index.js` inside a _worker.js
  *                          directory; the Astro adapter names its entry
  *                          `entry.mjs`, so we re-export it.
- *   _routes.json         – keeps static assets off the Worker so only
- *                          /api/* is billed and rendered on demand.
+ *   _routes.json         – keeps static assets off the Worker so only the
+ *                          routes listed in ROUTES_TO_WORKER are billed and
+ *                          rendered on demand.
  * Harmless on a plain Workers deploy (wrangler uses `main` + .assetsignore).
+ *
+ * `include` here is an ALLOWLIST, not a description of what happens to be
+ * dynamic today - Cloudflare Pages checks it BEFORE the Worker ever runs, so
+ * a route missing from this list does not 500 or fall through to the Worker,
+ * it 404s with no trace of why, because Pages looked for a static file,
+ * found none (nothing here is prerendered), and stopped. That is exactly
+ * what happened to /portal/ the first time it shipped as `prerender: false`
+ * without being added here: `wrangler dev` (used for all local testing in
+ * this repo) does not have a separate assets-vs-Worker split to get wrong,
+ * so it rendered the page correctly locally right up until the real Pages
+ * deploy 404'd it. ADD ANY NEW NON-/api/ ROUTE HERE THE MOMENT IT BECOMES
+ * `export const prerender = false` - there is no build-time check that
+ * catches a missing one, only this comment.
  */
+const ROUTES_TO_WORKER = ['/api/*', '/portal', '/portal/*'];
+
 function cloudflarePagesCompat() {
   return {
     name: 'cloudflare-pages-compat',
@@ -27,7 +43,7 @@ function cloudflarePagesCompat() {
         await writeFile(
           new URL('./_routes.json', dir),
           JSON.stringify(
-            { version: 1, include: ['/api/*'], exclude: ['/_astro/*', '/images/*'] },
+            { version: 1, include: ROUTES_TO_WORKER, exclude: ['/_astro/*', '/images/*'] },
             null,
             2
           )

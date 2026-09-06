@@ -744,6 +744,19 @@ listing these origins only lets a local dev server talk to itself. Add the custo
 the same commit that `SITE.url` switches to it (see "Attach the custom domain" above); nothing
 else needs to change, since this reads `SITE.url` rather than a second hardcoded value.
 
+**`/portal/` needed adding to `_routes.json`, and shipping without it 404'd the live
+site.** Cloudflare Pages checks `_routes.json`'s `include` list *before* the Worker ever runs -
+a route missing from it does not fall through to the Worker and 500, it 404s silently, because
+Pages looked for a static file (there is none; the route is server-rendered), found nothing, and
+stopped. `/portal/` used to be prerendered, so this never mattered; the moment it became
+`export const prerender = false` in this change, it needed a line in `astro.config.mjs`'s
+`ROUTES_TO_WORKER`, and the first version of this commit shipped without one. `wrangler dev` -
+used for every local verification described above - has no separate assets-vs-Worker split to
+get wrong, so every local test passed while the real Pages deploy 404'd. Caught by checking the
+live site after push, fixed in `astro.config.mjs` with a comment loud enough that the next
+`prerender = false` route hopefully does not repeat it - there is no build-time check that would
+catch a missing one otherwise.
+
 **One remote-database step remains and cannot be done from here.** `accounts` was deployed
 before this shipped, with the old five-column shape, and `auth_credentials`/`session`/
 `verification` do not exist on the remote D1 at all - `db/migrations/0001_auth.sql` covers both.
