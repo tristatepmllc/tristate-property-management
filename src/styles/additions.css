@@ -1474,3 +1474,81 @@ a[href^="mailto:"]{overflow-wrap:anywhere}
 .vdash-activity-text p:first-child{font-family:var(--body);font-size:.86rem;color:var(--navy-900);margin:0;font-weight:500}
 .vdash-activity-text p:last-child{font-family:var(--body);font-size:.75rem;color:var(--steel-light);margin:2px 0 0}
 .vdash-activity-empty{font-family:var(--body);font-size:.85rem;color:var(--steel);margin:0}
+
+/* ---------------------------------------------------------------------
+   Dashboard app shell (DashboardLayout.astro) - signed-in pages only.
+   Full-viewport, edge-to-edge, no marketing header/footer. Distinct from
+   .vdash below it, which is the vendor-specific sidebar+panel system that
+   lives inside .dash-main. */
+
+html:has(.dash-body){height:100%}
+.dash-body{
+  height:100vh;height:100dvh;
+  display:flex;flex-direction:column;
+  background:var(--paper);
+  overflow:hidden;
+}
+
+.dash-topbar{
+  flex:none;height:60px;
+  display:flex;align-items:center;justify-content:space-between;
+  padding:0 22px;background:var(--white);border-bottom:1px solid var(--line);
+}
+.dash-topbar-logo{
+  display:flex;align-items:center;gap:9px;text-decoration:none;
+}
+.dash-topbar-logo img{height:24px;width:auto}
+.dash-topbar-logo span{
+  font-family:var(--display);text-transform:uppercase;letter-spacing:.03em;
+  font-size:.86rem;color:var(--navy-900);font-weight:600;
+}
+
+.dash-profile{position:relative}
+.dash-profile-trigger{
+  display:flex;align-items:center;gap:9px;
+  background:none;border:none;cursor:pointer;padding:6px 8px;border-radius:8px;
+}
+.dash-profile-trigger:hover{background:var(--paper)}
+.dash-avatar{
+  flex:none;width:32px;height:32px;border-radius:50%;
+  background:var(--navy-800);color:var(--white);
+  display:flex;align-items:center;justify-content:center;
+  font-family:var(--display);font-size:.85rem;
+}
+.dash-profile-text{display:flex;flex-direction:column;align-items:flex-start;line-height:1.25}
+.dash-profile-name{font-family:var(--body);font-size:.85rem;font-weight:600;color:var(--navy-900)}
+.dash-profile-role{font-family:var(--body);font-size:.72rem;color:var(--steel)}
+.dash-profile-trigger svg{color:var(--steel);flex:none}
+
+.dash-profile-dropdown{
+  position:absolute;top:calc(100% + 8px);right:0;min-width:220px;
+  background:var(--white);border:1px solid var(--line);border-radius:8px;
+  box-shadow:var(--shadow-md);padding:14px;z-index:20;
+}
+.dash-profile-dropdown-email{font-family:var(--body);font-size:.82rem;color:var(--navy-900);margin:0 0 2px;word-break:break-all}
+.dash-profile-dropdown-company{font-family:var(--body);font-size:.78rem;color:var(--steel);margin:0 0 10px}
+.dash-profile-dropdown-signout{
+  width:100%;display:flex;align-items:center;gap:8px;margin-top:10px;
+  background:none;border:none;border-top:1px solid var(--line);padding-top:10px;
+  font-family:var(--body);font-size:.85rem;color:var(--red-dark);cursor:pointer;
+}
+.dash-profile-dropdown-signout:hover{color:var(--red)}
+
+.dash-main{flex:1;min-height:0;overflow:hidden}
+
+/* Client (non-vendor) dashboard content: no sidebar system, just the
+   existing flat cards, scrollable within the shell instead of the page. */
+.dash-content{
+  height:100%;overflow-y:auto;padding:28px 28px 40px;
+}
+.dash-content .wrap{max-width:900px;margin:0 auto}
+
+/* --- .vdash upgraded from a padded/rounded "card" to a true edge-to-edge
+   app-shell region now that it lives inside .dash-main instead of a
+   marketing .section - matches how the Renzo reference itself has the
+   sidebar run the full page height with no inset, not floating in a box. */
+.vdash{
+  height:100%;
+  border:none;border-radius:0;
+}
+.vdash-main{overflow-y:auto;height:100%}

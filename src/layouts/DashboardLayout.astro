@@ -1,0 +1,100 @@
+---
+/**
+ * Layout for SIGNED-IN dashboard views only (portal.astro's session-present
+ * branch). Deliberately does NOT reuse BaseLayout's <Header>/<Footer>/
+ * <ChatWidget>/<QuotePopup> - those are marketing-site chrome (Services/
+ * Industries/Login/Get Started nav, lead-capture popup, sales chat widget)
+ * and none of it belongs on a page someone only reaches by already being
+ * signed in. Flagged directly by the user: a real product dashboard is its
+ * own contained app, not a marketing page with a widget dropped into it.
+ *
+ * Reuses the same <head> boilerplate as BaseLayout (fonts, meta, favicon)
+ * since that's genuinely shared infrastructure, not marketing content -
+ * kept as a near-duplicate block rather than an awkward shared partial,
+ * since BaseLayout's own <head> has SEO/OG fields (canonical, og:image,
+ * twitter:card) this page has no use for at all; noindex is hard-set here,
+ * not a prop, because every page using this layout is signed-in-only by
+ * definition and must never be indexable.
+ *
+ * The top bar is intentionally minimal: logo, and a profile control
+ * (avatar-initial + name + role) that opens a small dropdown with
+ * email/role and Sign out. That replaces what used to be a whole separate
+ * "eyebrow / name / email · company" page section sitting above the
+ * dashboard - the same identity information, but where a real app puts
+ * it, not as its own block with dead space around it.
+ */
+import '@fontsource-variable/inter';
+import '@fontsource/ibm-plex-mono/400.css';
+import '@fontsource/ibm-plex-mono/500.css';
+import '@fontsource/ibm-plex-mono/600.css';
+import '../styles/global.css';
+import '../styles/additions.css';
+
+interface Props {
+  title: string;
+  user: {
+    name?: string | null;
+    email?: string | null;
+    role?: 'client' | 'vendor' | 'admin';
+    company?: string | null;
+  } | undefined;
+}
+const { title, user } = Astro.props;
+
+const displayName = user?.name || user?.email || 'Account';
+const initial = displayName.charAt(0).toUpperCase();
+const roleLabel = user?.role === 'vendor' ? 'Vendor' : user?.role === 'admin' ? 'Admin' : 'Client';
+---
+<!DOCTYPE html>
+<html lang="en-US">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>{title}</title>
+  <meta name="robots" content="noindex,nofollow" />
+  <link rel="icon" href="/favicon.ico" sizes="48x48" />
+  <link rel="icon" href="/favicon-32.png" sizes="32x32" type="image/png" />
+  <link rel="apple-touch-icon" href="/apple-touch-icon.png" />
+  <meta name="theme-color" content="#08152E" />
+</head>
+<body class="dash-body">
+  <a class="skip-link" href="#main">Skip to content</a>
+
+  <header class="dash-topbar">
+    <a class="dash-topbar-logo" href="/portal/" aria-label="Tristate Property Management portal home">
+      <img src="/images/logo-tristate.avif" alt="" width="28" height="28" />
+      <span>Property Management</span>
+    </a>
+
+    <div class="dash-profile" data-profile-menu>
+      <button type="button" class="dash-profile-trigger" data-profile-trigger aria-haspopup="true" aria-expanded="false">
+        <span class="dash-avatar">{initial}</span>
+        <span class="dash-profile-text">
+          <span class="dash-profile-name">{displayName}</span>
+          <span class="dash-profile-role">{roleLabel}</span>
+        </span>
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 9l6 6 6-6" /></svg>
+      </button>
+      <div class="dash-profile-dropdown" data-profile-dropdown hidden>
+        <p class="dash-profile-dropdown-email">{user?.email}</p>
+        {user?.company && <p class="dash-profile-dropdown-company">{user.company}</p>}
+        <form data-logout-form>
+          <button type="submit" class="dash-profile-dropdown-signout">
+            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4" /><path d="M16 17l5-5-5-5" /><path d="M21 12H9" /></svg>
+            Sign out
+          </button>
+        </form>
+      </div>
+    </div>
+  </header>
+
+  <main id="main" class="dash-main">
+    <slot />
+  </main>
+
+  <script>
+    import '../scripts/vendor-dashboard';
+    import '../scripts/dashboard-shell';
+  </script>
+</body>
+</html>
