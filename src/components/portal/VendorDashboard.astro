@@ -1,0 +1,272 @@
+---
+import JobHistoryTable from './JobHistoryTable.astro';
+import CashbackLedgerTable from './CashbackLedgerTable.astro';
+import ProfileForm from './ProfileForm.astro';
+
+type JobRow = {
+  id: string; service: string | null; description: string | null; status: string;
+  scheduled_at: number | null; completed_at: number | null; amount_cents: number | null; created_at: number;
+};
+type LedgerRow = { id: string; job_id: string | null; amount_cents: number; reason: string; created_at: number };
+
+interface Props {
+  user: {
+    role?: 'client' | 'vendor' | 'admin';
+    name?: string | null; email?: string | null; company?: string | null; phone?: string | null;
+    trade?: string | null; tradesOther?: string | null; serviceArea?: string | null;
+    licenseNumber?: string | null; licenseExpires?: number | null;
+    insuranceOnFile?: boolean | null; yearsInBusiness?: string | null; emergencyAvailable?: boolean | null;
+  } | undefined;
+  balance: string;
+  jobCount: number;
+  jobs: JobRow[];
+  ledgerEntries: LedgerRow[];
+  licenseExpiresValue: string;
+}
+const { user, balance, jobCount, jobs, ledgerEntries, licenseExpiresValue } = Astro.props;
+
+const fmtCents = (c: number) => (c / 100).toLocaleString('en-US', { style: 'currency', currency: 'USD' });
+
+const nyHour = Number(
+  new Date().toLocaleString('en-US', { hour: 'numeric', hour12: false, timeZone: 'America/New_York' })
+);
+const greeting = nyHour < 12 ? 'Good morning' : nyHour < 18 ? 'Good afternoon' : 'Good evening';
+const todayLabel = new Date().toLocaleDateString('en-US', {
+  day: 'numeric', month: 'long', year: 'numeric', timeZone: 'America/New_York',
+});
+
+const licenseExpiresMs = user?.licenseExpires ?? null;
+const licenseBadge: { tone: 'ok' | 'warn' | 'bad'; label: string } =
+  !user?.licenseNumber
+    ? { tone: 'bad', label: 'Not on file' }
+    : licenseExpiresMs && licenseExpiresMs < Date.now()
+    ? { tone: 'bad', label: 'Expired' }
+    : licenseExpiresMs && licenseExpiresMs < Date.now() + 30 * 86400000
+    ? { tone: 'warn', label: 'Expiring soon' }
+    : { tone: 'ok', label: 'On file' };
+const insuranceBadge: { tone: 'ok' | 'warn' | 'bad'; label: string } = user?.insuranceOnFile
+  ? { tone: 'ok', label: 'On file' }
+  : { tone: 'bad', label: 'Not on file' };
+const emergencyBadge: { tone: 'ok' | 'warn' | 'bad'; label: string } = user?.emergencyAvailable
+  ? { tone: 'ok', label: 'Available' }
+  : { tone: 'warn', label: 'Not available' };
+
+type ActivityItem = { kind: 'job' | 'ledger'; created_at: number; title: string; sub: string };
+const activity: ActivityItem[] = [
+  ...jobs.map((j): ActivityItem => ({
+    kind: 'job', created_at: j.created_at, title: j.service || j.description || 'Job on file', sub: `Status: ${j.status}`,
+  })),
+  ...ledgerEntries.map((e): ActivityItem => ({
+    kind: 'ledger', created_at: e.created_at,
+    title: e.amount_cents >= 0 ? `Cashback earned - ${fmtCents(e.amount_cents)}` : `Cashback redeemed - ${fmtCents(Math.abs(e.amount_cents))}`,
+    sub: e.reason,
+  })),
+].sort((a, b) => b.created_at - a.created_at).slice(0, 6);
+
+const relTime = (ms: number) => {
+  const diffMin = Math.round((Date.now() - ms) / 60000);
+  if (diffMin < 60) return `${Math.max(diffMin, 0)} min ago`;
+  const diffH = Math.round(diffMin / 60);
+  if (diffH < 24) return `${diffH}h ago`;
+  return `${Math.round(diffH / 24)}d ago`;
+};
+---
+<div class="vdash">
+  <aside class="vdash-side">
+    <div class="vdash-side-brand">
+      <img src="/images/logo-tristate-light.avif" alt="" />
+      <span>Vendor</span>
+    </div>
+    <button type="button" class="vdash-nav-item is-active" data-panel-link="dashboard">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="9" rx="1" /><rect x="14" y="3" width="7" height="5" rx="1" /><rect x="14" y="12" width="7" height="9" rx="1" /><rect x="3" y="16" width="7" height="5" rx="1" /></svg>
+      Dashboard
+    </button>
+    <button type="button" class="vdash-nav-item" data-panel-link="profile">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="8" r="4" /><path d="M4 21c0-4 3.5-7 8-7s8 3 8 7" /></svg>
+      Profile
+    </button>
+    <button type="button" class="vdash-nav-item" data-panel-link="jobs">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="7" width="18" height="14" rx="2" /><path d="M8 7V5a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2" /></svg>
+      Jobs
+    </button>
+    <button type="button" class="vdash-nav-item" data-panel-link="cashback">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="9" /><path d="M9 12h6M12 9v6" /></svg>
+      Cashback
+    </button>
+    <span class="vdash-nav-item is-soon">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" /><path d="M14 2v6h6" /></svg>
+      Documents
+      <span class="vdash-nav-soon-tag">Soon</span>
+    </span>
+    <span class="vdash-nav-item is-soon">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z" /></svg>
+      Messages
+      <span class="vdash-nav-soon-tag">Soon</span>
+    </span>
+    <div class="vdash-side-foot">
+      <form id="logout-form-side" data-logout-form>
+        <button type="submit" class="vdash-nav-item">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4" /><path d="M16 17l5-5-5-5" /><path d="M21 12H9" /></svg>
+          Sign out
+        </button>
+      </form>
+    </div>
+  </aside>
+
+  <div class="vdash-main">
+    <div class="vdash-topbar">
+      <div class="vdash-greeting">
+        <h2>{greeting}, <span>{(user?.name || user?.email || '').split(' ')[0]}!</span></h2>
+        <p id="vdash-panel-subtitle">Here's where your account stands today.</p>
+      </div>
+      <div class="vdash-topbar-right">
+        <span class="vdash-date-chip">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="4" width="18" height="18" rx="2" /><path d="M16 2v4M8 2v4M3 10h18" /></svg>
+          {todayLabel}
+        </span>
+        <span class="vdash-role-chip">{user?.trade ? user.trade.charAt(0).toUpperCase() + user.trade.slice(1) : 'Vendor'}</span>
+      </div>
+    </div>
+
+    <!-- Dashboard panel: at-a-glance summary. Default visible. -->
+    <div class="vdash-panel is-active" data-panel="dashboard">
+      <div class="vdash-stats">
+        <div class="vdash-stat">
+          <p class="vdash-stat-label">Cashback balance</p>
+          <p class="vdash-stat-value">{balance}</p>
+          <p class="vdash-stat-note">Lifetime earn/redeem total</p>
+        </div>
+        <div class="vdash-stat">
+          <p class="vdash-stat-label">Jobs on file</p>
+          <p class="vdash-stat-value">{jobCount}</p>
+          <p class="vdash-stat-note">{jobCount === 0 ? 'None scheduled yet' : `${jobCount} total record${jobCount === 1 ? '' : 's'}`}</p>
+        </div>
+        <div class="vdash-stat">
+          <p class="vdash-stat-label">Ledger entries</p>
+          <p class="vdash-stat-value">{ledgerEntries.length}</p>
+          <p class="vdash-stat-note">Earn + redeem events</p>
+        </div>
+      </div>
+
+      <div class="vdash-grid-2">
+        <div>
+          <div class="vdash-profile-card">
+            <h3>Trade profile</h3>
+            <div class="vdash-profile-rows">
+              <p class="vdash-profile-row">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14.7 6.3a1 1 0 0 0 0 1.4l1.6 1.6a1 1 0 0 0 1.4 0l3.77-3.77a6 6 0 0 1-7.94 7.94l-6.91 6.91a2.12 2.12 0 0 1-3-3l6.91-6.91a6 6 0 0 1 7.94-7.94z" /></svg>
+                <b>Primary trade</b>{user?.trade ? user.trade.charAt(0).toUpperCase() + user.trade.slice(1) : 'Not set'}
+              </p>
+              <p class="vdash-profile-row">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20.9 16.9a2 2 0 0 1-2.2.4c-1-.4-2-1-2.9-1.7a12.6 12.6 0 0 1-3.4-3.4c-.7-.9-1.3-1.9-1.7-2.9a2 2 0 0 1 .4-2.2l1-1a1 1 0 0 1 1.5.1l1.5 2a1 1 0 0 1-.1 1.3l-.6.6c.4.9 1 1.7 1.7 2.4.7.7 1.5 1.3 2.4 1.7l.6-.6a1 1 0 0 1 1.3-.1l2 1.5a1 1 0 0 1 .1 1.5z" /></svg>
+                <b>Phone</b>{user?.phone || 'Not set'}
+              </p>
+              <p class="vdash-profile-row">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z" /><circle cx="12" cy="10" r="3" /></svg>
+                <b>Service area</b>{user?.serviceArea || 'Not set'}
+              </p>
+              <p class="vdash-profile-row">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="4" width="18" height="18" rx="2" /><path d="M16 2v4M8 2v4M3 10h18" /></svg>
+                <b>Years in business</b>{user?.yearsInBusiness || 'Not set'}
+              </p>
+            </div>
+          </div>
+
+          <div class="vdash-compliance">
+            <h3>Compliance</h3>
+            <p>Status on file - keep this current so dispatch can assign work to your account.</p>
+            <div class="vdash-compliance-grid">
+              <div class="vdash-compliance-item">
+                <p class="vdash-compliance-item-label">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2l8 4v6c0 5-3.4 8.4-8 10-4.6-1.6-8-5-8-10V6z" /></svg>
+                  License
+                </p>
+                <span class={`vdash-badge vdash-badge--${licenseBadge.tone}`}>{licenseBadge.label}</span>
+                <p class="vdash-compliance-item-note">{user?.licenseNumber ? `# ${user.licenseNumber}` : 'Add in your Profile tab'}</p>
+              </div>
+              <div class="vdash-compliance-item">
+                <p class="vdash-compliance-item-label">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2l8 4v6c0 5-3.4 8.4-8 10-4.6-1.6-8-5-8-10V6z" /><path d="M9 12l2 2 4-4" /></svg>
+                  Insurance
+                </p>
+                <span class={`vdash-badge vdash-badge--${insuranceBadge.tone}`}>{insuranceBadge.label}</span>
+                <p class="vdash-compliance-item-note">Status only, no document yet</p>
+              </div>
+              <div class="vdash-compliance-item">
+                <p class="vdash-compliance-item-label">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="9" /><path d="M12 7v5l3 3" /></svg>
+                  Emergency
+                </p>
+                <span class={`vdash-badge vdash-badge--${emergencyBadge.tone}`}>{emergencyBadge.label}</span>
+                <p class="vdash-compliance-item-note">After-hours availability</p>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div>
+          <div class="vdash-balance-card">
+            <h3>Cashback overview</h3>
+            <div class="vdash-balance-row">
+              <div class="vdash-balance-item"><p>Current balance</p><p>{balance}</p></div>
+              <div class="vdash-balance-item">
+                <p>Last entry</p>
+                <p>{ledgerEntries[0] ? fmtCents(ledgerEntries[0].amount_cents) : '—'}</p>
+              </div>
+            </div>
+          </div>
+
+          <div class="vdash-activity">
+            <h3>Recent activity</h3>
+            {activity.length === 0 ? (
+              <p class="vdash-activity-empty">Nothing yet - this fills in once a job or cashback entry posts to your account.</p>
+            ) : (
+              <div class="vdash-activity-list">
+                {activity.map((a) => (
+                  <div class="vdash-activity-item">
+                    <span class="vdash-activity-icon">
+                      {a.kind === 'job' ? (
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="7" width="18" height="14" rx="2" /><path d="M8 7V5a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2" /></svg>
+                      ) : (
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="9" /><path d="M9 12h6M12 9v6" /></svg>
+                      )}
+                    </span>
+                    <div class="vdash-activity-text">
+                      <p>{a.title}</p>
+                      <p>{a.sub} &middot; {relTime(a.created_at)}</p>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Profile panel: the real editable form, same component used by
+         the client/admin flat dashboard - not a copy. -->
+    <div class="vdash-panel" data-panel="profile" hidden>
+      <div class="vdash-profile-card">
+        <h3>Profile</h3>
+        <ProfileForm user={user} licenseExpiresValue={licenseExpiresValue} />
+      </div>
+    </div>
+
+    <!-- Jobs panel: full history, same component the client dashboard uses. -->
+    <div class="vdash-panel" data-panel="jobs" hidden>
+      <div class="vdash-profile-card">
+        <h3>Job history</h3>
+        <JobHistoryTable jobs={jobs} />
+      </div>
+    </div>
+
+    <!-- Cashback panel: full ledger, same component the client dashboard uses. -->
+    <div class="vdash-panel" data-panel="cashback" hidden>
+      <div class="vdash-profile-card">
+        <h3>Cashback ledger</h3>
+        <CashbackLedgerTable entries={ledgerEntries} />
+      </div>
+    </div>
+  </div>
+</div>

@@ -1,0 +1,47 @@
+---
+/**
+ * Job history table. Used as-is in the flat client/admin dashboard, and
+ * again inside the vendor dashboard's "Jobs" tab panel - same component
+ * either place, not two copies of the same markup drifting apart.
+ */
+type JobRow = {
+  id: string;
+  service: string | null;
+  description: string | null;
+  status: string;
+  scheduled_at: number | null;
+  completed_at: number | null;
+  amount_cents: number | null;
+  created_at: number;
+};
+
+interface Props {
+  jobs: JobRow[];
+}
+const { jobs } = Astro.props;
+
+const fmtDate = (ms: number) =>
+  new Date(ms).toLocaleString('en-US', { dateStyle: 'medium', timeStyle: 'short', timeZone: 'America/New_York' });
+const fmtCents = (c: number) => (c / 100).toLocaleString('en-US', { style: 'currency', currency: 'USD' });
+---
+{jobs.length === 0 ? (
+  <p class="form-note">No jobs recorded yet. This fills in once work is scheduled against your account.</p>
+) : (
+  <div class="admin-table-wrap">
+    <table class="admin-table">
+      <thead>
+        <tr><th>Date</th><th>Service</th><th>Status</th><th>Amount</th></tr>
+      </thead>
+      <tbody>
+        {jobs.map((j) => (
+          <tr>
+            <td>{fmtDate(j.created_at)}</td>
+            <td>{j.service || j.description || '—'}</td>
+            <td>{j.status}</td>
+            <td>{j.amount_cents != null ? fmtCents(j.amount_cents) : '—'}</td>
+          </tr>
+        ))}
+      </tbody>
+    </table>
+  </div>
+)}

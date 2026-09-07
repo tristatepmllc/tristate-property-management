@@ -1,0 +1,37 @@
+---
+/**
+ * Cashback ledger table. Same sharing rationale as JobHistoryTable.astro -
+ * used unchanged in the flat client/admin dashboard and inside the vendor
+ * dashboard's "Cashback" tab panel.
+ */
+type LedgerRow = { id: string; job_id: string | null; amount_cents: number; reason: string; created_at: number };
+
+interface Props {
+  entries: LedgerRow[];
+}
+const { entries } = Astro.props;
+
+const fmtDate = (ms: number) =>
+  new Date(ms).toLocaleString('en-US', { dateStyle: 'medium', timeStyle: 'short', timeZone: 'America/New_York' });
+const fmtCents = (c: number) => (c / 100).toLocaleString('en-US', { style: 'currency', currency: 'USD' });
+---
+{entries.length === 0 ? (
+  <p class="form-note">No ledger entries yet. This fills in once a completed job earns or redeems cashback.</p>
+) : (
+  <div class="admin-table-wrap">
+    <table class="admin-table">
+      <thead>
+        <tr><th>Date</th><th>Reason</th><th>Amount</th></tr>
+      </thead>
+      <tbody>
+        {entries.map((e) => (
+          <tr>
+            <td>{fmtDate(e.created_at)}</td>
+            <td>{e.reason}</td>
+            <td>{e.amount_cents >= 0 ? '+' : ''}{fmtCents(e.amount_cents)}</td>
+          </tr>
+        ))}
+      </tbody>
+    </table>
+  </div>
+)}

@@ -1,0 +1,153 @@
+---
+/**
+ * Profile edit form - role-specific fields (vendor: trade/license/etc,
+ * client: address/property-type/etc), same `data-profile-form` submit
+ * handler in scripts/auth.ts either place it's rendered.
+ * Extracted so the vendor dashboard's tab-panel shell and the flat
+ * client/admin dashboard render the exact same form, not two copies that
+ * can drift out of sync with each other or with the PATCH /api/me handler
+ * that actually processes the submit.
+ */
+type Role = 'client' | 'vendor' | 'admin';
+
+interface Props {
+  user: {
+    role?: Role;
+    name?: string | null;
+    company?: string | null;
+    phone?: string | null;
+    address?: string | null;
+    city?: string | null;
+    state?: string | null;
+    zip?: string | null;
+    propertyType?: string | null;
+    preferredContact?: string | null;
+    notes?: string | null;
+    trade?: string | null;
+    tradesOther?: string | null;
+    serviceArea?: string | null;
+    licenseNumber?: string | null;
+    insuranceOnFile?: boolean | null;
+    yearsInBusiness?: string | null;
+    emergencyAvailable?: boolean | null;
+  } | undefined;
+  licenseExpiresValue: string;
+}
+const { user, licenseExpiresValue } = Astro.props;
+---
+<p class="form-note">
+  Contact and {user?.role === 'vendor' ? 'trade' : 'property'} details we use when scheduling
+  or matching work. Nothing here submits a new job or vendor application.
+</p>
+<form data-profile-form novalidate>
+  <div class="portal-grid">
+    <div class="field">
+      <label for="pf-name">Name</label>
+      <input type="text" id="pf-name" name="name" autocomplete="name" value={user?.name || ''} />
+    </div>
+    <div class="field">
+      <label for="pf-company">Company</label>
+      <input type="text" id="pf-company" name="company" autocomplete="organization" value={user?.company || ''} />
+    </div>
+    <div class="field">
+      <label for="pf-phone">Phone</label>
+      <input type="tel" id="pf-phone" name="phone" autocomplete="tel" value={user?.phone || ''} />
+    </div>
+
+    {user?.role === 'vendor' ? (
+      <>
+        <div class="field">
+          <label for="pf-trade">Primary trade</label>
+          <select id="pf-trade" name="trade">
+            <option value="" selected={!user?.trade}>Select one</option>
+            <option value="cleaning" selected={user?.trade === 'cleaning'}>Cleaning</option>
+            <option value="plumbing" selected={user?.trade === 'plumbing'}>Plumbing</option>
+            <option value="electrical" selected={user?.trade === 'electrical'}>Electrical</option>
+            <option value="hvac" selected={user?.trade === 'hvac'}>HVAC</option>
+            <option value="handyman" selected={user?.trade === 'handyman'}>Handyman</option>
+            <option value="painting" selected={user?.trade === 'painting'}>Painting</option>
+            <option value="grounds" selected={user?.trade === 'grounds'}>Grounds</option>
+            <option value="projects" selected={user?.trade === 'projects'}>Projects</option>
+          </select>
+        </div>
+        <div class="field">
+          <label for="pf-trades-other">Secondary trades</label>
+          <input type="text" id="pf-trades-other" name="tradesOther" value={user?.tradesOther || ''} placeholder="e.g. drywall, tiling" />
+        </div>
+        <div class="field">
+          <label for="pf-service-area">Service area</label>
+          <input type="text" id="pf-service-area" name="serviceArea" value={user?.serviceArea || ''} placeholder="Towns or zip codes covered" />
+        </div>
+        <div class="field">
+          <label for="pf-license-number">License number</label>
+          <input type="text" id="pf-license-number" name="licenseNumber" value={user?.licenseNumber || ''} />
+        </div>
+        <div class="field">
+          <label for="pf-license-expires">License expires</label>
+          <input type="date" id="pf-license-expires" name="licenseExpires" value={licenseExpiresValue} />
+        </div>
+        <div class="field">
+          <label for="pf-years">Years in business</label>
+          <input type="text" id="pf-years" name="yearsInBusiness" value={user?.yearsInBusiness || ''} />
+        </div>
+        <div class="field field--checkbox">
+          <label>
+            <input type="checkbox" name="insuranceOnFile" checked={!!user?.insuranceOnFile} />
+            Current insurance on file
+          </label>
+        </div>
+        <div class="field field--checkbox">
+          <label>
+            <input type="checkbox" name="emergencyAvailable" checked={!!user?.emergencyAvailable} />
+            Available for emergency / after-hours calls
+          </label>
+        </div>
+      </>
+    ) : user?.role === 'client' ? (
+      <>
+        <div class="field">
+          <label for="pf-address">Property address</label>
+          <input type="text" id="pf-address" name="address" autocomplete="street-address" value={user?.address || ''} />
+        </div>
+        <div class="field">
+          <label for="pf-city">City</label>
+          <input type="text" id="pf-city" name="city" autocomplete="address-level2" value={user?.city || ''} />
+        </div>
+        <div class="field">
+          <label for="pf-state">State</label>
+          <input type="text" id="pf-state" name="state" autocomplete="address-level1" value={user?.state || ''} />
+        </div>
+        <div class="field">
+          <label for="pf-zip">ZIP</label>
+          <input type="text" id="pf-zip" name="zip" autocomplete="postal-code" value={user?.zip || ''} />
+        </div>
+        <div class="field">
+          <label for="pf-property-type">Property type</label>
+          <select id="pf-property-type" name="propertyType">
+            <option value="" selected={!user?.propertyType}>Select one</option>
+            <option value="single_family" selected={user?.propertyType === 'single_family'}>Single-family</option>
+            <option value="multifamily" selected={user?.propertyType === 'multifamily'}>Multifamily</option>
+            <option value="commercial" selected={user?.propertyType === 'commercial'}>Commercial</option>
+            <option value="mixed_use" selected={user?.propertyType === 'mixed_use'}>Mixed-use</option>
+            <option value="other" selected={user?.propertyType === 'other'}>Other</option>
+          </select>
+        </div>
+        <div class="field">
+          <label for="pf-preferred-contact">Preferred contact method</label>
+          <select id="pf-preferred-contact" name="preferredContact">
+            <option value="" selected={!user?.preferredContact}>No preference</option>
+            <option value="email" selected={user?.preferredContact === 'email'}>Email</option>
+            <option value="phone" selected={user?.preferredContact === 'phone'}>Phone</option>
+            <option value="text" selected={user?.preferredContact === 'text'}>Text</option>
+          </select>
+        </div>
+        <div class="field field--wide">
+          <label for="pf-notes">Access notes / preferences</label>
+          <textarea id="pf-notes" name="notes" rows="3">{user?.notes || ''}</textarea>
+        </div>
+      </>
+    ) : null}
+  </div>
+  <button type="submit" class="btn btn--red">Save profile</button>
+  <p class="form-status" role="status" aria-live="polite" hidden></p>
+</form>

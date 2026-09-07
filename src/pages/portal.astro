@@ -6,6 +6,10 @@ import BaseLayout from '../layouts/BaseLayout.astro';
 import { SITE } from '../data/site';
 import { getAuth } from '../lib/auth';
 import { THROTTLE_WINDOW_MS, THROTTLE_MAX } from './api/portal/request-service';
+import VendorDashboard from '../components/portal/VendorDashboard.astro';
+import JobHistoryTable from '../components/portal/JobHistoryTable.astro';
+import CashbackLedgerTable from '../components/portal/CashbackLedgerTable.astro';
+import ProfileForm from '../components/portal/ProfileForm.astro';
 
 /**
  * Real login, registration and a dashboard - replacing the holding page.
@@ -88,65 +92,7 @@ if (session) {
   recentRequestCount = throttleRow?.n ?? 0;
 }
 
-const fmtDate = (ms: number) =>
-  new Date(ms).toLocaleString('en-US', { dateStyle: 'medium', timeStyle: 'short', timeZone: 'America/New_York' });
-const fmtCents = (c: number) => (c / 100).toLocaleString('en-US', { style: 'currency', currency: 'USD' });
 const canRequestService = user?.role === 'client' && recentRequestCount < THROTTLE_MAX;
-
-// --- Vendor dashboard shell only (below) ---
-const nyHour = Number(
-  new Date().toLocaleString('en-US', { hour: 'numeric', hour12: false, timeZone: 'America/New_York' })
-);
-const greeting = nyHour < 12 ? 'Good morning' : nyHour < 18 ? 'Good afternoon' : 'Good evening';
-const todayLabel = new Date().toLocaleDateString('en-US', {
-  day: 'numeric', month: 'long', year: 'numeric', timeZone: 'America/New_York',
-});
-
-const licenseExpiresMs = user?.licenseExpires ?? null;
-const licenseBadge: { tone: 'ok' | 'warn' | 'bad'; label: string } =
-  !user?.licenseNumber
-    ? { tone: 'bad', label: 'Not on file' }
-    : licenseExpiresMs && licenseExpiresMs < Date.now()
-    ? { tone: 'bad', label: 'Expired' }
-    : licenseExpiresMs && licenseExpiresMs < Date.now() + 30 * 86400000
-    ? { tone: 'warn', label: 'Expiring soon' }
-    : { tone: 'ok', label: 'On file' };
-const insuranceBadge: { tone: 'ok' | 'warn' | 'bad'; label: string } = user?.insuranceOnFile
-  ? { tone: 'ok', label: 'On file' }
-  : { tone: 'bad', label: 'Not on file' };
-const emergencyBadge: { tone: 'ok' | 'warn' | 'bad'; label: string } = user?.emergencyAvailable
-  ? { tone: 'ok', label: 'Available' }
-  : { tone: 'warn', label: 'Not available' };
-
-// Merge jobs + ledger into one reverse-chronological glance feed - both
-// datasets are already fetched above for the detail tables further down
-// the page, this just re-slices the same real rows into a combined,
-// trimmed list rather than querying anything new.
-type ActivityItem = { kind: 'job' | 'ledger'; created_at: number; title: string; sub: string };
-const activity: ActivityItem[] = [
-  ...jobs.map((j): ActivityItem => ({
-    kind: 'job',
-    created_at: j.created_at,
-    title: j.service || j.description || 'Job on file',
-    sub: `Status: ${j.status}`,
-  })),
-  ...ledgerEntries.map((e): ActivityItem => ({
-    kind: 'ledger',
-    created_at: e.created_at,
-    title: e.amount_cents >= 0 ? `Cashback earned - ${fmtCents(e.amount_cents)}` : `Cashback redeemed - ${fmtCents(Math.abs(e.amount_cents))}`,
-    sub: e.reason,
-  })),
-]
-  .sort((a, b) => b.created_at - a.created_at)
-  .slice(0, 6);
-
-const relTime = (ms: number) => {
-  const diffMin = Math.round((Date.now() - ms) / 60000);
-  if (diffMin < 60) return `${Math.max(diffMin, 0)} min ago`;
-  const diffH = Math.round(diffMin / 60);
-  if (diffH < 24) return `${diffH}h ago`;
-  return `${Math.round(diffH / 24)}d ago`;
-};
 
 const balance = (balanceCents / 100).toLocaleString('en-US', { style: 'currency', currency: 'USD' });
 const roleLabel = user?.role === 'vendor' ? 'Vendor' : user?.role === 'admin' ? 'Admin' : 'Client';
@@ -188,432 +134,115 @@ const licenseExpiresValue = user?.licenseExpires
         </div>
 
         {user?.role === 'vendor' ? (
-          <div class="vdash">
-            <aside class="vdash-side">
-              <div class="vdash-side-brand">
-                <img src="/images/logo-tristate-light.avif" alt="" />
-                <span>Vendor</span>
-              </div>
-              <a class="vdash-nav-item is-active" href="/portal/">
-                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="9" rx="1" /><rect x="14" y="3" width="7" height="5" rx="1" /><rect x="14" y="12" width="7" height="9" rx="1" /><rect x="3" y="16" width="7" height="5" rx="1" /></svg>
-                Dashboard
-              </a>
-              <a class="vdash-nav-item" href="#profile">
-                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="8" r="4" /><path d="M4 21c0-4 3.5-7 8-7s8 3 8 7" /></svg>
-                Profile
-              </a>
-              <a class="vdash-nav-item" href="#jobs">
-                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="7" width="18" height="14" rx="2" /><path d="M8 7V5a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2" /></svg>
-                Jobs
-              </a>
-              <a class="vdash-nav-item" href="#cashback">
-                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="9" /><path d="M9 12h6M12 9v6" /></svg>
-                Cashback
-              </a>
-              <span class="vdash-nav-item is-soon">
-                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" /><path d="M14 2v6h6" /></svg>
-                Documents
-                <span class="vdash-nav-soon-tag">Soon</span>
-              </span>
-              <span class="vdash-nav-item is-soon">
-                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z" /></svg>
-                Messages
-                <span class="vdash-nav-soon-tag">Soon</span>
-              </span>
-              <div class="vdash-side-foot">
-                <form id="logout-form-side" data-logout-form>
-                  <button type="submit" class="vdash-nav-item vdash-nav-item--btn">
-                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4" /><path d="M16 17l5-5-5-5" /><path d="M21 12H9" /></svg>
-                    Sign out
-                  </button>
-                </form>
-              </div>
-            </aside>
-
-            <div class="vdash-main">
-              <div class="vdash-topbar">
-                <div class="vdash-greeting">
-                  <h2>{greeting}, <span>{(user?.name || user?.email || '').split(' ')[0]}!</span></h2>
-                  <p>Here's where your account stands today.</p>
-                </div>
-                <div class="vdash-topbar-right">
-                  <span class="vdash-date-chip">
-                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="4" width="18" height="18" rx="2" /><path d="M16 2v4M8 2v4M3 10h18" /></svg>
-                    {todayLabel}
-                  </span>
-                  <span class="vdash-role-chip">{user?.trade ? user.trade.charAt(0).toUpperCase() + user.trade.slice(1) : 'Vendor'}</span>
-                </div>
-              </div>
-
-              <div class="vdash-stats">
-                <div class="vdash-stat">
-                  <p class="vdash-stat-label">Cashback balance</p>
-                  <p class="vdash-stat-value">{balance}</p>
-                  <p class="vdash-stat-note">Lifetime earn/redeem total</p>
-                </div>
-                <div class="vdash-stat">
-                  <p class="vdash-stat-label">Jobs on file</p>
-                  <p class="vdash-stat-value">{jobCount}</p>
-                  <p class="vdash-stat-note">{jobCount === 0 ? 'None scheduled yet' : `${jobCount} total record${jobCount === 1 ? '' : 's'}`}</p>
-                </div>
-                <div class="vdash-stat">
-                  <p class="vdash-stat-label">Ledger entries</p>
-                  <p class="vdash-stat-value">{ledgerEntries.length}</p>
-                  <p class="vdash-stat-note">Earn + redeem events</p>
-                </div>
-              </div>
-
-              <div class="vdash-grid-2">
-                <div>
-                  <div class="vdash-profile-card" id="profile">
-                    <h3>Trade profile</h3>
-                    <div class="vdash-profile-rows">
-                      <p class="vdash-profile-row">
-                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14.7 6.3a1 1 0 0 0 0 1.4l1.6 1.6a1 1 0 0 0 1.4 0l3.77-3.77a6 6 0 0 1-7.94 7.94l-6.91 6.91a2.12 2.12 0 0 1-3-3l6.91-6.91a6 6 0 0 1 7.94-7.94z" /></svg>
-                        <b>Primary trade</b>{user?.trade ? user.trade.charAt(0).toUpperCase() + user.trade.slice(1) : 'Not set'}
-                      </p>
-                      <p class="vdash-profile-row">
-                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20.9 16.9a2 2 0 0 1-2.2.4c-1-.4-2-1-2.9-1.7a12.6 12.6 0 0 1-3.4-3.4c-.7-.9-1.3-1.9-1.7-2.9a2 2 0 0 1 .4-2.2l1-1a1 1 0 0 1 1.5.1l1.5 2a1 1 0 0 1-.1 1.3l-.6.6c.4.9 1 1.7 1.7 2.4.7.7 1.5 1.3 2.4 1.7l.6-.6a1 1 0 0 1 1.3-.1l2 1.5a1 1 0 0 1 .1 1.5z" /></svg>
-                        <b>Phone</b>{user?.phone || 'Not set'}
-                      </p>
-                      <p class="vdash-profile-row">
-                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z" /><circle cx="12" cy="10" r="3" /></svg>
-                        <b>Service area</b>{user?.serviceArea || 'Not set'}
-                      </p>
-                      <p class="vdash-profile-row">
-                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="4" width="18" height="18" rx="2" /><path d="M16 2v4M8 2v4M3 10h18" /></svg>
-                        <b>Years in business</b>{user?.yearsInBusiness || 'Not set'}
-                      </p>
-                    </div>
-                  </div>
-
-                  <div class="vdash-compliance">
-                    <h3>Compliance</h3>
-                    <p>Status on file - keep this current so dispatch can assign work to your account.</p>
-                    <div class="vdash-compliance-grid">
-                      <div class="vdash-compliance-item">
-                        <p class="vdash-compliance-item-label">
-                          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2l8 4v6c0 5-3.4 8.4-8 10-4.6-1.6-8-5-8-10V6z" /></svg>
-                          License
-                        </p>
-                        <span class={`vdash-badge vdash-badge--${licenseBadge.tone}`}>{licenseBadge.label}</span>
-                        <p class="vdash-compliance-item-note">{user?.licenseNumber ? `# ${user.licenseNumber}` : 'Add in profile below'}</p>
-                      </div>
-                      <div class="vdash-compliance-item">
-                        <p class="vdash-compliance-item-label">
-                          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2l8 4v6c0 5-3.4 8.4-8 10-4.6-1.6-8-5-8-10V6z" /><path d="M9 12l2 2 4-4" /></svg>
-                          Insurance
-                        </p>
-                        <span class={`vdash-badge vdash-badge--${insuranceBadge.tone}`}>{insuranceBadge.label}</span>
-                        <p class="vdash-compliance-item-note">Status only, no document yet</p>
-                      </div>
-                      <div class="vdash-compliance-item">
-                        <p class="vdash-compliance-item-label">
-                          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="9" /><path d="M12 7v5l3 3" /></svg>
-                          Emergency
-                        </p>
-                        <span class={`vdash-badge vdash-badge--${emergencyBadge.tone}`}>{emergencyBadge.label}</span>
-                        <p class="vdash-compliance-item-note">After-hours availability</p>
-                      </div>
-                    </div>
-                  </div>
-                </div>
-
-                <div>
-                  <div class="vdash-balance-card">
-                    <h3>Cashback overview</h3>
-                    <div class="vdash-balance-row">
-                      <div class="vdash-balance-item"><p>Current balance</p><p>{balance}</p></div>
-                      <div class="vdash-balance-item">
-                        <p>Last entry</p>
-                        <p>{ledgerEntries[0] ? fmtCents(ledgerEntries[0].amount_cents) : '—'}</p>
-                      </div>
-                    </div>
-                  </div>
-
-                  <div class="vdash-activity">
-                    <h3>Recent activity</h3>
-                    {activity.length === 0 ? (
-                      <p class="vdash-activity-empty">Nothing yet - this fills in once a job or cashback entry posts to your account.</p>
-                    ) : (
-                      <div class="vdash-activity-list">
-                        {activity.map((a) => (
-                          <div class="vdash-activity-item">
-                            <span class="vdash-activity-icon">
-                              {a.kind === 'job' ? (
-                                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="7" width="18" height="14" rx="2" /><path d="M8 7V5a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2" /></svg>
-                              ) : (
-                                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="9" /><path d="M9 12h6M12 9v6" /></svg>
-                              )}
-                            </span>
-                            <div class="vdash-activity-text">
-                              <p>{a.title}</p>
-                              <p>{a.sub} &middot; {relTime(a.created_at)}</p>
-                            </div>
-                          </div>
-                        ))}
-                      </div>
-                    )}
-                  </div>
-                </div>
-              </div>
-            </div>
-          </div>
-        ) : null}
-
-        {user?.role === 'vendor' ? null : (
-        <div class="portal-grid">
-          <div class="form-card">
-            <h3>Cashback balance</h3>
-            <p class="portal-figure">{balance}</p>
-            <p class="form-note">
-              Running total from the earn/redeem ledger. Nothing has posted to it yet for most
-              accounts - that is expected until a completed job earns cashback.
-            </p>
-          </div>
-          <div class="form-card">
-            <h3>Jobs on file</h3>
-            <p class="portal-figure">{jobCount}</p>
-            <p class="form-note">
-              {jobCount === 0
-                ? 'No jobs recorded yet. This fills in once work is scheduled against your account.'
-                : `${jobCount} job${jobCount === 1 ? '' : 's'} on record.`}
-            </p>
-          </div>
-        </div>
-        )}
-
-        {user?.role === 'client' ? (
-          <div class="form-card form-card--wide">
-            <h3>Request service</h3>
-            {canRequestService ? (
-              <>
-                <p class="form-note">
-                  Submit straight from your account instead of re-filling the public form -
-                  your name, email and property go with it automatically.
-                </p>
-                <form data-lead-form action="/api/portal/request-service" data-source="portal-request-service"
-                  data-thanks-heading="Request received" novalidate>
-                  <div class="field">
-                    <label for="rs-phone">Phone <span class="req">*</span></label>
-                    <input type="tel" id="rs-phone" name="phone" autocomplete="tel" value={user?.phone || ''} required />
-                  </div>
-                  <div class="field">
-                    <label for="rs-service">Service needed <span class="req">*</span></label>
-                    <select id="rs-service" name="service" required>
-                      <option value="">Choose a service&hellip;</option>
-                      <option>Janitorial &amp; Cleaning</option>
-                      <option>Plumbing &amp; Drains</option>
-                      <option>Electrical &amp; Lighting</option>
-                      <option>HVAC &amp; Refrigeration</option>
-                      <option>Handyman &amp; Repairs</option>
-                      <option>Painting &amp; Surfaces</option>
-                      <option>Grounds &amp; Exterior</option>
-                      <option>Restoration &amp; Projects</option>
-                      <option>Multiple services / not sure</option>
-                    </select>
-                  </div>
-                  <div class="field">
-                    <label for="rs-urgency">How urgent?</label>
-                    <select id="rs-urgency" name="urgency">
-                      <option value="">Choose&hellip;</option>
-                      <option>Emergency - today</option>
-                      <option>Within 48 hours</option>
-                      <option>This week</option>
-                      <option>Planning ahead / budgeting</option>
-                    </select>
-                  </div>
-                  <div class="field">
-                    <label for="rs-details">Describe the job</label>
-                    <textarea id="rs-details" name="details" placeholder="What needs fixing, and where on the property."></textarea>
-                  </div>
-                  <input type="hidden" name="source" value="portal-request-service" />
-                  <button type="submit" class="btn btn--red">Send request</button>
-                  <p class="form-status" role="status" aria-live="polite" hidden></p>
-                </form>
-              </>
-            ) : (
-              <p class="form-note">
-                You've sent {recentRequestCount} requests in the last 24 hours - that's the limit
-                for this form. Need something urgent right now? Call <a href={SITE.telHref}>{SITE.phone}</a>,
-                answered 24/7.
-              </p>
-            )}
-          </div>
-        ) : null}
-
-        <div class="form-card form-card--wide" id="jobs">
-          <h3>Job history</h3>
-          {jobs.length === 0 ? (
-            <p class="form-note">No jobs recorded yet. This fills in once work is scheduled against your account.</p>
-          ) : (
-            <div class="admin-table-wrap">
-              <table class="admin-table">
-                <thead>
-                  <tr><th>Date</th><th>Service</th><th>Status</th><th>Amount</th></tr>
-                </thead>
-                <tbody>
-                  {jobs.map((j) => (
-                    <tr>
-                      <td>{fmtDate(j.created_at)}</td>
-                      <td>{j.service || j.description || '—'}</td>
-                      <td>{j.status}</td>
-                      <td>{j.amount_cents != null ? fmtCents(j.amount_cents) : '—'}</td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
-          )}
-        </div>
-
-        <div class="form-card form-card--wide" id="cashback">
-          <h3>Cashback ledger</h3>
-          {ledgerEntries.length === 0 ? (
-            <p class="form-note">No ledger entries yet. This fills in once a completed job earns or redeems cashback.</p>
-          ) : (
-            <div class="admin-table-wrap">
-              <table class="admin-table">
-                <thead>
-                  <tr><th>Date</th><th>Reason</th><th>Amount</th></tr>
-                </thead>
-                <tbody>
-                  {ledgerEntries.map((e) => (
-                    <tr>
-                      <td>{fmtDate(e.created_at)}</td>
-                      <td>{e.reason}</td>
-                      <td>{e.amount_cents >= 0 ? '+' : ''}{fmtCents(e.amount_cents)}</td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
-          )}
-        </div>
-
-        <div class="form-card form-card--wide">
-          <h3>Profile</h3>
-          <p class="form-note">
-            Contact and {user?.role === 'vendor' ? 'trade' : 'property'} details we use when scheduling
-            or matching work. Nothing here submits a new job or vendor application.
-          </p>
-          <form data-profile-form novalidate>
+          <VendorDashboard
+            user={user}
+            balance={balance}
+            jobCount={jobCount}
+            jobs={jobs}
+            ledgerEntries={ledgerEntries}
+            licenseExpiresValue={licenseExpiresValue}
+          />
+        ) : (
+          <>
             <div class="portal-grid">
-              <div class="field">
-                <label for="pf-name">Name</label>
-                <input type="text" id="pf-name" name="name" autocomplete="name" value={user?.name || ''} />
+              <div class="form-card">
+                <h3>Cashback balance</h3>
+                <p class="portal-figure">{balance}</p>
+                <p class="form-note">
+                  Running total from the earn/redeem ledger. Nothing has posted to it yet for most
+                  accounts - that is expected until a completed job earns cashback.
+                </p>
               </div>
-              <div class="field">
-                <label for="pf-company">Company</label>
-                <input type="text" id="pf-company" name="company" autocomplete="organization" value={user?.company || ''} />
+              <div class="form-card">
+                <h3>Jobs on file</h3>
+                <p class="portal-figure">{jobCount}</p>
+                <p class="form-note">
+                  {jobCount === 0
+                    ? 'No jobs recorded yet. This fills in once work is scheduled against your account.'
+                    : `${jobCount} job${jobCount === 1 ? '' : 's'} on record.`}
+                </p>
               </div>
-              <div class="field">
-                <label for="pf-phone">Phone</label>
-                <input type="tel" id="pf-phone" name="phone" autocomplete="tel" value={user?.phone || ''} />
-              </div>
-
-              {user?.role === 'vendor' ? (
-                <>
-                  <div class="field">
-                    <label for="pf-trade">Primary trade</label>
-                    <select id="pf-trade" name="trade">
-                      <option value="" selected={!user?.trade}>Select one</option>
-                      <option value="cleaning" selected={user?.trade === 'cleaning'}>Cleaning</option>
-                      <option value="plumbing" selected={user?.trade === 'plumbing'}>Plumbing</option>
-                      <option value="electrical" selected={user?.trade === 'electrical'}>Electrical</option>
-                      <option value="hvac" selected={user?.trade === 'hvac'}>HVAC</option>
-                      <option value="handyman" selected={user?.trade === 'handyman'}>Handyman</option>
-                      <option value="painting" selected={user?.trade === 'painting'}>Painting</option>
-                      <option value="grounds" selected={user?.trade === 'grounds'}>Grounds</option>
-                      <option value="projects" selected={user?.trade === 'projects'}>Projects</option>
-                    </select>
-                  </div>
-                  <div class="field">
-                    <label for="pf-trades-other">Secondary trades</label>
-                    <input type="text" id="pf-trades-other" name="tradesOther" value={user?.tradesOther || ''} placeholder="e.g. drywall, tiling" />
-                  </div>
-                  <div class="field">
-                    <label for="pf-service-area">Service area</label>
-                    <input type="text" id="pf-service-area" name="serviceArea" value={user?.serviceArea || ''} placeholder="Towns or zip codes covered" />
-                  </div>
-                  <div class="field">
-                    <label for="pf-license-number">License number</label>
-                    <input type="text" id="pf-license-number" name="licenseNumber" value={user?.licenseNumber || ''} />
-                  </div>
-                  <div class="field">
-                    <label for="pf-license-expires">License expires</label>
-                    <input type="date" id="pf-license-expires" name="licenseExpires" value={licenseExpiresValue} />
-                  </div>
-                  <div class="field">
-                    <label for="pf-years">Years in business</label>
-                    <input type="text" id="pf-years" name="yearsInBusiness" value={user?.yearsInBusiness || ''} />
-                  </div>
-                  <div class="field field--checkbox">
-                    <label>
-                      <input type="checkbox" name="insuranceOnFile" checked={!!user?.insuranceOnFile} />
-                      Current insurance on file
-                    </label>
-                  </div>
-                  <div class="field field--checkbox">
-                    <label>
-                      <input type="checkbox" name="emergencyAvailable" checked={!!user?.emergencyAvailable} />
-                      Available for emergency / after-hours calls
-                    </label>
-                  </div>
-                </>
-              ) : user?.role === 'client' ? (
-                <>
-                  <div class="field">
-                    <label for="pf-address">Property address</label>
-                    <input type="text" id="pf-address" name="address" autocomplete="street-address" value={user?.address || ''} />
-                  </div>
-                  <div class="field">
-                    <label for="pf-city">City</label>
-                    <input type="text" id="pf-city" name="city" autocomplete="address-level2" value={user?.city || ''} />
-                  </div>
-                  <div class="field">
-                    <label for="pf-state">State</label>
-                    <input type="text" id="pf-state" name="state" autocomplete="address-level1" value={user?.state || ''} />
-                  </div>
-                  <div class="field">
-                    <label for="pf-zip">ZIP</label>
-                    <input type="text" id="pf-zip" name="zip" autocomplete="postal-code" value={user?.zip || ''} />
-                  </div>
-                  <div class="field">
-                    <label for="pf-property-type">Property type</label>
-                    <select id="pf-property-type" name="propertyType">
-                      <option value="" selected={!user?.propertyType}>Select one</option>
-                      <option value="single_family" selected={user?.propertyType === 'single_family'}>Single-family</option>
-                      <option value="multifamily" selected={user?.propertyType === 'multifamily'}>Multifamily</option>
-                      <option value="commercial" selected={user?.propertyType === 'commercial'}>Commercial</option>
-                      <option value="mixed_use" selected={user?.propertyType === 'mixed_use'}>Mixed-use</option>
-                      <option value="other" selected={user?.propertyType === 'other'}>Other</option>
-                    </select>
-                  </div>
-                  <div class="field">
-                    <label for="pf-preferred-contact">Preferred contact method</label>
-                    <select id="pf-preferred-contact" name="preferredContact">
-                      <option value="" selected={!user?.preferredContact}>No preference</option>
-                      <option value="email" selected={user?.preferredContact === 'email'}>Email</option>
-                      <option value="phone" selected={user?.preferredContact === 'phone'}>Phone</option>
-                      <option value="text" selected={user?.preferredContact === 'text'}>Text</option>
-                    </select>
-                  </div>
-                  <div class="field field--wide">
-                    <label for="pf-notes">Access notes / preferences</label>
-                    <textarea id="pf-notes" name="notes" rows="3">{user?.notes || ''}</textarea>
-                  </div>
-                </>
-              ) : null}
             </div>
-            <button type="submit" class="btn btn--red">Save profile</button>
-            <p class="form-status" role="status" aria-live="polite" hidden></p>
-          </form>
-        </div>
 
-        <form id="logout-form" data-logout-form>
-          <button type="submit" class="btn btn--outline">Sign out</button>
-        </form>
+            {user?.role === 'client' ? (
+              <div class="form-card form-card--wide">
+                <h3>Request service</h3>
+                {canRequestService ? (
+                  <>
+                    <p class="form-note">
+                      Submit straight from your account instead of re-filling the public form -
+                      your name, email and property go with it automatically.
+                    </p>
+                    <form data-lead-form action="/api/portal/request-service" data-source="portal-request-service"
+                      data-thanks-heading="Request received" novalidate>
+                      <div class="field">
+                        <label for="rs-phone">Phone <span class="req">*</span></label>
+                        <input type="tel" id="rs-phone" name="phone" autocomplete="tel" value={user?.phone || ''} required />
+                      </div>
+                      <div class="field">
+                        <label for="rs-service">Service needed <span class="req">*</span></label>
+                        <select id="rs-service" name="service" required>
+                          <option value="">Choose a service&hellip;</option>
+                          <option>Janitorial &amp; Cleaning</option>
+                          <option>Plumbing &amp; Drains</option>
+                          <option>Electrical &amp; Lighting</option>
+                          <option>HVAC &amp; Refrigeration</option>
+                          <option>Handyman &amp; Repairs</option>
+                          <option>Painting &amp; Surfaces</option>
+                          <option>Grounds &amp; Exterior</option>
+                          <option>Restoration &amp; Projects</option>
+                          <option>Multiple services / not sure</option>
+                        </select>
+                      </div>
+                      <div class="field">
+                        <label for="rs-urgency">How urgent?</label>
+                        <select id="rs-urgency" name="urgency">
+                          <option value="">Choose&hellip;</option>
+                          <option>Emergency - today</option>
+                          <option>Within 48 hours</option>
+                          <option>This week</option>
+                          <option>Planning ahead / budgeting</option>
+                        </select>
+                      </div>
+                      <div class="field">
+                        <label for="rs-details">Describe the job</label>
+                        <textarea id="rs-details" name="details" placeholder="What needs fixing, and where on the property."></textarea>
+                      </div>
+                      <input type="hidden" name="source" value="portal-request-service" />
+                      <button type="submit" class="btn btn--red">Send request</button>
+                      <p class="form-status" role="status" aria-live="polite" hidden></p>
+                    </form>
+                  </>
+                ) : (
+                  <p class="form-note">
+                    You've sent {recentRequestCount} requests in the last 24 hours - that's the limit
+                    for this form. Need something urgent right now? Call <a href={SITE.telHref}>{SITE.phone}</a>,
+                    answered 24/7.
+                  </p>
+                )}
+              </div>
+            ) : null}
+
+            <div class="form-card form-card--wide">
+              <h3>Job history</h3>
+              <JobHistoryTable jobs={jobs} />
+            </div>
+
+            <div class="form-card form-card--wide">
+              <h3>Cashback ledger</h3>
+              <CashbackLedgerTable entries={ledgerEntries} />
+            </div>
+
+            <div class="form-card form-card--wide">
+              <h3>Profile</h3>
+              <ProfileForm user={user} licenseExpiresValue={licenseExpiresValue} />
+            </div>
+
+            <form id="logout-form" data-logout-form>
+              <button type="submit" class="btn btn--outline">Sign out</button>
+            </form>
+          </>
+        )}
       </div>
     </section>
   ) : resetToken ? (
@@ -716,4 +345,5 @@ const licenseExpiresValue = user?.licenseExpires
 
 <script>
   import '../scripts/auth';
+  import '../scripts/vendor-dashboard';
 </script>

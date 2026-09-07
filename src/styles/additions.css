@@ -1350,10 +1350,10 @@ a[href^="mailto:"]{overflow-wrap:anywhere}
   font-size:.98rem;color:var(--white);
 }
 .vdash-nav-item{
-  display:flex;align-items:center;gap:11px;
-  padding:10px 12px;border-radius:6px;
+  display:flex;align-items:center;gap:11px;width:100%;
+  padding:10px 12px;border-radius:6px;border:none;background:none;
   font-family:var(--body);font-size:.9rem;font-weight:500;
-  color:#B8C6DD;text-decoration:none;
+  color:#B8C6DD;text-decoration:none;cursor:pointer;text-align:left;
   transition:background .15s,color .15s;
 }
 .vdash-nav-item svg{flex:none;width:18px;height:18px;opacity:.85}
@@ -1368,10 +1368,6 @@ a[href^="mailto:"]{overflow-wrap:anywhere}
   background:rgba(255,255,255,.08);padding:2px 6px;border-radius:3px;
 }
 .vdash-side-foot{margin-top:auto;padding-top:14px;border-top:1px solid rgba(255,255,255,.08)}
-.vdash-nav-item--btn{
-  width:100%;background:none;border:none;cursor:pointer;text-align:left;
-  font-family:var(--body);
-}
 
 .vdash-main{padding:26px 28px 32px;background:var(--white)}
 
