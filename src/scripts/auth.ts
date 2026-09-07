@@ -103,7 +103,12 @@ function init(): void {
   const forgot = document.querySelector<HTMLFormElement>('[data-forgot-form]');
   const forgotToggle = document.querySelector<HTMLButtonElement>('[data-forgot-toggle]');
   const reset = document.querySelector<HTMLFormElement>('[data-reset-form]');
-  const logout = document.querySelector<HTMLFormElement>('[data-logout-form]');
+  // querySelectorAll, not querySelector: portal.astro's vendor dashboard
+  // shell adds a second [data-logout-form] (sidebar sign-out) alongside
+  // the original one further down the page - both need to actually work,
+  // not just whichever comes first in DOM order. Same submit handler
+  // wired to each; only one is ever visible/reachable per role anyway.
+  const logoutForms = document.querySelectorAll<HTMLFormElement>('[data-logout-form]');
   const profile = document.querySelector<HTMLFormElement>('[data-profile-form]');
 
   forgotToggle?.addEventListener('click', () => {
@@ -176,26 +181,28 @@ function init(): void {
     });
   }
 
-  logout?.addEventListener('submit', async (event) => {
-    event.preventDefault();
-    // Better Auth requires `Content-Type: application/json` even on a POST
-    // with no body - omitting it, as a bare `fetch(url, {method:'POST'})`
-    // does, gets a 415 from Better Auth itself (confirmed with curl before
-    // this shipped: a request with no Content-Type at all is rejected here,
-    // distinct from Astro's own checkOrigin, which is what a *missing Origin
-    // header* would trip - a real browser fetch always sends Origin, so only
-    // this header was actually missing).
-    // Better Auth requires `Content-Type: application/json` AND a parseable
-    // JSON body even on an endpoint that takes no parameters - an empty body
-    // with the header present still 400s with "Invalid JSON in request
-    // body". `{}` satisfies the parser; confirmed with curl before this
-    // shipped, same session as the Content-Type fix above.
-    await fetch('/api/auth/sign-out', {
-      method: 'POST',
-      headers: { 'content-type': 'application/json' },
-      body: '{}',
+  logoutForms.forEach((logout) => {
+    logout.addEventListener('submit', async (event) => {
+      event.preventDefault();
+      // Better Auth requires `Content-Type: application/json` even on a POST
+      // with no body - omitting it, as a bare `fetch(url, {method:'POST'})`
+      // does, gets a 415 from Better Auth itself (confirmed with curl before
+      // this shipped: a request with no Content-Type at all is rejected here,
+      // distinct from Astro's own checkOrigin, which is what a *missing Origin
+      // header* would trip - a real browser fetch always sends Origin, so only
+      // this header was actually missing).
+      // Better Auth requires `Content-Type: application/json` AND a parseable
+      // JSON body even on an endpoint that takes no parameters - an empty body
+      // with the header present still 400s with "Invalid JSON in request
+      // body". `{}` satisfies the parser; confirmed with curl before this
+      // shipped, same session as the Content-Type fix above.
+      await fetch('/api/auth/sign-out', {
+        method: 'POST',
+        headers: { 'content-type': 'application/json' },
+        body: '{}',
+      });
+      location.href = '/portal/';
     });
-    location.href = '/portal/';
   });
 
   if (profile) {

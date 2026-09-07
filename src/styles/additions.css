@@ -1299,3 +1299,182 @@ a[href^="mailto:"]{overflow-wrap:anywhere}
   margin-top:28px; /* aligns roughly with sibling fields' input boxes, since this field has no separate label above the control */
 }
 .field--checkbox input[type="checkbox"]{width:auto;flex:none}
+
+/* ---------------------------------------------------------------------
+   Vendor dashboard app shell (portal.astro, role=vendor only).
+   Styled after a sidebar-nav SaaS dashboard layout the user shared as a
+   reference (Renzo, a property-manager's own internal tool - occupancy,
+   units, rent, lease renewals). That specific content doesn't apply to a
+   vendor (a plumber/electrician doesn't manage occupancy rates) - the
+   LAYOUT LANGUAGE is what's reused: sidebar nav, top bar with greeting,
+   stat-card row, a big highlighted balance card, a compliance-status
+   strip, and a recent-activity feed. Every number in it comes from the
+   same jobs/cashback_ledger/account queries already running in
+   portal.astro's frontmatter - nothing here is invented content, only
+   the visual container around real data is new.
+   Colors reuse the site's own navy-900/700/red tokens rather than
+   Renzo's blue, so this doesn't read as a foreign design system bolted
+   onto the rest of the site. */
+
+.vdash{
+  display:grid;
+  grid-template-columns:240px 1fr;
+  gap:0;
+  background:var(--paper);
+  border:1px solid var(--line);
+  border-radius:8px;
+  overflow:hidden;
+  min-height:640px;
+}
+@media (max-width:860px){
+  .vdash{grid-template-columns:1fr}
+}
+
+.vdash-side{
+  background:var(--navy-900);
+  color:#C9D5E6;
+  padding:28px 18px;
+  display:flex;
+  flex-direction:column;
+  gap:4px;
+}
+.vdash-side-brand{
+  display:flex;align-items:center;gap:10px;
+  padding:0 10px 22px;
+  border-bottom:1px solid rgba(255,255,255,.08);
+  margin-bottom:18px;
+}
+.vdash-side-brand img{height:26px;width:auto}
+.vdash-side-brand span{
+  font-family:var(--display);text-transform:uppercase;letter-spacing:.04em;
+  font-size:.98rem;color:var(--white);
+}
+.vdash-nav-item{
+  display:flex;align-items:center;gap:11px;
+  padding:10px 12px;border-radius:6px;
+  font-family:var(--body);font-size:.9rem;font-weight:500;
+  color:#B8C6DD;text-decoration:none;
+  transition:background .15s,color .15s;
+}
+.vdash-nav-item svg{flex:none;width:18px;height:18px;opacity:.85}
+.vdash-nav-item:hover{background:rgba(255,255,255,.06);color:var(--white)}
+.vdash-nav-item.is-active{background:var(--red);color:var(--white)}
+.vdash-nav-item.is-active svg{opacity:1}
+.vdash-nav-item.is-soon{
+  opacity:.42;cursor:default;pointer-events:none;
+}
+.vdash-nav-soon-tag{
+  margin-left:auto;font-size:.62rem;text-transform:uppercase;letter-spacing:.05em;
+  background:rgba(255,255,255,.08);padding:2px 6px;border-radius:3px;
+}
+.vdash-side-foot{margin-top:auto;padding-top:14px;border-top:1px solid rgba(255,255,255,.08)}
+.vdash-nav-item--btn{
+  width:100%;background:none;border:none;cursor:pointer;text-align:left;
+  font-family:var(--body);
+}
+
+.vdash-main{padding:26px 28px 32px;background:var(--white)}
+
+.vdash-topbar{
+  display:flex;align-items:flex-start;justify-content:space-between;flex-wrap:wrap;gap:16px;
+  margin-bottom:24px;
+}
+.vdash-greeting h2{
+  font-family:var(--display);text-transform:none;letter-spacing:0;
+  font-size:1.5rem;color:var(--navy-900);margin:0 0 3px;
+}
+.vdash-greeting h2 span{color:var(--red)}
+.vdash-greeting p{font-family:var(--body);font-size:.88rem;color:var(--steel);margin:0}
+.vdash-topbar-right{display:flex;align-items:center;gap:12px}
+.vdash-date-chip{
+  display:flex;align-items:center;gap:7px;
+  border:1px solid var(--line);border-radius:6px;
+  padding:8px 14px;font-family:var(--body);font-size:.84rem;color:var(--navy-800);
+  background:var(--paper);
+}
+.vdash-role-chip{
+  font-family:var(--body);font-size:.74rem;font-weight:600;text-transform:uppercase;letter-spacing:.04em;
+  background:var(--red-soft);color:var(--red-dark);border-radius:20px;padding:5px 12px;
+}
+
+.vdash-stats{
+  display:grid;grid-template-columns:repeat(3,1fr);gap:14px;margin-bottom:18px;
+}
+@media (max-width:640px){.vdash-stats{grid-template-columns:1fr}}
+.vdash-stat{
+  border:1px solid var(--line);border-radius:8px;padding:16px 18px;background:var(--white);
+}
+.vdash-stat-label{font-family:var(--body);font-size:.78rem;color:var(--steel);margin:0 0 6px}
+.vdash-stat-value{font-family:var(--display);font-size:1.7rem;color:var(--navy-900);margin:0;line-height:1}
+.vdash-stat-note{font-family:var(--body);font-size:.76rem;color:var(--steel-light);margin:6px 0 0}
+
+.vdash-grid-2{
+  display:grid;grid-template-columns:1.55fr 1fr;gap:18px;align-items:start;
+}
+@media (max-width:860px){.vdash-grid-2{grid-template-columns:1fr}}
+
+.vdash-profile-card{
+  border:1px solid var(--line);border-radius:8px;padding:22px;background:var(--white);margin-bottom:18px;
+}
+.vdash-profile-card h3{
+  font-family:var(--display);text-transform:none;letter-spacing:0;font-size:1.08rem;
+  color:var(--navy-900);margin:0 0 14px;
+}
+.vdash-profile-rows{display:flex;flex-direction:column;gap:10px}
+.vdash-profile-row{display:flex;align-items:center;gap:10px;font-family:var(--body);font-size:.88rem;color:var(--navy-800)}
+.vdash-profile-row svg{flex:none;width:16px;height:16px;color:var(--red)}
+.vdash-profile-row b{color:var(--steel);font-weight:500;margin-right:4px}
+
+.vdash-balance-card{
+  background:linear-gradient(135deg,var(--navy-800),var(--navy-600));
+  border-radius:8px;padding:22px;color:var(--white);margin-bottom:18px;
+}
+.vdash-balance-card h3{
+  font-family:var(--display);text-transform:none;letter-spacing:0;font-size:1.02rem;
+  color:var(--white);margin:0 0 16px;
+}
+.vdash-balance-row{display:flex;justify-content:space-between;gap:12px;flex-wrap:wrap}
+.vdash-balance-item p:first-child{font-family:var(--body);font-size:.74rem;color:#A9BAD2;margin:0 0 4px}
+.vdash-balance-item p:last-child{font-family:var(--display);font-size:1.35rem;color:var(--white);margin:0}
+
+.vdash-compliance{
+  border:1px solid var(--line);border-radius:8px;padding:20px 22px;margin-bottom:18px;
+}
+.vdash-compliance h3{
+  font-family:var(--display);text-transform:none;letter-spacing:0;font-size:1.08rem;
+  color:var(--navy-900);margin:0 0 3px;
+}
+.vdash-compliance>p{font-family:var(--body);font-size:.82rem;color:var(--steel);margin:0 0 16px}
+.vdash-compliance-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:14px}
+@media (max-width:640px){.vdash-compliance-grid{grid-template-columns:1fr}}
+.vdash-compliance-item{border:1px solid var(--line);border-radius:6px;padding:12px 14px}
+.vdash-compliance-item-label{
+  display:flex;align-items:center;gap:7px;font-family:var(--body);font-size:.82rem;
+  font-weight:600;color:var(--navy-800);margin:0 0 8px;
+}
+.vdash-compliance-item-label svg{width:15px;height:15px;color:var(--red)}
+.vdash-badge{
+  display:inline-block;font-family:var(--body);font-size:.72rem;font-weight:600;
+  border-radius:20px;padding:3px 10px;
+}
+.vdash-badge--ok{background:#E3F6EA;color:#1C8A4A}
+.vdash-badge--warn{background:#FFF3D6;color:#9C6B00}
+.vdash-badge--bad{background:var(--red-soft);color:var(--red-dark)}
+.vdash-compliance-item-note{font-family:var(--body);font-size:.72rem;color:var(--steel-light);margin:6px 0 0}
+
+.vdash-activity{border:1px solid var(--line);border-radius:8px;padding:20px 22px}
+.vdash-activity h3{
+  font-family:var(--display);text-transform:none;letter-spacing:0;font-size:1.08rem;
+  color:var(--navy-900);margin:0 0 16px;
+}
+.vdash-activity-list{display:flex;flex-direction:column;gap:14px}
+.vdash-activity-item{display:flex;align-items:flex-start;gap:12px}
+.vdash-activity-icon{
+  flex:none;width:34px;height:34px;border-radius:7px;
+  display:flex;align-items:center;justify-content:center;
+  background:var(--red-soft);color:var(--red-dark);
+}
+.vdash-activity-icon svg{width:16px;height:16px}
+.vdash-activity-text p:first-child{font-family:var(--body);font-size:.86rem;color:var(--navy-900);margin:0;font-weight:500}
+.vdash-activity-text p:last-child{font-family:var(--body);font-size:.75rem;color:var(--steel-light);margin:2px 0 0}
+.vdash-activity-empty{font-family:var(--body);font-size:.85rem;color:var(--steel);margin:0}
