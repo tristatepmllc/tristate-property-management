@@ -112,24 +112,47 @@ const TRADES = [
   <!-- ================= FORM ================= -->
   <section class="section" id="apply">
     <div class="wrap">
-      <div class="sec-head sec-head--form">
-        <p class="eyebrow">Vendor registration</p>
-        <h2>Tell us what you do</h2>
-        <p>
-          Five required fields. We read every application and reply either way. Prefer to talk
-          first? Call <a href={SITE.telHref}>{SITE.phone}</a>.
-        </p>
-      </div>
+      <div class="contact-grid contact-grid--reverse">
 
-      <div class="form-card form-card--narrow">
-        <form
-          action="/api/vendors"
-          method="post"
-          data-lead-form
-          data-source="vendor-network"
-          data-thanks-heading="Thank you for your application!"
-          data-success={`We review every application and reply within five business days. Questions before then? Call ${SITE.phone}.`}
-          novalidate
+        <!-- INTRO (left, Lessen layout) -->
+        <div>
+          <p class="eyebrow">Vendor registration</p>
+          <h2 style="font-size:1.9rem;text-transform:uppercase;margin-bottom:8px">Tell us what you do</h2>
+          <p style="color:var(--steel);font-size:.93rem;margin-bottom:26px">
+            We read every application and reply either way, usually within five business days.
+            Prefer to talk first? Call <a href={SITE.telHref}>{SITE.phone}</a>.
+          </p>
+
+          <div class="info-block">
+            <h3>What we ask before dispatch</h3>
+            <div class="info-row"><span class="k">Licence</span><span class="v">Where your trade requires one</span></div>
+            <div class="info-row"><span class="k">Insurance</span><span class="v">General liability, workers' comp</span></div>
+            <div class="info-row"><span class="k">Pricing</span><span class="v">Written rate sheet before the first job</span></div>
+          </div>
+
+          <div class="info-block">
+            <h3>Contact details</h3>
+            <div class="info-row">
+              <span class="k">Phone</span>
+              <span class="v"><a href={SITE.telHref}>{SITE.phone}</a></span>
+            </div>
+            <div class="info-row">
+              <span class="k">Email</span>
+              <span class="v"><a href={SITE.mailtoHref}>{SITE.email}</a></span>
+            </div>
+          </div>
+        </div>
+
+        <!-- FORM (right) -->
+        <div class="form-card">
+          <form
+            action="/api/vendors"
+            method="post"
+            data-lead-form
+            data-source="vendor-network"
+            data-thanks-heading="Thank you for your application!"
+            data-success={`We review every application and reply within five business days. Questions before then? Call ${SITE.phone}.`}
+            novalidate
         >
           <div class="field-row">
             <div class="field">
@@ -281,6 +304,8 @@ const TRADES = [
             <a href="/privacy-policy/">privacy policy</a>.
           </p>
         </form>
+        </div>
+
       </div>
     </div>
   </section>

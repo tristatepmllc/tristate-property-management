@@ -32,24 +32,48 @@ const jsonLd = graph([
     </div>
   </section>
 
-  <section class="section">
-    <div class="wrap">
-      <div class="sec-head sec-head--form">
+<section class="section">
+  <div class="wrap">
+    <div class="contact-grid contact-grid--reverse">
+
+      <!-- INFO (left, Lessen layout) -->
+      <div>
         <p class="eyebrow">New client</p>
-        <h2>Four fields to get started</h2>
-        <p>
+        <h2 style="font-size:1.9rem;text-transform:uppercase;margin-bottom:8px">Four fields to get started</h2>
+        <p style="color:var(--steel);font-size:.93rem;margin-bottom:26px">
           Name, number, property address and what you need. Everything else we work out on the
           call. Would rather talk now? <a href={SITE.telHref}>{SITE.phone}</a>.
         </p>
+
+        <div class="info-block">
+          <h3>Contact details</h3>
+          <div class="info-row">
+            <span class="k">Phone</span>
+            <span class="v"><a href={SITE.telHref}>{SITE.phone}</a></span>
+          </div>
+          <div class="info-row">
+            <span class="k">Email</span>
+            <span class="v"><a href={SITE.mailtoHref}>{SITE.email}</a></span>
+          </div>
+        </div>
+
+        <div class="info-block">
+          <h3>Hours</h3>
+          <div class="info-row"><span class="k">Mon&ndash;Fri</span><span class="v">7:00 AM &ndash; 6:00 PM</span></div>
+          <div class="info-row"><span class="k">Saturday</span><span class="v">8:00 AM &ndash; 2:00 PM</span></div>
+          <div class="info-row"><span class="k">Emergency</span><span class="v">24 / 7 / 365</span></div>
+        </div>
       </div>
 
-      <div class="form-card form-card--narrow">
+      <!-- FORM (right) -->
+      <div class="form-card">
         <form
           action="/api/leads"
           method="post"
           data-lead-form
           data-source="client-registration"
-          data-success="Registered. We will call to confirm the property and the scope, usually the same business day."
+          data-thanks-heading="Thank you for registering!"
+          data-success="We will call to confirm the property and the scope, usually the same business day."
           novalidate
         >
           <input type="hidden" name="urgency" value="Ongoing contract enquiry" />
@@ -122,8 +146,10 @@ const jsonLd = graph([
           </p>
         </form>
       </div>
+
     </div>
-  </section>
+  </div>
+</section>
 
   <section class="section section--navy">
     <div class="wrap">
