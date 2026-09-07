@@ -15,21 +15,22 @@
   --display:"Fraunces Variable","Fraunces",Georgia,serif;
 }
 
-/* Fraunces in bulk uppercase (the site's existing convention for big
-   headlines - .hero h1, .page-hero h1, .sec-head h2, all in global.css)
-   reads heavy and tabloid-like, not like the elegant mixed-case reference.
-   These three overrides turn that off for the large narrative headlines
-   only - nav, buttons, eyebrows, and every other uppercase+letter-spacing
-   use elsewhere in the design system is untouched, since that's a UI-chrome
-   convention independent of which display font sits behind it.
-   NOTE: .hero and .page-hero are marked "never touch" in the design rules -
-   this overrides their heading's text-transform only, not their structure,
-   layout, imagery, or anything else, because the font swap requested here
-   broke their headline typography and leaving that broken silently would
-   be worse than flagging the one property changed. */
-.hero h1,.page-hero h1,.sec-head h2{
-  text-transform:none;
-  letter-spacing:0;
+/* Display font: Proxima Nova was requested, but it's a paid/licensed font
+   (Mark Simonson Studio) with no free/legal source - shipping a "free"
+   download of it would be pirated commercial software on a live business
+   site. Inter is the standard free substitute (same reason it's this
+   site's body font already) - reusing it here means one font family site-
+   wide, zero new dependency, zero licensing question.
+   This replaces the Barlow Condensed -> Fraunces swap from earlier this
+   session: Fraunces (elegant serif) wasn't liked either, and moving to a
+   clean sans for --display means the hero h1 / page-hero h1 / sec-head h2
+   text-transform overrides added to fix Fraunces-in-uppercase looking
+   heavy no longer apply - a bold uppercase sans is the site's existing
+   convention everywhere else (nav, buttons, eyebrows), so removing that
+   override fully restores .hero and .page-hero to untouched, matching the
+   "never touch" rule with no exception needed at all now. */
+:root{
+  --display:"Inter Variable","Inter",-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif;
 }
 
 .skip-link{
