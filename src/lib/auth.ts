@@ -154,9 +154,24 @@ function buildAuth() {
           // Admin is granted with a direct UPDATE once there is a staff UI to
           // do it from - see the note on `role` in db/schema.sql.
           before: async (user) => {
-            const role = (user as { role?: unknown }).role;
-            const safe = role === 'vendor' ? 'vendor' : 'client';
-            return { data: { ...user, role: safe } };
+            // Self-serve sign-up creates client accounts only, full stop -
+            // `role: 'vendor'` from the request body is no longer honored
+            // here at all, even though the additionalFields config above
+            // still marks it `input: true` (kept there so PATCH /api/me
+            // and other authenticated writers aren't affected; sign-up is
+            // the only path this hook gates).
+            // Before this change, `role === 'vendor' ? 'vendor' : 'client'`
+            // meant anyone could tick "Trade partner (vendor)" on /portal/
+            // and get a live vendor account with zero vetting - no licence
+            // check, no insurance check, nothing between signing up and
+            // being eligible for dispatch. The vendor-network application
+            // (`vendors` table, /vendor-network/, status new|reviewing|
+            // approved|declined) is the only vetted path now. There is
+            // deliberately no self-serve route from an approved vendor
+            // application to a live portal account yet either - that's the
+            // next piece (an admin action that creates the account after
+            // approval), not silently reintroduced here as a shortcut.
+            return { data: { ...user, role: 'client' } };
           },
         },
       },

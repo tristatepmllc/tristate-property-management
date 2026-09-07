@@ -5,6 +5,7 @@ import { env } from 'cloudflare:workers';
 import BaseLayout from '../layouts/BaseLayout.astro';
 import { SITE } from '../data/site';
 import { getAuth } from '../lib/auth';
+import { THROTTLE_WINDOW_MS, THROTTLE_MAX } from './api/portal/request-service';
 
 /**
  * Real login, registration and a dashboard - replacing the holding page.
@@ -47,19 +48,50 @@ const user = session?.user as (typeof session extends null ? never : NonNullable
 
 let balanceCents = 0;
 let jobCount = 0;
+type JobRow = {
+  id: string; service: string | null; description: string | null; status: string;
+  scheduled_at: number | null; completed_at: number | null; amount_cents: number | null; created_at: number;
+};
+type LedgerRow = { id: string; job_id: string | null; amount_cents: number; reason: string; created_at: number };
+let jobs: JobRow[] = [];
+let ledgerEntries: LedgerRow[] = [];
+let recentRequestCount = 0;
 
 if (session) {
-  const [balanceRow, jobsRow] = await Promise.all([
+  const since = Date.now() - THROTTLE_WINDOW_MS;
+  const [balanceRow, jobsRow, jobsList, ledgerList, throttleRow] = await Promise.all([
     env.DB.prepare(`SELECT COALESCE(SUM(amount_cents), 0) AS cents FROM cashback_ledger WHERE account_id = ?1`)
       .bind(session.user.id)
       .first<{ cents: number }>(),
     env.DB.prepare(`SELECT COUNT(*) AS n FROM jobs WHERE account_id = ?1`)
       .bind(session.user.id)
       .first<{ n: number }>(),
+    env.DB.prepare(
+      `SELECT id, service, description, status, scheduled_at, completed_at, amount_cents, created_at
+       FROM jobs WHERE account_id = ?1 ORDER BY created_at DESC LIMIT 100`
+    ).bind(session.user.id).all<JobRow>(),
+    env.DB.prepare(
+      `SELECT id, job_id, amount_cents, reason, created_at
+       FROM cashback_ledger WHERE account_id = ?1 ORDER BY created_at DESC LIMIT 200`
+    ).bind(session.user.id).all<LedgerRow>(),
+    // Same window/limit as POST /api/portal/request-service - computed here
+    // too so the form can be hidden server-side once the same account has
+    // hit it, rather than rendering a form that would just 429 on submit.
+    env.DB.prepare(`SELECT COUNT(*) AS n FROM leads WHERE account_id = ?1 AND created_at > ?2`)
+      .bind(session.user.id, since)
+      .first<{ n: number }>(),
   ]);
   balanceCents = balanceRow?.cents ?? 0;
   jobCount = jobsRow?.n ?? 0;
+  jobs = jobsList.results ?? [];
+  ledgerEntries = ledgerList.results ?? [];
+  recentRequestCount = throttleRow?.n ?? 0;
 }
+
+const fmtDate = (ms: number) =>
+  new Date(ms).toLocaleString('en-US', { dateStyle: 'medium', timeStyle: 'short', timeZone: 'America/New_York' });
+const fmtCents = (c: number) => (c / 100).toLocaleString('en-US', { style: 'currency', currency: 'USD' });
+const canRequestService = user?.role === 'client' && recentRequestCount < THROTTLE_MAX;
 
 const balance = (balanceCents / 100).toLocaleString('en-US', { style: 'currency', currency: 'USD' });
 const roleLabel = user?.role === 'vendor' ? 'Vendor' : user?.role === 'admin' ? 'Admin' : 'Client';
@@ -118,6 +150,114 @@ const licenseExpiresValue = user?.licenseExpires
                 : `${jobCount} job${jobCount === 1 ? '' : 's'} on record.`}
             </p>
           </div>
+        </div>
+
+        {user?.role === 'client' ? (
+          <div class="form-card form-card--wide">
+            <h3>Request service</h3>
+            {canRequestService ? (
+              <>
+                <p class="form-note">
+                  Submit straight from your account instead of re-filling the public form -
+                  your name, email and property go with it automatically.
+                </p>
+                <form data-lead-form action="/api/portal/request-service" data-source="portal-request-service"
+                  data-thanks-heading="Request received" novalidate>
+                  <div class="field">
+                    <label for="rs-phone">Phone <span class="req">*</span></label>
+                    <input type="tel" id="rs-phone" name="phone" autocomplete="tel" value={user?.phone || ''} required />
+                  </div>
+                  <div class="field">
+                    <label for="rs-service">Service needed <span class="req">*</span></label>
+                    <select id="rs-service" name="service" required>
+                      <option value="">Choose a service&hellip;</option>
+                      <option>Janitorial &amp; Cleaning</option>
+                      <option>Plumbing &amp; Drains</option>
+                      <option>Electrical &amp; Lighting</option>
+                      <option>HVAC &amp; Refrigeration</option>
+                      <option>Handyman &amp; Repairs</option>
+                      <option>Painting &amp; Surfaces</option>
+                      <option>Grounds &amp; Exterior</option>
+                      <option>Restoration &amp; Projects</option>
+                      <option>Multiple services / not sure</option>
+                    </select>
+                  </div>
+                  <div class="field">
+                    <label for="rs-urgency">How urgent?</label>
+                    <select id="rs-urgency" name="urgency">
+                      <option value="">Choose&hellip;</option>
+                      <option>Emergency - today</option>
+                      <option>Within 48 hours</option>
+                      <option>This week</option>
+                      <option>Planning ahead / budgeting</option>
+                    </select>
+                  </div>
+                  <div class="field">
+                    <label for="rs-details">Describe the job</label>
+                    <textarea id="rs-details" name="details" placeholder="What needs fixing, and where on the property."></textarea>
+                  </div>
+                  <input type="hidden" name="source" value="portal-request-service" />
+                  <button type="submit" class="btn btn--red">Send request</button>
+                  <p class="form-status" role="status" aria-live="polite" hidden></p>
+                </form>
+              </>
+            ) : (
+              <p class="form-note">
+                You've sent {recentRequestCount} requests in the last 24 hours - that's the limit
+                for this form. Need something urgent right now? Call <a href={SITE.telHref}>{SITE.phone}</a>,
+                answered 24/7.
+              </p>
+            )}
+          </div>
+        ) : null}
+
+        <div class="form-card form-card--wide">
+          <h3>Job history</h3>
+          {jobs.length === 0 ? (
+            <p class="form-note">No jobs recorded yet. This fills in once work is scheduled against your account.</p>
+          ) : (
+            <div class="admin-table-wrap">
+              <table class="admin-table">
+                <thead>
+                  <tr><th>Date</th><th>Service</th><th>Status</th><th>Amount</th></tr>
+                </thead>
+                <tbody>
+                  {jobs.map((j) => (
+                    <tr>
+                      <td>{fmtDate(j.created_at)}</td>
+                      <td>{j.service || j.description || '—'}</td>
+                      <td>{j.status}</td>
+                      <td>{j.amount_cents != null ? fmtCents(j.amount_cents) : '—'}</td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          )}
+        </div>
+
+        <div class="form-card form-card--wide">
+          <h3>Cashback ledger</h3>
+          {ledgerEntries.length === 0 ? (
+            <p class="form-note">No ledger entries yet. This fills in once a completed job earns or redeems cashback.</p>
+          ) : (
+            <div class="admin-table-wrap">
+              <table class="admin-table">
+                <thead>
+                  <tr><th>Date</th><th>Reason</th><th>Amount</th></tr>
+                </thead>
+                <tbody>
+                  {ledgerEntries.map((e) => (
+                    <tr>
+                      <td>{fmtDate(e.created_at)}</td>
+                      <td>{e.reason}</td>
+                      <td>{e.amount_cents >= 0 ? '+' : ''}{fmtCents(e.amount_cents)}</td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          )}
         </div>
 
         <div class="form-card form-card--wide">
@@ -311,17 +451,14 @@ const licenseExpiresValue = user?.licenseExpires
                 <input type="password" id="su-password" name="password" autocomplete="new-password" minlength="10" required />
                 <p class="form-note">At least 10 characters.</p>
               </div>
-              <fieldset class="field">
-                <legend>I am a...</legend>
-                <label><input type="radio" name="role" value="client" checked /> Property owner (client)</label>
-                <label><input type="radio" name="role" value="vendor" /> Trade partner (vendor)</label>
-              </fieldset>
+              <input type="hidden" name="role" value="client" />
               <button type="submit" class="btn btn--red btn--wide">Create account</button>
               <p class="form-note">
-                Registering here creates portal login credentials. It does not submit a job
-                request or a vendor application - do that first at
-                <a href="/client-registration/">client registration</a> or the
-                <a href="/vendor-network/">vendor network page</a> if you have not already.
+                This creates a <strong>client</strong> portal account only - property owners and
+                managers requesting work. Vendor accounts aren't self-serve: apply at the
+                <a href="/vendor-network/">vendor network page</a> first. We review every
+                application, verify licence and insurance, and set up your portal login once
+                you're approved.
               </p>
               <p class="form-status" role="status" aria-live="polite" hidden></p>
             </form>
