@@ -29,131 +29,18 @@ const jsonLd = graph([breadcrumbs([{ name: 'Home', path: '/' }, { name: 'Contact
 
 <section class="section">
   <div class="wrap">
-    <div class="contact-grid">
+    <div class="contact-grid contact-grid--reverse">
 
-      <!-- FORM -->
-      <div class="form-card">
-        <p class="eyebrow">Free quote &middot; No obligation</p>
-        <h2 style="font-size:1.9rem;text-transform:uppercase;margin-bottom:8px">Request a quote</h2>
+      <!-- INFO (left, Lessen layout) -->
+      <div>
+        <p class="eyebrow">Contact Tristate</p>
+        <h2 style="font-size:1.9rem;text-transform:uppercase;margin-bottom:8px">How may we help you?</h2>
         <p style="color:var(--steel);font-size:.93rem;margin-bottom:26px">
-          The more detail you give us, the more accurate the price. A photo helps more than
-          a paragraph - you can send one to the email or number on the right.
+          Fill in the form and we'll get back to you, usually the same business day. Prefer to
+          talk now? Call <a href={SITE.telHref}>{SITE.phone}</a>.
         </p>
 
-        <form
-          action="/api/leads"
-          method="post"
-          data-lead-form
-          data-source="contact-page-form"
-          data-thanks-heading="Thank you for your submission!"
-          data-success={`We read every request and reply with a written price, usually the same business day. Need us right now? Call ${SITE.phone}.`}
-        >
-          <div class="field-row">
-            <div class="field">
-              <label for="name">Your name <span class="req">*</span></label>
-              <input type="text" id="name" name="name" placeholder="Jane Whitfield" required>
-            </div>
-            <div class="field">
-              <label for="company">Company / property</label>
-              <input type="text" id="company" name="company" placeholder="Riverside Business Park">
-            </div>
-          </div>
-
-          <div class="field-row">
-            <div class="field">
-              <label for="email">Email <span class="req">*</span></label>
-              <input type="email" id="email" name="email" placeholder="jane@company.com" required>
-            </div>
-            <div class="field">
-              <label for="phone">Phone <span class="req">*</span></label>
-              <input type="tel" id="phone" name="phone" placeholder="(203) 000-0000" required>
-            </div>
-          </div>
-
-          <div class="field">
-            <label for="address">Site address</label>
-            <input type="text" id="address" name="address" placeholder="Street, city, ZIP">
-          </div>
-
-          <div class="field-row">
-            <div class="field">
-              <label for="service">Service needed <span class="req">*</span></label>
-              <select id="service" name="service" required>
-                <option value="">Choose a service&hellip;</option>
-                <option>Janitorial &amp; Cleaning</option>
-                <option>Plumbing &amp; Drains</option>
-                <option>Electrical &amp; Lighting</option>
-                <option>HVAC &amp; Refrigeration</option>
-                <option>Handyman &amp; Repairs</option>
-                <option>Painting &amp; Surfaces</option>
-                <option>Grounds &amp; Exterior</option>
-                <option>Restoration &amp; Projects</option>
-                <option>Multiple services / not sure</option>
-              </select>
-            </div>
-            <div class="field">
-              <label for="urgency">How urgent? <span class="req">*</span></label>
-              <select id="urgency" name="urgency" required>
-                <option value="">Choose&hellip;</option>
-                <option>Emergency - today</option>
-                <option>Within 48 hours</option>
-                <option>This week</option>
-                <option>Planning ahead / budgeting</option>
-                <option>Ongoing contract enquiry</option>
-              </select>
-            </div>
-          </div>
-
-          <div class="field">
-            <label for="building">Building type</label>
-            <select id="building" name="building">
-              <option value="">Choose&hellip;</option>
-              <option>Office</option>
-              <option>Retail / shopping centre</option>
-              <option>Restaurant / commercial kitchen</option>
-              <option>Medical / dental</option>
-              <option>Warehouse / industrial</option>
-              <option>School / childcare</option>
-              <option>Multifamily / HOA</option>
-              <option>Auto dealership</option>
-              <option>Other</option>
-            </select>
-          </div>
-
-          <div class="field">
-            <label for="details">Describe the job <span class="req">*</span></label>
-            <textarea id="details" name="details" placeholder="Example: Second-floor men's restroom, two of three faucets dripping constantly and one flush valve running. Building is open 8&ndash;6, work would need to be after hours." required></textarea>
-          </div>
-
-          <LeadFormExtras source="contact-page-form" />
-
-          <button type="submit" class="btn btn--red btn--wide">Send request</button>
-
-          <p class="form-note">
-            We reply to every request. Quotes sent before noon on a business day are answered
-            the same day; anything later comes back the next morning. We never pass your
-            details to a third party.
-          </p>
-        </form>
-      </div>
-
-      <!-- SIDEBAR -->
-      <div>
-        <figure class="photo-card">
-          <img src="/images/contact-tristate-technician-on-a-service-call.webp" alt="Tristate technician on a service call" width="760" height="507" loading="eager" fetchpriority="high" decoding="async">
-          <figcaption>Same crew. Every visit.</figcaption>
-        </figure>
-        <div class="emergency-card" id="emergency">
-          <h3>Emergency? Call, don't type</h3>
-          <p>
-            Active leaks, no power, no heat or cooling, broken glass, sewage backup or a
-            blocked fire exit - the line is answered by a person who can dispatch a crew,
-            24 hours a day.
-          </p>
-          <a class="big" href={SITE.telHref}>{SITE.phone}</a>
-        </div>
-
-        <div class="info-block" style="margin-top:18px">
+        <div class="info-block">
           <h3>Contact details</h3>
           <div class="info-row">
             <span class="k">Phone</span>
@@ -188,12 +75,79 @@ const jsonLd = graph([breadcrumbs([{ name: 'Home', path: '/' }, { name: 'Contact
           </p>
           <Coverage columns="1fr 1fr" />
         </div>
+
+        <div class="emergency-card" id="emergency" style="margin-top:18px">
+          <h3>Emergency? Call, don't type</h3>
+          <p>
+            Active leaks, no power, no heat or cooling, broken glass, sewage backup or a
+            blocked fire exit - the line is answered by a person who can dispatch a crew,
+            24 hours a day.
+          </p>
+          <a class="big" href={SITE.telHref}>{SITE.phone}</a>
+        </div>
+      </div>
+
+      <!-- FORM (right, Lessen layout - fields only, no heading inside the card) -->
+      <div class="form-card">
+        <form action="/api/leads" method="post" data-lead-form data-source="contact-page-form"
+          data-thanks-heading="Thank you for your submission!"
+          data-success={`We read every request and reply with a written price, usually the same business day. Need us right now? Call ${SITE.phone}.`}
+        >
+          <div class="field">
+            <label for="email">Email <span class="req">*</span></label>
+            <input type="email" id="email" name="email" placeholder="jane@company.com" required>
+          </div>
+
+          <div class="field-row">
+            <div class="field">
+              <label for="first_name">First Name <span class="req">*</span></label>
+              <input type="text" id="first_name" name="first_name" autocomplete="given-name" placeholder="Jane" required>
+            </div>
+            <div class="field">
+              <label for="last_name">Last Name <span class="req">*</span></label>
+              <input type="text" id="last_name" name="last_name" autocomplete="family-name" placeholder="Whitfield" required>
+            </div>
+          </div>
+
+          <div class="field">
+            <label for="company">Company <span class="req">*</span></label>
+            <input type="text" id="company" name="company" placeholder="Riverside Business Park" required>
+          </div>
+
+          <div class="field">
+            <label for="phone">Phone</label>
+            <input type="tel" id="phone" name="phone" placeholder="(203) 000-0000">
+          </div>
+
+          <div class="field">
+            <fieldset>
+              <legend>Which best describes you? <span class="req">*</span></legend>
+              <label><input type="radio" name="describes_you" value="Commercial property manager/owner" required /> Commercial property manager/owner</label>
+              <label><input type="radio" name="describes_you" value="Residential property manager/owner" /> Residential property manager/owner</label>
+            </fieldset>
+          </div>
+
+          <div class="field">
+            <label for="details">Is there anything you'd like us to know?</label>
+            <span style="display:block;font-size:.75rem;color:var(--steel);margin:-4px 0 7px">Optional</span>
+            <textarea id="details" name="details" placeholder="Example: Second-floor men's restroom, two of three faucets dripping constantly and one flush valve running."></textarea>
+          </div>
+
+          <LeadFormExtras source="contact-page-form" />
+
+          <button type="submit" class="btn btn--red btn--wide">Submit</button>
+
+          <p class="form-note">
+            We reply to every request. Quotes sent before noon on a business day are answered
+            the same day; anything later comes back the next morning. We never pass your
+            details to a third party.
+          </p>
+        </form>
       </div>
 
     </div>
   </div>
 </section>
-
 <!-- ================= REASSURANCE ================= -->
 <section class="section section--tight section--paper">
   <div class="wrap">

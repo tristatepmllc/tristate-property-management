@@ -116,6 +116,7 @@ CREATE TABLE IF NOT EXISTS leads (
   service       TEXT,
   urgency       TEXT,
   building      TEXT,
+  describes_you TEXT,              -- "Commercial property manager/owner" | "Residential property manager/owner"
   message       TEXT,
   source        TEXT,               -- which form / page
   utm_source    TEXT,

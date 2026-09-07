@@ -37,6 +37,12 @@
 }
 .form-thanks[hidden]{display:none}
 
+/* Lessen-pattern contact layout: info column on the left, form on the right -
+   the reverse of .contact-grid's default order/ratio, which was built for
+   form-first. Same gap, columns closer to even since the info column now
+   carries more (hours + coverage + emergency card) than a plain sidebar did. */
+.contact-grid--reverse{grid-template-columns:.95fr 1.05fr}
+
 /* Respect users who ask for less motion */
 @media (prefers-reduced-motion:reduce){
   *,*::before,*::after{

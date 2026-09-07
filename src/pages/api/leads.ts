@@ -59,13 +59,13 @@ export const POST: APIRoute = async ({ request }) => {
   try {
     await env.DB.prepare(
       `INSERT INTO leads (id, name, email, phone, company, address, service, urgency,
-                          building, message, source, utm_source, utm_medium, utm_campaign,
+                          building, describes_you, message, source, utm_source, utm_medium, utm_campaign,
                           referrer, status, created_at)
-       VALUES (?1,?2,?3,?4,?5,?6,?7,?8,?9,?10,?11,?12,?13,?14,?15,?16,?17)`
+       VALUES (?1,?2,?3,?4,?5,?6,?7,?8,?9,?10,?11,?12,?13,?14,?15,?16,?17,?18)`
     ).bind(
       id, lead.name, lead.email, lead.phone,
       lead.company ?? null, lead.address ?? null, lead.service ?? null, lead.urgency ?? null,
-      lead.building ?? null, lead.message ?? null, lead.source ?? null,
+      lead.building ?? null, lead.describesYou ?? null, lead.message ?? null, lead.source ?? null,
       lead.utm_source ?? null, lead.utm_medium ?? null, lead.utm_campaign ?? null,
       request.headers.get('referer'), status, now
     ).run();
@@ -78,7 +78,8 @@ export const POST: APIRoute = async ({ request }) => {
     const rows = Object.entries({
       Name: lead.name, Email: lead.email, Phone: lead.phone,
       Company: lead.company, Address: lead.address, Service: lead.service,
-      Urgency: lead.urgency, Building: lead.building, Details: lead.message,
+      Urgency: lead.urgency, Building: lead.building, 'Describes you': lead.describesYou,
+      Details: lead.message,
       Source: lead.source,
     })
       .filter(([, v]) => v)

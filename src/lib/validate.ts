@@ -2,7 +2,7 @@ export type LeadInput = {
   name: string; email: string; phone: string;
   company?: string; address?: string; service?: string;
   urgency?: string; building?: string; message?: string;
-  source?: string;
+  source?: string; describesYou?: string;
   utm_source?: string; utm_medium?: string; utm_campaign?: string;
 };
 
@@ -16,7 +16,13 @@ export function validateLead(raw: Record<string, unknown>): { ok: true; value: L
     return typeof v === 'string' ? v.trim().slice(0, max) : '';
   };
 
-  const name = str('name', 120);
+  const firstName = str('first_name', 60);
+  const lastName = str('last_name', 60);
+  // The Lessen-pattern contact form sends first/last name split; every other
+  // form on the site (home hero, quote popup, careers, client-registration)
+  // still sends one "name" field. Prefer the split when present so both keep
+  // working against the same `name` column without a second migration.
+  const name = firstName || lastName ? `${firstName} ${lastName}`.trim() : str('name', 120);
   const email = str('email', 200).toLowerCase();
   const phone = str('phone', 40);
 
@@ -44,6 +50,7 @@ export function validateLead(raw: Record<string, unknown>): { ok: true; value: L
       building: str('building', 80) || undefined,
       message: str('details', 4000) || str('message', 4000) || undefined,
       source: str('source', 80) || undefined,
+      describesYou: str('describes_you', 120) || undefined,
       utm_source: str('utm_source', 120) || undefined,
       utm_medium: str('utm_medium', 120) || undefined,
       utm_campaign: str('utm_campaign', 120) || undefined,
