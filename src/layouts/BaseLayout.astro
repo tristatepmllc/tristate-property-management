@@ -1,7 +1,9 @@
 ---
-import '@fontsource/barlow-condensed/600.css';
-import '@fontsource/barlow-condensed/700.css';
-import '@fontsource/barlow-condensed/800.css';
+// Barlow Condensed used to be the --display font (see additions.css for the
+// override to Fraunces). Import removed - it is not referenced by name
+// anywhere outside that one variable, so keeping it here would just ship
+// unused font weights.
+import '@fontsource-variable/fraunces';
 import '@fontsource-variable/inter';
 import '@fontsource/ibm-plex-mono/400.css';
 import '@fontsource/ibm-plex-mono/500.css';

@@ -1,6 +1,37 @@
 /* Additions required by the production build. The approved stylesheet in
    global.css is untouched apart from @container -> @media (see README). */
 
+/* Display font swap: Barlow Condensed (bold/condensed/industrial - the
+   "robotic" look) replaced with Fraunces, a warm humanist serif, closer to
+   the reference look requested. Overriding the --display custom property
+   here (this file loads after global.css - see BaseLayout.astro) means the
+   swap reaches every h1-h4, .eyebrow-adjacent display text and component
+   across the whole site without editing the approved stylesheet.
+   Fraunces is free/open-license (SIL OFL) via @fontsource-variable/fraunces -
+   not a copy of whatever exact typeface the reference site uses, which is
+   very likely a paid, licensed font we have no rights to and no way to
+   verify from a screenshot alone. */
+:root{
+  --display:"Fraunces Variable","Fraunces",Georgia,serif;
+}
+
+/* Fraunces in bulk uppercase (the site's existing convention for big
+   headlines - .hero h1, .page-hero h1, .sec-head h2, all in global.css)
+   reads heavy and tabloid-like, not like the elegant mixed-case reference.
+   These three overrides turn that off for the large narrative headlines
+   only - nav, buttons, eyebrows, and every other uppercase+letter-spacing
+   use elsewhere in the design system is untouched, since that's a UI-chrome
+   convention independent of which display font sits behind it.
+   NOTE: .hero and .page-hero are marked "never touch" in the design rules -
+   this overrides their heading's text-transform only, not their structure,
+   layout, imagery, or anything else, because the font swap requested here
+   broke their headline typography and leaving that broken silently would
+   be worse than flagging the one property changed. */
+.hero h1,.page-hero h1,.sec-head h2{
+  text-transform:none;
+  letter-spacing:0;
+}
+
 .skip-link{
   position:absolute;left:-9999px;top:0;z-index:999;
   background:var(--red);color:#fff;padding:10px 16px;
