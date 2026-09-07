@@ -40,7 +40,14 @@ const jsonLd = graph([breadcrumbs([{ name: 'Home', path: '/' }, { name: 'Contact
           a paragraph - you can send one to the email or number on the right.
         </p>
 
-        <form action="/api/leads" method="post" data-lead-form data-source="contact-page-form">
+        <form
+          action="/api/leads"
+          method="post"
+          data-lead-form
+          data-source="contact-page-form"
+          data-thanks-heading="Thank you for your submission!"
+          data-success={`We read every request and reply with a written price, usually the same business day. Need us right now? Call ${SITE.phone}.`}
+        >
           <div class="field-row">
             <div class="field">
               <label for="name">Your name <span class="req">*</span></label>

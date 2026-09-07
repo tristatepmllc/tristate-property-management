@@ -51,6 +51,7 @@ function init(): void {
     const status = form.querySelector<HTMLElement>('.form-status');
     const button = form.querySelector<HTMLButtonElement>('button[type="submit"]');
     const inPopup = Boolean(form.closest('[data-quote-popup]'));
+    const thanksHeading = form.dataset.thanksHeading ?? 'Thank you for your submission!';
     // Read from the markup rather than hardcoding /api/leads, so the vendor
     // form can reuse this whole path (UTM, honeypot, Turnstile, status line)
     // while posting to its own endpoint. getAttribute, not `.action`, which
@@ -62,6 +63,25 @@ function init(): void {
       if (!status) return;
       status.hidden = false;
       status.textContent = text;
+    };
+
+    // Lessen-style success state: the form disappears and a "Thank you"
+    // card takes its place in the same spot on the same page - no redirect,
+    // no toast that scrolls away. Built once per form, then just toggled.
+    const showThanks = (message: string): void => {
+      let card = form.parentElement?.querySelector<HTMLElement>(':scope > .form-thanks') ?? null;
+      if (!card) {
+        card = document.createElement('div');
+        card.className = 'form-thanks';
+        card.setAttribute('role', 'status');
+        card.innerHTML = `<h3>${thanksHeading}</h3><p></p>`;
+        form.insertAdjacentElement('afterend', card);
+      }
+      const p = card.querySelector('p');
+      if (p) p.textContent = message;
+      form.hidden = true;
+      card.hidden = false;
+      card.scrollIntoView({ behavior: 'smooth', block: 'center' });
     };
 
     form.addEventListener('submit', async (event) => {
@@ -92,12 +112,18 @@ function init(): void {
 
         if (response.ok) {
           form.reset();
-          say(
+          const message =
             successCopy ??
-              (inPopup
-                ? 'Booked - we will call to arrange a time, usually the same business day.'
-                : 'Thanks - your request is in. We reply to every one, usually the same business day.')
-          );
+            (inPopup
+              ? 'Booked - we will call to arrange a time, usually the same business day.'
+              : 'Thanks - your request is in. We reply to every one, usually the same business day.');
+          if (inPopup) {
+            // The popup is small and users expect it to just confirm and close -
+            // a full card swap here would feel like a second modal.
+            say(message);
+          } else {
+            showThanks(message);
+          }
           window.turnstile?.reset();
           form.dispatchEvent(new CustomEvent('lead:sent', { bubbles: true }));
           if (!inPopup) history.replaceState(null, '', `${location.pathname}?sent=1`);

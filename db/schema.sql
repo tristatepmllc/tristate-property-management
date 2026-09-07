@@ -185,10 +185,18 @@ CREATE TABLE IF NOT EXISTS vendors (
   phone         TEXT NOT NULL,
   address       TEXT,
   trade         TEXT NOT NULL,     -- primary specialty
+  license_number            TEXT,  -- primary trade license #, self-declared
   trades_other  TEXT,              -- additional trades, free text
+  secondary_trade           TEXT,
+  secondary_license_number  TEXT,
   area          TEXT,              -- towns / counties covered
+  service_radius TEXT,             -- miles, self-declared
+  work_types    TEXT,              -- comma-joined: commercial/residential/turns_rehab/exteriors/all
   credentials   TEXT,              -- licensed and/or insured, self-declared
   years         TEXT,
+  sos_active    TEXT,              -- "Yes"/"No" - active status with Secretary of State
+  uses_portal   TEXT,              -- "Yes"/"No" - will use our client/vendor portal
+  referral_source TEXT,            -- how they heard about us
   notes         TEXT,
   source        TEXT,
   referrer      TEXT,

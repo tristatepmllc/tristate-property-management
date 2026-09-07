@@ -57,13 +57,20 @@ export const POST: APIRoute = async ({ request }) => {
 
   try {
     await env.DB.prepare(
-      `INSERT INTO vendors (id, name, business, email, phone, address, trade, trades_other,
-                            area, credentials, years, notes, source, referrer, status, created_at)
-       VALUES (?1,?2,?3,?4,?5,?6,?7,?8,?9,?10,?11,?12,?13,?14,?15,?16)`
+      `INSERT INTO vendors (id, name, business, email, phone, address, trade, license_number,
+                            trades_other, secondary_trade, secondary_license_number,
+                            area, service_radius, work_types, credentials, years,
+                            sos_active, uses_portal, referral_source, notes, source, referrer,
+                            status, created_at)
+       VALUES (?1,?2,?3,?4,?5,?6,?7,?8,?9,?10,?11,?12,?13,?14,?15,?16,?17,?18,?19,?20,?21,?22,?23,?24)`
     ).bind(
       id, v.name, v.business ?? null, v.email, v.phone, v.address ?? null,
-      v.trade, v.tradesOther ?? null, v.area ?? null, v.credentials ?? null,
-      v.years ?? null, v.notes ?? null, v.source ?? null,
+      v.trade, v.licenseNumber ?? null,
+      v.tradesOther ?? null, v.secondaryTrade ?? null, v.secondaryLicenseNumber ?? null,
+      v.area ?? null, v.serviceRadius ?? null, v.workTypes ?? null, v.credentials ?? null,
+      v.years ?? null,
+      v.sosActive ?? null, v.usesPortal ?? null, v.referralSource ?? null, v.notes ?? null,
+      v.source ?? null,
       request.headers.get('referer'), status, now
     ).run();
   } catch (e) {
@@ -74,9 +81,17 @@ export const POST: APIRoute = async ({ request }) => {
   if (env.RESEND_API_KEY && env.LEAD_NOTIFY_TO) {
     const rows = Object.entries({
       Name: v.name, Business: v.business, Email: v.email, Phone: v.phone,
-      Address: v.address, Trade: v.trade, 'Other trades': v.tradesOther,
-      'Area covered': v.area, 'Licence / insurance': v.credentials,
-      'Years trading': v.years, Notes: v.notes, Source: v.source,
+      Address: v.address,
+      'Primary trade': v.trade, 'Primary licence #': v.licenseNumber,
+      'Secondary trade': v.secondaryTrade, 'Secondary licence #': v.secondaryLicenseNumber,
+      'Other trades': v.tradesOther,
+      'Area covered': v.area, 'Service radius (mi)': v.serviceRadius,
+      'Work types': v.workTypes,
+      'Licence / insurance': v.credentials, 'Years trading': v.years,
+      'Active with Secretary of State': v.sosActive,
+      'Will use client/vendor portal': v.usesPortal,
+      'How they heard about us': v.referralSource,
+      Notes: v.notes, Source: v.source,
     })
       .filter(([, val]) => val)
       .map(([k, val]) => `<tr><td style="padding:4px 12px 4px 0;color:#5D6E85">${k}</td><td>${escapeHtml(String(val))}</td></tr>`)

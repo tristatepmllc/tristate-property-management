@@ -127,7 +127,8 @@ const TRADES = [
           method="post"
           data-lead-form
           data-source="vendor-network"
-          data-success="Application received. We review every one and reply within five business days."
+          data-thanks-heading="Thank you for your application!"
+          data-success={`We review every application and reply within five business days. Questions before then? Call ${SITE.phone}.`}
           novalidate
         >
           <div class="field-row">
@@ -157,12 +158,32 @@ const TRADES = [
             <input type="text" id="v-address" name="address" autocomplete="street-address" placeholder="Street, town, ZIP" required />
           </div>
 
-          <div class="field">
-            <label for="v-trade">Primary specialty <span class="req">*</span></label>
-            <select id="v-trade" name="trade" required>
-              <option value="">Choose your trade&hellip;</option>
-              {TRADES.map((t) => <option set:html={t} />)}
-            </select>
+          <div class="field-row">
+            <div class="field">
+              <label for="v-trade">Primary trade <span class="req">*</span></label>
+              <select id="v-trade" name="trade" required>
+                <option value="">Choose your trade&hellip;</option>
+                {TRADES.map((t) => <option set:html={t} />)}
+              </select>
+            </div>
+            <div class="field">
+              <label for="v-license">Primary trade licence number</label>
+              <input type="text" id="v-license" name="license_number" placeholder="If your trade requires one" />
+            </div>
+          </div>
+
+          <div class="field-row">
+            <div class="field">
+              <label for="v-trade-2">Secondary trade</label>
+              <select id="v-trade-2" name="secondary_trade">
+                <option value="">Choose&hellip; (optional)</option>
+                {TRADES.map((t) => <option set:html={t} />)}
+              </select>
+            </div>
+            <div class="field">
+              <label for="v-license-2">Secondary trade licence number</label>
+              <input type="text" id="v-license-2" name="secondary_license_number" placeholder="If applicable" />
+            </div>
           </div>
 
           <div class="field">
@@ -198,9 +219,47 @@ const TRADES = [
             </div>
           </div>
 
+          <div class="field-row">
+            <div class="field">
+              <label for="v-area">Towns or counties you cover</label>
+              <input type="text" id="v-area" name="area" placeholder="Example: Fairfield and New Haven counties" />
+            </div>
+            <div class="field">
+              <label for="v-radius">Service radius (miles)</label>
+              <input type="number" id="v-radius" name="service_radius" min="0" placeholder="Example: 25" />
+            </div>
+          </div>
+
           <div class="field">
-            <label for="v-area">Towns or counties you cover</label>
-            <input type="text" id="v-area" name="area" placeholder="Example: Fairfield and New Haven counties" />
+            <fieldset>
+              <legend>What type of work are you interested in?</legend>
+              <label><input type="checkbox" name="work_types" value="Commercial" /> Commercial</label>
+              <label><input type="checkbox" name="work_types" value="Residential" /> Residential</label>
+              <label><input type="checkbox" name="work_types" value="Turns and rehab" /> Turns and rehab</label>
+              <label><input type="checkbox" name="work_types" value="Exteriors" /> Exteriors</label>
+              <label><input type="checkbox" name="work_types" value="All of the above" /> All of the above</label>
+            </fieldset>
+          </div>
+
+          <div class="field">
+            <fieldset>
+              <legend>Are you in active status with your Secretary of State?</legend>
+              <label><input type="radio" name="sos_active" value="Yes" /> Yes</label>
+              <label><input type="radio" name="sos_active" value="No" /> No</label>
+            </fieldset>
+          </div>
+
+          <div class="field">
+            <fieldset>
+              <legend>Will you use our client/vendor portal to manage jobs and payments?</legend>
+              <label><input type="radio" name="uses_portal" value="Yes" /> Yes</label>
+              <label><input type="radio" name="uses_portal" value="No" /> No</label>
+            </fieldset>
+          </div>
+
+          <div class="field">
+            <label for="v-referral">How did you hear about us?</label>
+            <input type="text" id="v-referral" name="referral_source" placeholder="Optional" />
           </div>
 
           <div class="field">

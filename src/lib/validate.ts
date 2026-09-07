@@ -56,6 +56,9 @@ export type VendorInput = {
   business?: string; address?: string; tradesOther?: string;
   area?: string; credentials?: string; years?: string; notes?: string;
   source?: string;
+  licenseNumber?: string; secondaryTrade?: string; secondaryLicenseNumber?: string;
+  serviceRadius?: string; workTypes?: string; sosActive?: string;
+  usesPortal?: string; referralSource?: string;
 };
 
 /**
@@ -99,6 +102,15 @@ export function validateVendor(raw: Record<string, unknown>): { ok: true; value:
       years: str('years', 40) || undefined,
       notes: str('notes', 4000) || str('details', 4000) || undefined,
       source: str('source', 80) || undefined,
+      licenseNumber: str('license_number', 60) || undefined,
+      secondaryTrade: str('secondary_trade', 120) || undefined,
+      secondaryLicenseNumber: str('secondary_license_number', 60) || undefined,
+      serviceRadius: str('service_radius', 20) || undefined,
+      // Checkbox group - lead-form.ts joins same-name checked values with ", ".
+      workTypes: str('work_types', 300) || undefined,
+      sosActive: str('sos_active', 10) || undefined,
+      usesPortal: str('uses_portal', 10) || undefined,
+      referralSource: str('referral_source', 200) || undefined,
     },
   };
 }

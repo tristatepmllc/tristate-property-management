@@ -16,6 +16,27 @@
   color:var(--navy-700);
 }
 
+/* Full-card success state that replaces the form in place (Lessen-style
+   "Thank you for your submission!" pattern) - no redirect, same spot on
+   the page. Hidden by default; lead-form.ts creates/reveals it once. */
+.form-thanks{
+  background:var(--white);
+  border:1px solid var(--line);
+  border-top:4px solid var(--navy-700);
+  border-radius:var(--radius);
+  padding:40px 34px;
+  box-shadow:var(--shadow-sm);
+  text-align:center;
+}
+.form-thanks h3{
+  font-size:1.5rem;margin-bottom:12px;
+}
+.form-thanks p{
+  color:var(--steel);font-size:.98rem;line-height:1.6;
+  max-width:46ch;margin:0 auto;
+}
+.form-thanks[hidden]{display:none}
+
 /* Respect users who ask for less motion */
 @media (prefers-reduced-motion:reduce){
   *,*::before,*::after{
@@ -1196,7 +1217,8 @@ a[href^="mailto:"]{overflow-wrap:anywhere}
   display:flex;align-items:center;gap:8px;font-family:var(--body);font-size:.92rem;
   text-transform:none;letter-spacing:normal;color:var(--navy-800);margin-bottom:8px;font-weight:400;
 }
-.field fieldset input[type="radio"]{width:auto;flex:none}
+.field fieldset input[type="radio"],
+.field fieldset input[type="checkbox"]{width:auto;flex:none}
 
 /* Plain-text "Forgot your password?" toggle - a link, styled as one, not a
    second red button competing with the submit button above it. */
