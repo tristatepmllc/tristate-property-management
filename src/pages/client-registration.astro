@@ -34,15 +34,111 @@ const jsonLd = graph([
 
 <section class="section">
   <div class="wrap">
-    <div class="contact-grid contact-grid--reverse">
+    <div class="contact-grid">
 
-      <!-- INFO (left, Lessen layout) -->
+      <!-- FORM (left) -->
       <div>
         <p class="eyebrow">New client</p>
-        <h2 style="font-size:1.9rem;text-transform:uppercase;margin-bottom:8px">Four fields to get started</h2>
+        <h2 style="font-size:1.9rem;text-transform:none;margin-bottom:8px">Four fields to get started</h2>
         <p style="color:var(--steel);font-size:.93rem;margin-bottom:26px">
           Name, number, property address and what you need. Everything else we work out on the
           call. Would rather talk now? <a href={SITE.telHref}>{SITE.phone}</a>.
+        </p>
+
+        <div class="form-card">
+          <form
+            action="/api/leads"
+            method="post"
+            data-lead-form
+            data-source="client-registration"
+            data-thanks-heading="Thank you for registering!"
+            data-success="We will call to confirm the property and the scope, usually the same business day."
+            novalidate
+          >
+            <input type="hidden" name="urgency" value="Ongoing contract enquiry" />
+
+            <div class="field-row">
+              <div class="field">
+                <label for="r-name">Your name <span class="req">*</span></label>
+                <input type="text" id="r-name" name="name" autocomplete="name" placeholder="Jane Whitfield" required />
+              </div>
+              <div class="field">
+                <label for="r-phone">Phone <span class="req">*</span></label>
+                <input type="tel" id="r-phone" name="phone" autocomplete="tel" placeholder="(203) 000-0000" required />
+              </div>
+            </div>
+
+            <div class="field">
+              <label for="r-address">Property address <span class="req">*</span></label>
+              <input type="text" id="r-address" name="address" autocomplete="street-address" placeholder="Street, town, ZIP" required />
+            </div>
+
+            <div class="field">
+              <label for="r-service">Service required <span class="req">*</span></label>
+              <select id="r-service" name="service" required>
+                <option value="">Choose a service&hellip;</option>
+                <option>Full property management</option>
+                {SERVICE_CATEGORIES.map((c) => <option set:html={c.name} />)}
+                <option>Multiple services / not sure yet</option>
+              </select>
+            </div>
+
+            <div class="field-row">
+              <div class="field">
+                <label for="r-email">Email</label>
+                <input type="email" id="r-email" name="email" autocomplete="email" placeholder="jane@company.com" />
+              </div>
+              <div class="field">
+                <label for="r-building">Property type</label>
+                <select id="r-building" name="building">
+                  <option value="">Choose&hellip;</option>
+                  <option>Single-family rental</option>
+                  <option>Multifamily / HOA</option>
+                  <option>Office</option>
+                  <option>Retail</option>
+                  <option>Restaurant</option>
+                  <option>Medical / dental</option>
+                  <option>Warehouse / industrial</option>
+                  <option>Mixed use</option>
+                  <option>Other</option>
+                </select>
+              </div>
+            </div>
+
+            <div class="field">
+              <label for="r-details">Anything we should know</label>
+              <textarea
+                id="r-details"
+                name="details"
+                placeholder="Example: eight units, currently self-managed, two tenants turning over in spring, boiler is fifteen years old."
+              ></textarea>
+            </div>
+
+            <LeadFormExtras source="client-registration" />
+
+            <button type="submit" class="btn btn--red btn--wide">Register my property</button>
+
+            <p class="form-note">
+              Registering costs nothing and commits you to nothing. Nothing is scheduled and no
+              fee applies until we have agreed the scope in writing. Your details are never passed
+              to a third party - see our <a href="/privacy-policy/">privacy policy</a>.
+            </p>
+          </form>
+        </div>
+      </div>
+
+      <!-- INFO (right) - a hidden copy of the left heading block sits above the
+           boxes so their top edge lands at the same height as the form-card's
+           top edge on the left, not at the grid row's top. A fixed margin
+           would drift the moment the heading copy or font changes (as it just
+           did, site-wide, this same session); duplicating the real block and
+           hiding it keeps the two columns' box-tops in sync automatically. -->
+      <div>
+        <p class="eyebrow" aria-hidden="true" style="visibility:hidden">New client</p>
+        <h2 aria-hidden="true" style="visibility:hidden;font-size:1.9rem;margin-bottom:8px">Four fields to get started</h2>
+        <p aria-hidden="true" style="visibility:hidden;font-size:.93rem;margin-bottom:26px">
+          Name, number, property address and what you need. Everything else we work out on the
+          call. Would rather talk now? {SITE.phone}.
         </p>
 
         <div class="info-block">
@@ -63,88 +159,6 @@ const jsonLd = graph([
           <div class="info-row"><span class="k">Saturday</span><span class="v">8:00 AM &ndash; 2:00 PM</span></div>
           <div class="info-row"><span class="k">Emergency</span><span class="v">24 / 7 / 365</span></div>
         </div>
-      </div>
-
-      <!-- FORM (right) -->
-      <div class="form-card">
-        <form
-          action="/api/leads"
-          method="post"
-          data-lead-form
-          data-source="client-registration"
-          data-thanks-heading="Thank you for registering!"
-          data-success="We will call to confirm the property and the scope, usually the same business day."
-          novalidate
-        >
-          <input type="hidden" name="urgency" value="Ongoing contract enquiry" />
-
-          <div class="field-row">
-            <div class="field">
-              <label for="r-name">Your name <span class="req">*</span></label>
-              <input type="text" id="r-name" name="name" autocomplete="name" placeholder="Jane Whitfield" required />
-            </div>
-            <div class="field">
-              <label for="r-phone">Phone <span class="req">*</span></label>
-              <input type="tel" id="r-phone" name="phone" autocomplete="tel" placeholder="(203) 000-0000" required />
-            </div>
-          </div>
-
-          <div class="field">
-            <label for="r-address">Property address <span class="req">*</span></label>
-            <input type="text" id="r-address" name="address" autocomplete="street-address" placeholder="Street, town, ZIP" required />
-          </div>
-
-          <div class="field">
-            <label for="r-service">Service required <span class="req">*</span></label>
-            <select id="r-service" name="service" required>
-              <option value="">Choose a service&hellip;</option>
-              <option>Full property management</option>
-              {SERVICE_CATEGORIES.map((c) => <option set:html={c.name} />)}
-              <option>Multiple services / not sure yet</option>
-            </select>
-          </div>
-
-          <div class="field-row">
-            <div class="field">
-              <label for="r-email">Email</label>
-              <input type="email" id="r-email" name="email" autocomplete="email" placeholder="jane@company.com" />
-            </div>
-            <div class="field">
-              <label for="r-building">Property type</label>
-              <select id="r-building" name="building">
-                <option value="">Choose&hellip;</option>
-                <option>Single-family rental</option>
-                <option>Multifamily / HOA</option>
-                <option>Office</option>
-                <option>Retail</option>
-                <option>Restaurant</option>
-                <option>Medical / dental</option>
-                <option>Warehouse / industrial</option>
-                <option>Mixed use</option>
-                <option>Other</option>
-              </select>
-            </div>
-          </div>
-
-          <div class="field">
-            <label for="r-details">Anything we should know</label>
-            <textarea
-              id="r-details"
-              name="details"
-              placeholder="Example: eight units, currently self-managed, two tenants turning over in spring, boiler is fifteen years old."
-            ></textarea>
-          </div>
-
-          <LeadFormExtras source="client-registration" />
-
-          <button type="submit" class="btn btn--red btn--wide">Register my property</button>
-
-          <p class="form-note">
-            Registering costs nothing and commits you to nothing. Nothing is scheduled and no
-            fee applies until we have agreed the scope in writing. Your details are never passed
-            to a third party - see our <a href="/privacy-policy/">privacy policy</a>.
-          </p>
-        </form>
       </div>
 
     </div>
