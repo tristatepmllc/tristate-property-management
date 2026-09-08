@@ -1289,6 +1289,17 @@ a[href^="mailto:"]{overflow-wrap:anywhere}
 .admin-status--contacted,.admin-status--quoted{background:var(--paper-2);color:var(--navy-700)}
 .admin-status--won{background:var(--navy-900);color:var(--white)}
 .admin-status--lost{background:var(--paper);color:var(--steel-light)}
+/* jobs.status - reuses the same .admin-status pill, own modifier namespace
+   (job-*) so it can't collide with the leads.status values above. */
+.admin-status--job-scheduled{background:var(--paper-2);color:var(--navy-700)}
+.admin-status--job-in_progress{background:var(--red-soft);color:var(--red-dark)}
+.admin-status--job-completed{background:var(--navy-900);color:var(--white)}
+.admin-status--job-cancelled{background:var(--paper);color:var(--steel-light)}
+/* jobs.vendor_response - the assignment's own state, separate from job status. */
+.admin-status--vr-unassigned{background:var(--paper);color:var(--steel-light)}
+.admin-status--vr-pending{background:var(--red-soft);color:var(--red-dark)}
+.admin-status--vr-accepted{background:var(--navy-900);color:var(--white)}
+.admin-status--vr-declined{background:var(--paper);color:var(--red-dark)}
 
 /* Profile form inside the logged-in portal dashboard. */
 .form-card--wide{grid-column:1/-1}

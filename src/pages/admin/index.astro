@@ -36,6 +36,21 @@ type Lead = {
   created_at: number;
 };
 
+type Job = {
+  id: string;
+  service: string | null;
+  description: string | null;
+  status: string;
+  vendor_id: string | null;
+  vendor_response: string;
+  created_at: number;
+  client_name: string | null;
+  client_email: string | null;
+  vendor_name: string | null;
+};
+
+type VendorOption = { id: string; name: string | null; email: string; trade: string | null };
+
 // No pagination yet - fine at current volume (single digits as of
 // 2026-09-06). Revisit once this list is long enough to scroll past a
 // screen; LIMIT below is a guardrail, not a feature.
@@ -46,6 +61,26 @@ const { results: leads } = await env.DB.prepare(
 )
   .bind(LEADS_LIMIT)
   .all<Lead>();
+
+// Jobs list + vendor-assign, first admin job action. Same "no pagination
+// yet, LIMIT is a guardrail not a feature" posture as leads above - there
+// is no job-creation flow either, so this is 0 rows on a fresh install and
+// stays honest about that rather than fabricating rows.
+const JOBS_LIMIT = 200;
+const { results: jobs } = await env.DB.prepare(
+  `SELECT j.id, j.service, j.description, j.status, j.vendor_id, j.vendor_response, j.created_at,
+          c.name AS client_name, c.email AS client_email, v.name AS vendor_name
+   FROM jobs j
+   LEFT JOIN accounts c ON c.id = j.account_id
+   LEFT JOIN accounts v ON v.id = j.vendor_id
+   ORDER BY j.created_at DESC LIMIT ?1`
+)
+  .bind(JOBS_LIMIT)
+  .all<Job>();
+
+const { results: vendorOptions } = await env.DB.prepare(
+  `SELECT id, name, email, trade FROM accounts WHERE role = 'vendor' ORDER BY name`
+).all<VendorOption>();
 
 const fmtDate = (ms: number) =>
   new Date(ms).toLocaleString('en-US', {
@@ -109,4 +144,69 @@ const fmtDate = (ms: number) =>
       )}
     </div>
   </section>
+
+  <section class="section">
+    <div class="wrap">
+      <div class="sec-head sec-head--form">
+        <p class="eyebrow">Jobs</p>
+        <h2>{jobs.length} total</h2>
+        <p>
+          Assign a vendor to a job. Basic on purpose - no status override, no job
+          creation here yet (see the handoff doc for what's still open on this).
+          {vendorOptions.length === 0 ? ' No vendor accounts exist yet, so there is nothing to assign to.' : ''}
+        </p>
+      </div>
+
+      {jobs.length === 0 ? (
+        <p class="form-note">No jobs yet. Nothing converts a lead into a job row yet either - this list will stay empty until that exists.</p>
+      ) : (
+        <div class="admin-table-wrap">
+          <table class="admin-table">
+            <thead>
+              <tr>
+                <th>Received</th>
+                <th>Client</th>
+                <th>Service</th>
+                <th>Status</th>
+                <th>Assignment</th>
+                <th>Assign vendor</th>
+              </tr>
+            </thead>
+            <tbody>
+              {jobs.map((job) => (
+                <tr>
+                  <td>{fmtDate(job.created_at)}</td>
+                  <td>{job.client_name || job.client_email || '—'}</td>
+                  <td>{job.service || job.description || '—'}</td>
+                  <td><span class={`admin-status admin-status--job-${job.status}`}>{job.status.replace('_', ' ')}</span></td>
+                  <td>
+                    <span class={`admin-status admin-status--vr-${job.vendor_response}`}>{job.vendor_response.replace('_', ' ')}</span>
+                    {job.vendor_name ? <><br /><span class="admin-muted">{job.vendor_name}</span></> : null}
+                  </td>
+                  <td>
+                    <form data-job-assign-form data-job-id={job.id}>
+                      <select name="vendorId" disabled={vendorOptions.length === 0}>
+                        <option value="">Unassign</option>
+                        {vendorOptions.map((v) => (
+                          <option value={v.id} selected={v.id === job.vendor_id}>
+                            {(v.name || v.email)}{v.trade ? ` (${v.trade})` : ''}
+                          </option>
+                        ))}
+                      </select>
+                      <button type="submit" class="btn btn--outline" disabled={vendorOptions.length === 0}>Assign</button>
+                      <div class="form-status" role="status" aria-live="polite" hidden></div>
+                    </form>
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      )}
+    </div>
+  </section>
 </BaseLayout>
+
+<script>
+  import '../../scripts/admin-jobs';
+</script>

@@ -1,0 +1,195 @@
+---
+export const prerender = false;
+
+import { env } from 'cloudflare:workers';
+import DashboardLayout from '../../../layouts/DashboardLayout.astro';
+import { getAuth } from '../../../lib/auth';
+
+/**
+ * Job detail - the vendor-side workflow (#17-#20 of the job-assignment
+ * scaffold): accept/decline an assignment, move status once accepted,
+ * upload documents. Also readable by the job's client (their own job) and
+ * by admin (any job, read-only - no admin action forms render here; admin
+ * assignment happens from /admin/, not this page).
+ *
+ * Route note: this falls under the existing `/portal/*` entry in
+ * astro.config.mjs's ROUTES_TO_WORKER allowlist, so no config change was
+ * needed - see that file's comment for why a missing entry silently 404s
+ * in production while looking fine in every local test.
+ */
+const session = await getAuth().api.getSession({ headers: Astro.request.headers });
+if (!session) return Astro.redirect('/portal/', 302);
+
+const user = session.user as typeof session.user & { role?: 'client' | 'vendor' | 'admin'; company?: string | null };
+const jobId = Astro.params.id;
+
+type JobRow = {
+  id: string; account_id: string; vendor_id: string | null;
+  service: string | null; description: string | null; status: string;
+  vendor_response: string; vendor_responded_at: number | null; decline_reason: string | null;
+  scheduled_at: number | null; completed_at: number | null; amount_cents: number | null; created_at: number;
+};
+type AccountRow = { id: string; name: string | null; email: string; phone: string | null; company: string | null };
+type DocRow = {
+  id: string; account_id: string; kind: string; filename: string;
+  content_type: string | null; size_bytes: number | null; created_at: number;
+};
+
+const job = jobId
+  ? await env.DB.prepare(
+      `SELECT id, account_id, vendor_id, service, description, status,
+              vendor_response, vendor_responded_at, decline_reason,
+              scheduled_at, completed_at, amount_cents, created_at
+       FROM jobs WHERE id = ?1`
+    ).bind(jobId).first<JobRow>()
+  : null;
+
+// No distinguishing 404 vs 403 message, same posture as /admin/'s role
+// gate: someone probing a job id they have no relationship to sees the
+// same redirect as a typo'd id.
+const isParticipant = job && (job.account_id === user.id || job.vendor_id === user.id);
+const isAdminViewer = job && user.role === 'admin';
+if (!job || (!isParticipant && !isAdminViewer)) return Astro.redirect('/portal/', 302);
+
+const isVendorOnThisJob = user.role === 'vendor' && job.vendor_id === user.id;
+
+const [client, vendor, docsResult] = await Promise.all([
+  env.DB.prepare(`SELECT id, name, email, phone, company FROM accounts WHERE id = ?1`)
+    .bind(job.account_id)
+    .first<AccountRow>(),
+  job.vendor_id
+    ? env.DB.prepare(`SELECT id, name, email, phone, company FROM accounts WHERE id = ?1`)
+        .bind(job.vendor_id)
+        .first<AccountRow>()
+    : Promise.resolve(null),
+  env.DB.prepare(
+    `SELECT id, account_id, kind, filename, content_type, size_bytes, created_at
+     FROM job_documents WHERE job_id = ?1 ORDER BY created_at DESC`
+  ).bind(job.id).all<DocRow>(),
+]);
+const documents = docsResult.results ?? [];
+
+const fmtDate = (ms: number) =>
+  new Date(ms).toLocaleString('en-US', { dateStyle: 'medium', timeStyle: 'short', timeZone: 'America/New_York' });
+const fmtCents = (c: number) => (c / 100).toLocaleString('en-US', { style: 'currency', currency: 'USD' });
+const fmtBytes = (n: number | null) => (n == null ? '—' : n < 1024 ? `${n} B` : n < 1048576 ? `${(n / 1024).toFixed(1)} KB` : `${(n / 1048576).toFixed(1)} MB`);
+
+const STATUS_OPTIONS = [
+  { value: 'in_progress', label: 'In progress' },
+  { value: 'completed', label: 'Completed' },
+  { value: 'cancelled', label: 'Cancelled' },
+];
+---
+<DashboardLayout title={`Job - ${job.service || 'Detail'} - Tristate Property Management`} user={user}>
+  <div class="dash-content">
+    <div class="wrap">
+      <p class="crumb"><a href="/portal/">Portal</a> &nbsp;/&nbsp; <span>Job</span></p>
+
+      <div class="form-card form-card--wide">
+        <h3>{job.service || job.description || 'Job'}</h3>
+        <p class="form-note">
+          Created {fmtDate(job.created_at)}. Status:
+          <span class={`admin-status admin-status--job-${job.status}`}>{job.status.replace('_', ' ')}</span>
+          &nbsp;&middot;&nbsp; Assignment:
+          <span class={`admin-status admin-status--vr-${job.vendor_response}`}>{job.vendor_response.replace('_', ' ')}</span>
+        </p>
+        {job.description ? <p class="form-note">{job.description}</p> : null}
+        {job.amount_cents != null ? <p class="form-note">Amount: {fmtCents(job.amount_cents)}</p> : null}
+        {job.vendor_response === 'declined' && job.decline_reason ? (
+          <p class="form-note">Decline reason: {job.decline_reason}</p>
+        ) : null}
+
+        <div class="portal-grid">
+          <div>
+            <p class="form-note"><b>Client</b><br />{client?.name || client?.company || client?.email || '—'}</p>
+          </div>
+          <div>
+            <p class="form-note"><b>Vendor</b><br />{vendor ? (vendor.name || vendor.company || vendor.email) : 'Unassigned'}</p>
+          </div>
+        </div>
+      </div>
+
+      {isVendorOnThisJob && job.vendor_response === 'pending' ? (
+        <div class="form-card form-card--wide">
+          <h3>Respond to this assignment</h3>
+          <p class="form-note">Accept to take this job, or decline with a reason so admin can reassign it.</p>
+          <form data-job-respond-form data-job-id={job.id} novalidate>
+            <div class="field">
+              <label for="jr-reason">Decline reason (required only if declining)</label>
+              <textarea id="jr-reason" name="reason" placeholder="Why you can't take this one"></textarea>
+            </div>
+            <button type="submit" class="btn btn--red" data-respond-action="accept">Accept</button>
+            <button type="submit" class="btn btn--outline" data-respond-action="decline">Decline</button>
+            <p class="form-status" role="status" aria-live="polite" hidden></p>
+          </form>
+        </div>
+      ) : null}
+
+      {isVendorOnThisJob && job.vendor_response === 'accepted' ? (
+        <div class="form-card form-card--wide">
+          <h3>Update status</h3>
+          <p class="form-note">Current status: {job.status.replace('_', ' ')}.</p>
+          <form data-job-status-form data-job-id={job.id} novalidate>
+            <div class="field">
+              <label for="js-status">New status</label>
+              <select id="js-status" name="status">
+                {STATUS_OPTIONS.map((o) => <option value={o.value}>{o.label}</option>)}
+              </select>
+            </div>
+            <button type="submit" class="btn btn--navy">Update status</button>
+            <p class="form-status" role="status" aria-live="polite" hidden></p>
+          </form>
+        </div>
+      ) : null}
+
+      {isParticipant ? (
+        <div class="form-card form-card--wide">
+          <h3>Documents</h3>
+          <p class="form-note">COI, photos, or anything else attached to this job.</p>
+
+          {documents.length === 0 ? (
+            <p class="form-note">Nothing uploaded yet.</p>
+          ) : (
+            <div class="admin-table-wrap">
+              <table class="admin-table">
+                <thead><tr><th>Uploaded</th><th>File</th><th>Kind</th><th>Size</th></tr></thead>
+                <tbody>
+                  {documents.map((d) => (
+                    <tr>
+                      <td>{fmtDate(d.created_at)}</td>
+                      <td>{d.filename}</td>
+                      <td>{d.kind}</td>
+                      <td>{fmtBytes(d.size_bytes)}</td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+              <p class="form-note">No download link yet - files are stored, not yet servable back out. Ask the office if you need a copy right now.</p>
+            </div>
+          )}
+
+          <form data-job-document-form data-job-id={job.id} enctype="multipart/form-data" novalidate>
+            <div class="field">
+              <label for="jd-kind">Kind</label>
+              <select id="jd-kind" name="kind">
+                <option value="coi">Certificate of insurance</option>
+                <option value="photo">Photo</option>
+                <option value="other" selected>Other</option>
+              </select>
+            </div>
+            <div class="field">
+              <label for="jd-file">File <span class="req">*</span></label>
+              <input type="file" id="jd-file" name="file" required />
+            </div>
+            <button type="submit" class="btn btn--outline">Upload</button>
+            <p class="form-status" role="status" aria-live="polite" hidden></p>
+          </form>
+        </div>
+      ) : null}
+    </div>
+  </div>
+</DashboardLayout>
+
+<script>
+  import '../../../scripts/job-detail';
+</script>

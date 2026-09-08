@@ -5,6 +5,7 @@ import ProfileForm from './ProfileForm.astro';
 
 type JobRow = {
   id: string; service: string | null; description: string | null; status: string;
+  vendor_id: string | null; vendor_response: string;
   scheduled_at: number | null; completed_at: number | null; amount_cents: number | null; created_at: number;
 };
 type LedgerRow = { id: string; job_id: string | null; amount_cents: number; reason: string; created_at: number };

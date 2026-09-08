@@ -55,6 +55,7 @@ let balanceCents = 0;
 let jobCount = 0;
 type JobRow = {
   id: string; service: string | null; description: string | null; status: string;
+  vendor_id: string | null; vendor_response: string;
   scheduled_at: number | null; completed_at: number | null; amount_cents: number | null; created_at: number;
 };
 type LedgerRow = { id: string; job_id: string | null; amount_cents: number; reason: string; created_at: number };
@@ -68,12 +69,15 @@ if (session) {
     env.DB.prepare(`SELECT COALESCE(SUM(amount_cents), 0) AS cents FROM cashback_ledger WHERE account_id = ?1`)
       .bind(session.user.id)
       .first<{ cents: number }>(),
-    env.DB.prepare(`SELECT COUNT(*) AS n FROM jobs WHERE account_id = ?1`)
+    // account_id = ?1 covers a client's own jobs; vendor_id = ?1 covers jobs
+    // assigned to this account as the vendor - same reasoning as
+    // GET /api/jobs, kept in sync with it.
+    env.DB.prepare(`SELECT COUNT(*) AS n FROM jobs WHERE account_id = ?1 OR vendor_id = ?1`)
       .bind(session.user.id)
       .first<{ n: number }>(),
     env.DB.prepare(
-      `SELECT id, service, description, status, scheduled_at, completed_at, amount_cents, created_at
-       FROM jobs WHERE account_id = ?1 ORDER BY created_at DESC LIMIT 100`
+      `SELECT id, service, description, status, vendor_id, vendor_response, scheduled_at, completed_at, amount_cents, created_at
+       FROM jobs WHERE account_id = ?1 OR vendor_id = ?1 ORDER BY created_at DESC LIMIT 100`
     ).bind(session.user.id).all<JobRow>(),
     env.DB.prepare(
       `SELECT id, job_id, amount_cents, reason, created_at

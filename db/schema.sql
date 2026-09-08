@@ -132,19 +132,46 @@ CREATE INDEX IF NOT EXISTS idx_leads_created_at ON leads(created_at DESC);
 CREATE INDEX IF NOT EXISTS idx_leads_status     ON leads(status);
 
 -- ---------------------------------------------------------------- jobs
+-- account_id is the client the job belongs to; vendor_id (added in
+-- migration 0005) is who it's assigned to - separate people, separate
+-- columns, both nullable-by-role in the sense that a fresh job has no
+-- vendor yet, not that either column means something different per row.
 CREATE TABLE IF NOT EXISTS jobs (
   id            TEXT PRIMARY KEY,
   account_id    TEXT NOT NULL REFERENCES accounts(id) ON DELETE CASCADE,
   lead_id       TEXT REFERENCES leads(id) ON DELETE SET NULL,
+  vendor_id     TEXT REFERENCES accounts(id) ON DELETE SET NULL,
   service       TEXT,
   description   TEXT,
-  status        TEXT NOT NULL DEFAULT 'scheduled',
+  status        TEXT NOT NULL DEFAULT 'scheduled', -- scheduled|in_progress|completed|cancelled
+  -- Vendor's response to the assignment - see migration 0005 for why this
+  -- is not folded into `status`.
+  vendor_response      TEXT NOT NULL DEFAULT 'unassigned', -- unassigned|pending|accepted|declined
+  vendor_responded_at  INTEGER,
+  decline_reason       TEXT,
   scheduled_at  INTEGER,
   completed_at  INTEGER,
   amount_cents  INTEGER,
   created_at    INTEGER NOT NULL
 );
 CREATE INDEX IF NOT EXISTS idx_jobs_account ON jobs(account_id, created_at DESC);
+CREATE INDEX IF NOT EXISTS idx_jobs_vendor  ON jobs(vendor_id, created_at DESC);
+
+-- ------------------------------------------------------------ job_documents
+-- COI, job photos, or anything else attached to one specific job. First
+-- real use of the R2 `MEDIA` binding - see wrangler.jsonc.
+CREATE TABLE IF NOT EXISTS job_documents (
+  id            TEXT PRIMARY KEY,
+  job_id        TEXT NOT NULL REFERENCES jobs(id) ON DELETE CASCADE,
+  account_id    TEXT NOT NULL REFERENCES accounts(id) ON DELETE CASCADE, -- uploader
+  kind          TEXT NOT NULL DEFAULT 'other', -- coi|photo|other
+  filename      TEXT NOT NULL,
+  content_type  TEXT,
+  size_bytes    INTEGER,
+  r2_key        TEXT NOT NULL,
+  created_at    INTEGER NOT NULL
+);
+CREATE INDEX IF NOT EXISTS idx_job_documents_job ON job_documents(job_id, created_at DESC);
 
 -- ---------------------------------------------------------------- cashback
 -- Append-only ledger. Balance = SUM(amount_cents). Never mutate a balance field.
