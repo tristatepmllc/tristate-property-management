@@ -77,7 +77,8 @@ const relTime = (ms: number) => {
 ---
 <!--
   Sidebar order/labels loosely match a reference SaaS (DMG Pro) the user
-  provided, minus one deliberate omission and one deliberate merge:
+  provided, minus one deliberate omission, and with one deliberate split
+  between here and the header dropdown:
 
   - "Opportunities" is NOT here. In DMG Pro that's an open job marketplace
     vendors browse and claim - a pull model. This app is push-only: admin
@@ -85,25 +86,26 @@ const relTime = (ms: number) => {
     who then accepts/declines that one assignment. Adding an "Opportunities"
     Soon-tag would silently imply a marketplace is planned, which is a real
     product decision, not a UI gap - held back pending an actual answer.
-  - "Company Settings" is NOT a separate item here. It's covered by the
-    header's Settings link (see DashboardLayout.astro) - keeping both would
-    contradict the explicit instruction to move Settings/Profile out of
-    this sidebar. If real company-level fields (EIN, payout details - see
-    the original handoff doc's "deliberately not built" list) get built
-    later, they belong under that same Settings surface, not a new one.
+  - "Company Settings" IS here (Soon stub), but the header's "Settings"
+    link (DashboardLayout.astro's profile dropdown) is a different thing,
+    not a duplicate: that one is personal account settings (email,
+    password - built, real). This one is meant for business/compliance
+    data (EIN, payout details, W-9 - see the original handoff doc's
+    "deliberately not built" list) once it exists. Recommended keeping
+    that split rather than merging both into the dropdown: compliance
+    data that goes stale is a real operational problem (same reasoning as
+    License/Insurance already being prominent Dashboard cards, not buried
+    in a menu), personal login settings are not.
 
-  Every other new item below (Important Tasks, Estimates, Employees, My
-  Agreements, Provider Support) is a static "Soon" stub - .is-soon,
-  pointer-events:none, same as Documents/Messages already were. No new
-  schema, no new routes, purely the label existing so the sidebar isn't
-  visibly missing things that were asked about - not a claim any of these
-  are close to built.
+  Every "Soon" item below is a static stub - .is-soon, pointer-events:none,
+  same pattern Documents/Messages already used. No new schema, no new
+  routes behind any of them yet.
 -->
 <div class="vdash">
   <aside class="vdash-side">
     <button type="button" class="vdash-nav-item is-active" data-panel-link="dashboard">
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="9" rx="1" /><rect x="14" y="3" width="7" height="5" rx="1" /><rect x="14" y="12" width="7" height="9" rx="1" /><rect x="3" y="16" width="7" height="5" rx="1" /></svg>
-      Dashboard
+      Provider Dashboard
     </button>
     <span class="vdash-nav-item is-soon">
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 11l3 3L22 4" /><path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11" /></svg>
@@ -112,7 +114,7 @@ const relTime = (ms: number) => {
     </span>
     <button type="button" class="vdash-nav-item" data-panel-link="jobs">
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="7" width="18" height="14" rx="2" /><path d="M8 7V5a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2" /></svg>
-      Jobs
+      My Jobs
     </button>
     <span class="vdash-nav-item is-soon">
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 17V9m3 8V5m3 12v-4" /><rect x="3" y="3" width="18" height="18" rx="2" /></svg>
@@ -123,6 +125,11 @@ const relTime = (ms: number) => {
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" /><path d="M14 2v6h6M9 13h6M9 17h6" /></svg>
       Invoices
     </button>
+    <span class="vdash-nav-item is-soon">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 21v-6.5a2.5 2.5 0 0 1 5 0V21M4 10h16M6 6h12a2 2 0 0 1 2 2v13H4V8a2 2 0 0 1 2-2z" /><path d="M9 21v-4h6v4" /></svg>
+      Company Settings
+      <span class="vdash-nav-soon-tag">Soon</span>
+    </span>
     <span class="vdash-nav-item is-soon">
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="9" cy="7" r="3" /><path d="M2 21v-2a5 5 0 0 1 5-5h4a5 5 0 0 1 5 5v2" /><path d="M17 11a3 3 0 1 0 0-6M22 21v-2a4 4 0 0 0-3-3.87" /></svg>
       Employees
