@@ -8,11 +8,29 @@ export type AreaServed = {
 export const SITE = {
   name: 'Tristate Property Management',
   legalName: 'Tristate Property Management LLC',
-  // Live host today. The custom domain (tristatepropertymanagement.com) currently
-  // returns 503, and og:image / og:url / canonical all resolve against this value -
-  // pointing them at a dead host is why WhatsApp and Facebook showed no preview.
-  // Switch back the moment the custom domain is attached in Cloudflare Pages.
-  url: 'https://tristate-property-management.pages.dev',
+  // Live host. Was the .pages.dev subdomain until the custom domain was
+  // connected (2026-09-08) - og:image/og:url/canonical/Better Auth's
+  // baseURL and trustedOrigins all read this value, so a stale entry here
+  // doesn't just break SEO previews, it breaks sign-in: Better Auth's CSRF
+  // origin check rejects any POST whose Origin header isn't in
+  // trustedOrigins (derived from this field in src/lib/auth.ts), which is
+  // exactly what was happening - 403 on every auth request from the real
+  // domain, 401 (i.e. working, just wrong password) from the old pages.dev
+  // origin. Confirmed both ways with curl before this changed.
+  //
+  // NOTE: the domain actually connected is tristatepropertymanagementllc.com
+  // (with "llc"), not tristatepropertymanagement.com, which is what every
+  // prior doc/comment in this repo assumed would be the eventual domain.
+  // Confirmed by curl: the "llc" apex serves this site (200, real content,
+  // /api/health reaches the same D1), the non-"llc" one still 503s. Treating
+  // "llc" as the real, current domain since that's what's live and what was
+  // explicitly connected - flag it if that's not the final intent, since
+  // this field feeds auth, canonical URLs and the sitemap.
+  //
+  // www does NOT work yet (503) - that's DNS/Pages custom-domain config, not
+  // fixable from this file. Add a www redirect or second custom domain entry
+  // in Cloudflare if you want it to resolve.
+  url: 'https://tristatepropertymanagementllc.com',
   phone: '(708) 905-4471',
   phoneE164: '+17089054471',
   get telHref() { return `tel:${this.phoneE164}`; },

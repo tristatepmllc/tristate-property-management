@@ -54,7 +54,7 @@ function cloudflarePagesCompat() {
 }
 
 export default defineConfig({
-  site: 'https://tristate-property-management.pages.dev', // switch to the custom domain once it is attached in Pages
+  site: 'https://tristatepropertymanagementllc.com', // custom domain connected 2026-09-08 - see src/data/site.ts SITE.url for why this matters beyond SEO
   // `output: 'hybrid'` was removed in Astro 5. The modern equivalent is
   // `output: 'static'` + an adapter; routes that need a server opt in with
   // `export const prerender = false` (see src/pages/api/*).
