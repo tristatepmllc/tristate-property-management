@@ -1336,10 +1336,17 @@ a[href^="mailto:"]{overflow-wrap:anywhere}
   border-radius:8px;
   overflow:hidden;
   min-height:640px;
+  transition:grid-template-columns .18s ease;
 }
 @media (max-width:860px){
   .vdash{grid-template-columns:1fr}
 }
+/* Sidebar collapse - toggled by the hamburger in DashboardLayout's header
+   (scripts/dashboard-shell.ts). Column goes to 0 AND the sidebar's own
+   padding goes to 0 (see .vdash-side transition above) so it truly
+   disappears rather than sitting there squished-but-visible. */
+.vdash.is-sidebar-hidden{grid-template-columns:0 1fr}
+.vdash.is-sidebar-hidden .vdash-side{padding-left:0;padding-right:0}
 
 .vdash-side{
   background:var(--navy-900);
@@ -1348,17 +1355,8 @@ a[href^="mailto:"]{overflow-wrap:anywhere}
   display:flex;
   flex-direction:column;
   gap:4px;
-}
-.vdash-side-brand{
-  display:flex;align-items:center;gap:10px;
-  padding:0 10px 22px;
-  border-bottom:1px solid rgba(255,255,255,.08);
-  margin-bottom:18px;
-}
-.vdash-side-brand img{height:26px;width:auto}
-.vdash-side-brand span{
-  font-family:var(--display);text-transform:uppercase;letter-spacing:.04em;
-  font-size:.98rem;color:var(--white);
+  overflow:hidden;
+  transition:padding .18s ease;
 }
 .vdash-nav-item{
   display:flex;align-items:center;gap:11px;width:100%;
@@ -1432,18 +1430,6 @@ a[href^="mailto:"]{overflow-wrap:anywhere}
 .vdash-profile-row svg{flex:none;width:16px;height:16px;color:var(--red)}
 .vdash-profile-row b{color:var(--steel);font-weight:500;margin-right:4px}
 
-.vdash-balance-card{
-  background:linear-gradient(135deg,var(--navy-800),var(--navy-600));
-  border-radius:8px;padding:22px;color:var(--white);margin-bottom:18px;
-}
-.vdash-balance-card h3{
-  font-family:var(--display);text-transform:none;letter-spacing:0;font-size:1.02rem;
-  color:var(--white);margin:0 0 16px;
-}
-.vdash-balance-row{display:flex;justify-content:space-between;gap:12px;flex-wrap:wrap}
-.vdash-balance-item p:first-child{font-family:var(--body);font-size:.74rem;color:#A9BAD2;margin:0 0 4px}
-.vdash-balance-item p:last-child{font-family:var(--display);font-size:1.35rem;color:var(--white);margin:0}
-
 .vdash-compliance{
   border:1px solid var(--line);border-radius:8px;padding:20px 22px;margin-bottom:18px;
 }
@@ -1486,6 +1472,26 @@ a[href^="mailto:"]{overflow-wrap:anywhere}
 .vdash-activity-text p:last-child{font-family:var(--body);font-size:.75rem;color:var(--steel-light);margin:2px 0 0}
 .vdash-activity-empty{font-family:var(--body);font-size:.85rem;color:var(--steel);margin:0}
 
+.vdash-invoices-teaser{
+  border:1px solid var(--line);border-radius:8px;padding:20px 22px;margin-bottom:18px;background:var(--paper);
+}
+.vdash-invoices-teaser h3{
+  font-family:var(--display);text-transform:none;letter-spacing:0;font-size:1.02rem;
+  color:var(--navy-900);margin:0 0 6px;
+}
+.vdash-invoices-teaser p{font-family:var(--body);font-size:.82rem;color:var(--steel);margin:0 0 14px}
+
+.vdash-invoice-cols{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-top:16px}
+@media (max-width:760px){.vdash-invoice-cols{grid-template-columns:repeat(2,1fr)}}
+.vdash-invoice-col{border:1px solid var(--line);border-radius:8px;padding:14px 16px;background:var(--paper)}
+.vdash-invoice-col.is-current{border-color:var(--navy-800);background:var(--navy-900)}
+.vdash-invoice-col.is-current .vdash-invoice-col-title,
+.vdash-invoice-col.is-current .vdash-invoice-col-amount{color:var(--white)}
+.vdash-invoice-col-title{font-family:var(--body);font-size:.78rem;font-weight:600;color:var(--navy-800);margin:0 0 10px}
+.vdash-invoice-col-count{font-family:var(--display);font-size:1.4rem;color:var(--navy-900);margin:0}
+.vdash-invoice-col.is-current .vdash-invoice-col-count{color:var(--white)}
+.vdash-invoice-col-amount{font-family:var(--body);font-size:.76rem;color:var(--steel-light);margin:4px 0 0}
+
 /* ---------------------------------------------------------------------
    Dashboard app shell (DashboardLayout.astro) - signed-in pages only.
    Full-viewport, edge-to-edge, no marketing header/footer. Distinct from
@@ -1505,6 +1511,13 @@ html:has(.dash-body){height:100%}
   display:flex;align-items:center;justify-content:space-between;
   padding:0 22px;background:var(--white);border-bottom:1px solid var(--line);
 }
+.dash-topbar-left{display:flex;align-items:center;gap:14px}
+.dash-sidebar-toggle{
+  display:flex;align-items:center;justify-content:center;
+  width:32px;height:32px;border-radius:6px;border:none;background:none;
+  color:var(--navy-800);cursor:pointer;flex:none;
+}
+.dash-sidebar-toggle:hover{background:var(--paper)}
 .dash-topbar-logo{
   display:flex;align-items:center;gap:9px;text-decoration:none;
 }
@@ -1513,6 +1526,11 @@ html:has(.dash-body){height:100%}
   font-family:var(--display);text-transform:uppercase;letter-spacing:.03em;
   font-size:.86rem;color:var(--navy-900);font-weight:600;
 }
+/* Thin accent strip under the white header - the one visual note the
+   reference screenshot's header had that ours didn't. Deliberately just a
+   3px bar, not a background-color change on the header itself - the white
+   bar stays exactly as it was, per the brief. */
+.dash-topbar-accent{flex:none;height:3px;background:var(--red)}
 
 .dash-profile{position:relative}
 .dash-profile-trigger{
@@ -1538,6 +1556,14 @@ html:has(.dash-body){height:100%}
 }
 .dash-profile-dropdown-email{font-family:var(--body);font-size:.82rem;color:var(--navy-900);margin:0 0 2px;word-break:break-all}
 .dash-profile-dropdown-company{font-family:var(--body);font-size:.78rem;color:var(--steel);margin:0 0 10px}
+.dash-profile-dropdown-link{
+  width:100%;display:flex;align-items:center;gap:8px;
+  background:none;border:none;padding:8px 4px;margin:0;
+  font-family:var(--body);font-size:.85rem;color:var(--navy-800);
+  text-decoration:none;cursor:pointer;text-align:left;border-radius:4px;
+}
+.dash-profile-dropdown-link svg{flex:none;color:var(--steel)}
+.dash-profile-dropdown-link:hover{background:var(--paper);color:var(--red-dark)}
 .dash-profile-dropdown-signout{
   width:100%;display:flex;align-items:center;gap:8px;margin-top:10px;
   background:none;border:none;border-top:1px solid var(--line);padding-top:10px;

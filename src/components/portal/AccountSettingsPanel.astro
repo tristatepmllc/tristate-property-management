@@ -1,0 +1,40 @@
+---
+interface Props {
+  email: string | null | undefined;
+}
+const { email } = Astro.props;
+---
+
+<!--
+  Account settings, deliberately separate from Profile (trade/contact
+  details): this is the account itself, not the person/company. First
+  content: email (read-only - no email-change flow exists) and a real
+  password change, wired to Better Auth's built-in
+  POST /api/auth/change-password (currentPassword, newPassword,
+  revokeOtherSessions?) - not a stub, this actually works. minPasswordLength
+  is 10, same as sign-up (see src/lib/auth.ts).
+-->
+<div class="acct-settings">
+  <div class="field">
+    <label>Account email</label>
+    <p class="form-note acct-settings-email">{email || '—'}</p>
+  </div>
+
+  <form data-change-password-form novalidate>
+    <div class="field">
+      <label for="cp-current">Current password <span class="req">*</span></label>
+      <input type="password" id="cp-current" name="currentPassword" autocomplete="current-password" required />
+    </div>
+    <div class="field">
+      <label for="cp-new">New password <span class="req">*</span></label>
+      <input type="password" id="cp-new" name="newPassword" autocomplete="new-password" minlength="10" required />
+      <p class="form-note">At least 10 characters.</p>
+    </div>
+    <div class="field">
+      <label for="cp-confirm">Confirm new password <span class="req">*</span></label>
+      <input type="password" id="cp-confirm" name="newPasswordConfirm" autocomplete="new-password" minlength="10" required />
+    </div>
+    <button type="submit" class="btn btn--red">Change password</button>
+    <p class="form-status" role="status" aria-live="polite" hidden></p>
+  </form>
+</div>

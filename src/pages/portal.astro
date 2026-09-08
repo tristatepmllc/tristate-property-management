@@ -11,6 +11,7 @@ import VendorDashboard from '../components/portal/VendorDashboard.astro';
 import JobHistoryTable from '../components/portal/JobHistoryTable.astro';
 import CashbackLedgerTable from '../components/portal/CashbackLedgerTable.astro';
 import ProfileForm from '../components/portal/ProfileForm.astro';
+import AccountSettingsPanel from '../components/portal/AccountSettingsPanel.astro';
 
 /**
  * Real login, registration and a dashboard - replacing the holding page.
@@ -112,10 +113,8 @@ const licenseExpiresValue = user?.licenseExpires
     {user?.role === 'vendor' ? (
       <VendorDashboard
         user={user}
-        balance={balance}
         jobCount={jobCount}
         jobs={jobs}
-        ledgerEntries={ledgerEntries}
         licenseExpiresValue={licenseExpiresValue}
       />
     ) : (
@@ -210,9 +209,14 @@ const licenseExpiresValue = user?.licenseExpires
             <CashbackLedgerTable entries={ledgerEntries} />
           </div>
 
-          <div class="form-card form-card--wide">
+          <div class="form-card form-card--wide" id="profile">
             <h3>Profile</h3>
             <ProfileForm user={user} licenseExpiresValue={licenseExpiresValue} />
+          </div>
+
+          <div class="form-card form-card--wide" id="settings">
+            <h3>Settings</h3>
+            <AccountSettingsPanel email={user?.email} />
           </div>
         </div>
       </div>

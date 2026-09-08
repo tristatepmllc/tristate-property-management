@@ -44,6 +44,11 @@ const { title, user } = Astro.props;
 const displayName = user?.name || user?.email || 'Account';
 const initial = displayName.charAt(0).toUpperCase();
 const roleLabel = user?.role === 'vendor' ? 'Vendor' : user?.role === 'admin' ? 'Admin' : 'Client';
+// Only vendor has a collapsible sidebar (.vdash-side) to toggle - client/
+// admin render the flat single-column dashboard with nothing to hide, so
+// the hamburger simply doesn't exist on their pages rather than sitting
+// there disabled with nothing to do.
+const hasSidebar = user?.role === 'vendor';
 ---
 <!DOCTYPE html>
 <html lang="en-US">
@@ -61,10 +66,17 @@ const roleLabel = user?.role === 'vendor' ? 'Vendor' : user?.role === 'admin' ? 
   <a class="skip-link" href="#main">Skip to content</a>
 
   <header class="dash-topbar">
-    <a class="dash-topbar-logo" href="/portal/" aria-label="Tristate Property Management portal home">
-      <img src="/images/logo-tristate.avif" alt="" width="28" height="28" />
-      <span>Property Management</span>
-    </a>
+    <div class="dash-topbar-left">
+      {hasSidebar && (
+        <button type="button" class="dash-sidebar-toggle" data-sidebar-toggle aria-label="Toggle menu" aria-expanded="true">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 6h18M3 12h18M3 18h18" /></svg>
+        </button>
+      )}
+      <a class="dash-topbar-logo" href="/portal/" aria-label="Tristate Property Management portal home">
+        <img src="/images/logo-tristate.avif" alt="" width="28" height="28" />
+        <span>Property Management</span>
+      </a>
+    </div>
 
     <div class="dash-profile" data-profile-menu>
       <button type="button" class="dash-profile-trigger" data-profile-trigger aria-haspopup="true" aria-expanded="false">
@@ -78,6 +90,31 @@ const roleLabel = user?.role === 'vendor' ? 'Vendor' : user?.role === 'admin' ? 
       <div class="dash-profile-dropdown" data-profile-dropdown hidden>
         <p class="dash-profile-dropdown-email">{user?.email}</p>
         {user?.company && <p class="dash-profile-dropdown-company">{user.company}</p>}
+
+        {hasSidebar ? (
+          <>
+            <button type="button" class="dash-profile-dropdown-link" data-panel-link="profile">
+              <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="8" r="4" /><path d="M4 21c0-4 3.5-7 8-7s8 3 8 7" /></svg>
+              Profile
+            </button>
+            <button type="button" class="dash-profile-dropdown-link" data-panel-link="settings">
+              <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3" /><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z" /></svg>
+              Settings
+            </button>
+          </>
+        ) : (
+          <>
+            <a class="dash-profile-dropdown-link" href="/portal/#profile">
+              <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="8" r="4" /><path d="M4 21c0-4 3.5-7 8-7s8 3 8 7" /></svg>
+              Profile
+            </a>
+            <a class="dash-profile-dropdown-link" href="/portal/#settings">
+              <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3" /><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z" /></svg>
+              Settings
+            </a>
+          </>
+        )}
+
         <form data-logout-form>
           <button type="submit" class="dash-profile-dropdown-signout">
             <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4" /><path d="M16 17l5-5-5-5" /><path d="M21 12H9" /></svg>
@@ -87,6 +124,7 @@ const roleLabel = user?.role === 'vendor' ? 'Vendor' : user?.role === 'admin' ? 
       </div>
     </div>
   </header>
+  <div class="dash-topbar-accent" aria-hidden="true"></div>
 
   <main id="main" class="dash-main">
     <slot />
@@ -95,6 +133,7 @@ const roleLabel = user?.role === 'vendor' ? 'Vendor' : user?.role === 'admin' ? 
   <script>
     import '../scripts/vendor-dashboard';
     import '../scripts/dashboard-shell';
+    import '../scripts/account-settings';
   </script>
 </body>
 </html>

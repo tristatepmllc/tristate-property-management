@@ -15,8 +15,9 @@ function init(): void {
   const subtitleByPanel: Record<string, string> = {
     dashboard: "Here's where your account stands today.",
     profile: 'Update your contact and trade details.',
+    settings: 'Account email and password.',
     jobs: 'Full history of jobs on your account.',
-    cashback: 'Full earn and redeem history.',
+    invoices: 'Submit and track invoices for completed jobs.',
   };
 
   links.forEach((link) => {
