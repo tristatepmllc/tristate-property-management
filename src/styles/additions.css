@@ -1554,7 +1554,7 @@ html:has(.dash-body){height:100%}
 .dash-topbar-logo{
   display:flex;align-items:center;text-decoration:none;
 }
-.dash-topbar-logo img{height:38px;width:auto}
+.dash-topbar-logo img{height:36px;width:auto}
 /* Thin accent strip under the white header - the one visual note the
    reference screenshot's header had that ours didn't. Deliberately just a
    3px bar, not a background-color change on the header itself - the white
