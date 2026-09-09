@@ -8,7 +8,7 @@ type JobRow = {
   vendor_id: string | null; vendor_response: string;
   scheduled_at: number | null; completed_at: number | null; amount_cents: number | null; created_at: number;
   invoice_status: string; invoice_amount_cents: number | null; invoice_notes: string | null;
-  invoice_submitted_at: number | null; invoice_rejected_reason: string | null;
+  invoice_submitted_at: number | null; invoice_paid_at: number | null; invoice_rejected_reason: string | null;
 };
 
 interface Props {
@@ -75,6 +75,23 @@ const paidInvoices = vendorJobs.filter((j) => j.invoice_status === 'paid');
 const sumCents = (rows: JobRow[], field: 'amount_cents' | 'invoice_amount_cents') =>
   rows.reduce((total, j) => total + (j[field] ?? 0), 0);
 
+// Current balance = money already invoiced (submitted or approved) but not
+// yet paid out - the figure a vendor actually cares about when they ask
+// "how much am I owed right now". Deliberately excludes needsInvoice (no
+// amount has even been claimed yet) and paidInvoices (already settled).
+const currentBalanceCents = sumCents(underReview, 'invoice_amount_cents') + sumCents(pendingPayment, 'invoice_amount_cents');
+
+// "Current job's payment" for the Dashboard payment box - the single
+// most-relevant in-flight invoice. Pending payment (approved, waiting on
+// disbursement) ranks ahead of under review (still awaiting an admin
+// decision) since it's the one closer to actually being paid; within a
+// bucket, most recently touched first.
+const currentPaymentJob =
+  [...pendingPayment].sort((a, b) => (b.invoice_submitted_at ?? 0) - (a.invoice_submitted_at ?? 0))[0] ??
+  [...underReview].sort((a, b) => (b.invoice_submitted_at ?? 0) - (a.invoice_submitted_at ?? 0))[0] ??
+  null;
+const lastPaidJob = [...paidInvoices].sort((a, b) => (b.invoice_paid_at ?? 0) - (a.invoice_paid_at ?? 0))[0] ?? null;
+
 type ActivityItem = { created_at: number; title: string; sub: string };
 const activity: ActivityItem[] = jobs
   .map((j): ActivityItem => ({
@@ -121,63 +138,63 @@ const relTime = (ms: number) => {
 -->
 <div class="vdash">
   <aside class="vdash-side">
-    <button type="button" class="vdash-nav-item is-active" data-panel-link="dashboard">
+    <button type="button" class="vdash-nav-item is-active" data-panel-link="dashboard" title="Provider Dashboard">
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="9" rx="1" /><rect x="14" y="3" width="7" height="5" rx="1" /><rect x="14" y="12" width="7" height="9" rx="1" /><rect x="3" y="16" width="7" height="5" rx="1" /></svg>
-      Provider Dashboard
+      <span class="vdash-nav-label">Provider Dashboard</span>
     </button>
-    <span class="vdash-nav-item is-soon">
+    <span class="vdash-nav-item is-soon" title="Important Tasks">
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 11l3 3L22 4" /><path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11" /></svg>
-      Important Tasks
+      <span class="vdash-nav-label">Important Tasks</span>
       <span class="vdash-nav-soon-tag">Soon</span>
     </span>
-    <button type="button" class="vdash-nav-item" data-panel-link="jobs">
+    <button type="button" class="vdash-nav-item" data-panel-link="jobs" title="My Jobs">
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="7" width="18" height="14" rx="2" /><path d="M8 7V5a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2" /></svg>
-      My Jobs
+      <span class="vdash-nav-label">My Jobs</span>
     </button>
-    <span class="vdash-nav-item is-soon">
+    <span class="vdash-nav-item is-soon" title="Estimates">
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 17V9m3 8V5m3 12v-4" /><rect x="3" y="3" width="18" height="18" rx="2" /></svg>
-      Estimates
+      <span class="vdash-nav-label">Estimates</span>
       <span class="vdash-nav-soon-tag">Soon</span>
     </span>
-    <button type="button" class="vdash-nav-item" data-panel-link="invoices">
+    <button type="button" class="vdash-nav-item" data-panel-link="invoices" title="Invoices">
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" /><path d="M14 2v6h6M9 13h6M9 17h6" /></svg>
-      Invoices
+      <span class="vdash-nav-label">Invoices</span>
     </button>
-    <span class="vdash-nav-item is-soon">
+    <span class="vdash-nav-item is-soon" title="Company Settings">
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 21v-6.5a2.5 2.5 0 0 1 5 0V21M4 10h16M6 6h12a2 2 0 0 1 2 2v13H4V8a2 2 0 0 1 2-2z" /><path d="M9 21v-4h6v4" /></svg>
-      Company Settings
+      <span class="vdash-nav-label">Company Settings</span>
       <span class="vdash-nav-soon-tag">Soon</span>
     </span>
-    <span class="vdash-nav-item is-soon">
+    <span class="vdash-nav-item is-soon" title="Employees">
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="9" cy="7" r="3" /><path d="M2 21v-2a5 5 0 0 1 5-5h4a5 5 0 0 1 5 5v2" /><path d="M17 11a3 3 0 1 0 0-6M22 21v-2a4 4 0 0 0-3-3.87" /></svg>
-      Employees
+      <span class="vdash-nav-label">Employees</span>
       <span class="vdash-nav-soon-tag">Soon</span>
     </span>
-    <span class="vdash-nav-item is-soon">
+    <span class="vdash-nav-item is-soon" title="My Agreements">
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M15 3H6a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V9z" /><path d="M15 3v6h6M9 15l2 2 4-4" /></svg>
-      My Agreements
+      <span class="vdash-nav-label">My Agreements</span>
       <span class="vdash-nav-soon-tag">Soon</span>
     </span>
-    <span class="vdash-nav-item is-soon">
+    <span class="vdash-nav-item is-soon" title="Documents">
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" /><path d="M14 2v6h6" /></svg>
-      Documents
+      <span class="vdash-nav-label">Documents</span>
       <span class="vdash-nav-soon-tag">Soon</span>
     </span>
-    <span class="vdash-nav-item is-soon">
+    <span class="vdash-nav-item is-soon" title="Messages">
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z" /></svg>
-      Messages
+      <span class="vdash-nav-label">Messages</span>
       <span class="vdash-nav-soon-tag">Soon</span>
     </span>
-    <span class="vdash-nav-item is-soon">
+    <span class="vdash-nav-item is-soon" title="Provider Support">
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="9" /><path d="M9.5 9a2.5 2.5 0 0 1 5 0c0 1.5-2.5 2-2.5 3.5" /><path d="M12 17h.01" /></svg>
-      Provider Support
+      <span class="vdash-nav-label">Provider Support</span>
       <span class="vdash-nav-soon-tag">Soon</span>
     </span>
     <div class="vdash-side-foot">
       <form id="logout-form-side" data-logout-form>
-        <button type="submit" class="vdash-nav-item">
+        <button type="submit" class="vdash-nav-item" title="Sign out">
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4" /><path d="M16 17l5-5-5-5" /><path d="M21 12H9" /></svg>
-          Sign out
+          <span class="vdash-nav-label">Sign out</span>
         </button>
       </form>
     </div>
@@ -277,12 +294,41 @@ const relTime = (ms: number) => {
         <div>
           <!-- Cashback overview card removed - this used to show a
                permanently-$0.00 client-reward balance that no vendor
-               account has ever earned into. Invoices teaser replaces it,
-               pointing at the new tab rather than a dead figure. -->
-          <div class="vdash-invoices-teaser">
-            <h3>Invoices</h3>
-            <p>Submit invoices and track payment status for completed jobs - coming to the Invoices tab.</p>
-            <button type="button" class="btn btn--outline" data-panel-link="invoices">View invoices</button>
+               account has ever earned into. Real Payment box replaces it:
+               current balance, the single most-relevant in-flight invoice,
+               and the most recent paid one - all computed off the same
+               `jobs` prop the Invoices tab uses, no extra query. Used to
+               be a static teaser pointing at the Invoices tab ("coming
+               soon"); that's stale now that tab is real. -->
+          <div class="vdash-payment-box">
+            <h3>Payment</h3>
+            <p class="vdash-payment-balance-label">Current balance</p>
+            <p class="vdash-payment-balance-value">{fmtCents(currentBalanceCents)}</p>
+            <p class="vdash-payment-balance-note">Invoiced, not yet paid out</p>
+
+            {currentPaymentJob ? (
+              <a href={`/portal/jobs/${currentPaymentJob.id}`} class="vdash-payment-row">
+                <span class="vdash-payment-row-label">Current job</span>
+                <span class="vdash-payment-row-job">{currentPaymentJob.service || currentPaymentJob.description || 'Job'}</span>
+                <span class="vdash-payment-row-amount">{currentPaymentJob.invoice_amount_cents != null ? fmtCents(currentPaymentJob.invoice_amount_cents) : '—'}</span>
+                <span class={`admin-status admin-status--inv-${currentPaymentJob.invoice_status}`}>{currentPaymentJob.invoice_status.replace('_', ' ')}</span>
+              </a>
+            ) : (
+              <p class="vdash-payment-row-empty">No payment currently in progress.</p>
+            )}
+
+            {lastPaidJob ? (
+              <a href={`/portal/jobs/${lastPaidJob.id}`} class="vdash-payment-row">
+                <span class="vdash-payment-row-label">Last paid</span>
+                <span class="vdash-payment-row-job">{lastPaidJob.service || lastPaidJob.description || 'Job'}</span>
+                <span class="vdash-payment-row-amount">{lastPaidJob.invoice_amount_cents != null ? fmtCents(lastPaidJob.invoice_amount_cents) : '—'}</span>
+                <span class="vdash-payment-row-date">{lastPaidJob.invoice_paid_at ? new Date(lastPaidJob.invoice_paid_at).toLocaleDateString('en-US', { dateStyle: 'medium', timeZone: 'America/New_York' }) : ''}</span>
+              </a>
+            ) : (
+              <p class="vdash-payment-row-empty">Nothing paid out yet.</p>
+            )}
+
+            <button type="button" class="btn btn--outline" data-panel-link="invoices">View all invoices</button>
           </div>
 
           <div class="vdash-activity">
@@ -353,6 +399,7 @@ const relTime = (ms: number) => {
       <div class="vdash-profile-card">
         <h3>Invoices &amp; payments</h3>
         <p class="form-note">One invoice per completed job. Submit it from the job's own page.</p>
+        <p class="vdash-invoices-balance">Current balance: <b>{fmtCents(currentBalanceCents)}</b> <span>(invoiced, not yet paid out)</span></p>
         <div class="vdash-invoice-cols">
           <div class="vdash-invoice-col is-current">
             <p class="vdash-invoice-col-title">1. Review &amp; submit</p>

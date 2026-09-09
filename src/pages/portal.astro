@@ -59,14 +59,12 @@ type JobRow = {
   vendor_id: string | null; vendor_response: string;
   scheduled_at: number | null; completed_at: number | null; amount_cents: number | null; created_at: number;
   invoice_status: string; invoice_amount_cents: number | null; invoice_notes: string | null;
-  invoice_submitted_at: number | null; invoice_rejected_reason: string | null;
+  invoice_submitted_at: number | null; invoice_paid_at: number | null; invoice_rejected_reason: string | null;
 };
 type LedgerRow = { id: string; job_id: string | null; amount_cents: number; reason: string; created_at: number };
 let jobs: JobRow[] = [];
 let ledgerEntries: LedgerRow[] = [];
 let recentRequestCount = 0;
-
-let dashboardDataError = false;
 
 if (session) {
   try {
@@ -83,7 +81,7 @@ if (session) {
         .first<{ n: number }>(),
       env.DB.prepare(
         `SELECT id, service, description, status, vendor_id, vendor_response, scheduled_at, completed_at, amount_cents,
-                invoice_status, invoice_amount_cents, invoice_notes, invoice_submitted_at, invoice_rejected_reason, created_at
+                invoice_status, invoice_amount_cents, invoice_notes, invoice_submitted_at, invoice_paid_at, invoice_rejected_reason, created_at
          FROM jobs WHERE account_id = ?1 OR vendor_id = ?1 ORDER BY created_at DESC LIMIT 100`
       ).bind(session.user.id).all<JobRow>(),
       env.DB.prepare(
@@ -110,10 +108,13 @@ if (session) {
     // remote D1 yet (exactly what happened shipping the invoice columns -
     // /api/health only checks table names, not columns, so it stayed green
     // while every signed-in page load 500'd). Degrade to the same empty
-    // state a fresh account already renders correctly, rather than crash,
-    // and say so on the page instead of just silently showing zeros.
+    // state a fresh account already renders correctly, rather than crash -
+    // silently, on purpose: an in-page technical warning ("your data
+    // couldn't load") reads as broken/alarming to a real customer and adds
+    // nothing they can act on. console.error is the record of it; a human
+    // checking Cloudflare's logs is the intended audience, not the vendor
+    // looking at their own dashboard.
     console.error('portal_dashboard_query_failed', String(e).slice(0, 300));
-    dashboardDataError = true;
   }
 }
 
@@ -129,13 +130,6 @@ const licenseExpiresValue = user?.licenseExpires
 ---
 {session ? (
   <DashboardLayout title="Portal - Tristate Property Management" user={user}>
-    {dashboardDataError ? (
-      <div class="wrap">
-        <p class="form-note" style="margin-top:16px;padding:12px 16px;background:var(--red-soft);border-radius:8px;color:var(--red-dark)">
-          Your account data couldn't load just now - the numbers below may be incomplete. Try refreshing in a moment; contact us if this keeps happening.
-        </p>
-      </div>
-    ) : null}
     {user?.role === 'vendor' ? (
       <VendorDashboard
         user={user}
