@@ -198,31 +198,26 @@ token where the web sends a session cookie.
       JSON-LD, so anything wrong here produces schema that disagrees with the Google Business
       Profile. `areaServed` is the biggest single ranking gain left: fill it and the coverage
       grids on the homepage and `/contact/` populate themselves.
-- [ ] **Attach the custom domain.** `tristatepropertymanagement.com` currently returns 503, so
-      `SITE.url` and `astro.config.mjs` point at the `.pages.dev` host instead. That is deliberate:
-      `og:image`, `og:url` and the canonicals are absolute URLs built from that value, and while
-      they pointed at the dead domain WhatsApp and Facebook fetched a 503 and showed no preview at
-      all. Once the domain is attached in Cloudflare Pages, change both values back in the same
-      commit - a canonical pointing at a host that does not serve the page is worse than none.
-      `public/robots.txt` carries the sitemap URL too.
+- [x] ~~**Attach the custom domain.**~~ Done, but not the domain this bullet originally meant -
+      `tristatepropertymanagement.com` (no "llc") still 503s. `tristatepropertymanagementllc.com`
+      is the one actually connected in Cloudflare Pages (confirmed live, 200) and is what
+      `SITE.url` / `astro.config.mjs` both point at now. If the no-"llc" domain is ever meant to
+      be the real one, that is a DNS/Pages-attachment task outside this repo, not a code change -
+      flag it back here if so.
 - [ ] **Google Business Profile** created and matching the NAP exactly.
-- [ ] **Remote D1 has no schema.** The binding exists and `/api/health` used to report `ok`
-      because it only ran `SELECT 1`, which succeeds against an empty database. Every form POST
-      and `/api/offers` return 500 in production until `npm run db:remote` is run. Health now
-      returns 503 and names the missing tables.
-- [ ] **Remote D1 predates the auth tables.** `accounts` was deployed before Better Auth shipped
-      (see "Auth & portal"), so it has the old five columns, not the current nine, and
-      `auth_credentials`/`session`/`verification` do not exist yet. `npm run db:remote` will not
-      add them - `CREATE TABLE IF NOT EXISTS` cannot add a column to a table that already exists.
-      Run `npm run db:migrate:auth` once, after `db:remote`. `/api/health`'s `fix` field says
-      which one is needed.
+- [x] ~~**Remote D1 has no schema.**~~ Done - confirmed via `wrangler d1 execute --remote`:
+      all tables present (`accounts`, `jobs`, `leads`, `offers`, `vendors`,
+      `cashback_ledger`, `job_documents`, plus the auth tables below). `/api/health` reports
+      `{"ok":true,"db":"ok"}` in production.
+- [x] ~~**Remote D1 predates the auth tables.**~~ Done - `auth_credentials`, `session`, and
+      `verification` all confirmed present on remote D1. Login/session cookies work end to end
+      in production (verified this session: vendor sign-in, portal load, sign-out).
 - [x] ~~**Decide on the chat widget.**~~ Done - it is real three-step lead capture posting to
       `/api/leads` with `source = 'chat-widget'`, and the status line says "Messages go straight
       to dispatch" rather than "Online now". It does still depend on the D1 schema above.
 - [ ] **Unverified claims** - see the inventory below; seven of them, all listed with locations.
-- [ ] **Demo reviews are live on the homepage.** Five invented cards, added so the layout could
-      be shown to the owner, labelled on the page as samples. Set `DEMO_REVIEWS` to `false` in
-      `src/data/testimonials.ts` to remove them. This must happen before the site is indexed.
+- [x] ~~**Demo reviews are live on the homepage.**~~ Done - `DEMO_REVIEWS` confirmed `false` in
+      `src/data/testimonials.ts`. Homepage reviews section does not render.
 
 ## Blog
 
