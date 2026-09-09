@@ -66,39 +66,55 @@ let jobs: JobRow[] = [];
 let ledgerEntries: LedgerRow[] = [];
 let recentRequestCount = 0;
 
+let dashboardDataError = false;
+
 if (session) {
-  const since = Date.now() - THROTTLE_WINDOW_MS;
-  const [balanceRow, jobsRow, jobsList, ledgerList, throttleRow] = await Promise.all([
-    env.DB.prepare(`SELECT COALESCE(SUM(amount_cents), 0) AS cents FROM cashback_ledger WHERE account_id = ?1`)
-      .bind(session.user.id)
-      .first<{ cents: number }>(),
-    // account_id = ?1 covers a client's own jobs; vendor_id = ?1 covers jobs
-    // assigned to this account as the vendor - same reasoning as
-    // GET /api/jobs, kept in sync with it.
-    env.DB.prepare(`SELECT COUNT(*) AS n FROM jobs WHERE account_id = ?1 OR vendor_id = ?1`)
-      .bind(session.user.id)
-      .first<{ n: number }>(),
-    env.DB.prepare(
-      `SELECT id, service, description, status, vendor_id, vendor_response, scheduled_at, completed_at, amount_cents,
-              invoice_status, invoice_amount_cents, invoice_notes, invoice_submitted_at, invoice_rejected_reason, created_at
-       FROM jobs WHERE account_id = ?1 OR vendor_id = ?1 ORDER BY created_at DESC LIMIT 100`
-    ).bind(session.user.id).all<JobRow>(),
-    env.DB.prepare(
-      `SELECT id, job_id, amount_cents, reason, created_at
-       FROM cashback_ledger WHERE account_id = ?1 ORDER BY created_at DESC LIMIT 200`
-    ).bind(session.user.id).all<LedgerRow>(),
-    // Same window/limit as POST /api/portal/request-service - computed here
-    // too so the form can be hidden server-side once the same account has
-    // hit it, rather than rendering a form that would just 429 on submit.
-    env.DB.prepare(`SELECT COUNT(*) AS n FROM leads WHERE account_id = ?1 AND created_at > ?2`)
-      .bind(session.user.id, since)
-      .first<{ n: number }>(),
-  ]);
-  balanceCents = balanceRow?.cents ?? 0;
-  jobCount = jobsRow?.n ?? 0;
-  jobs = jobsList.results ?? [];
-  ledgerEntries = ledgerList.results ?? [];
-  recentRequestCount = throttleRow?.n ?? 0;
+  try {
+    const since = Date.now() - THROTTLE_WINDOW_MS;
+    const [balanceRow, jobsRow, jobsList, ledgerList, throttleRow] = await Promise.all([
+      env.DB.prepare(`SELECT COALESCE(SUM(amount_cents), 0) AS cents FROM cashback_ledger WHERE account_id = ?1`)
+        .bind(session.user.id)
+        .first<{ cents: number }>(),
+      // account_id = ?1 covers a client's own jobs; vendor_id = ?1 covers jobs
+      // assigned to this account as the vendor - same reasoning as
+      // GET /api/jobs, kept in sync with it.
+      env.DB.prepare(`SELECT COUNT(*) AS n FROM jobs WHERE account_id = ?1 OR vendor_id = ?1`)
+        .bind(session.user.id)
+        .first<{ n: number }>(),
+      env.DB.prepare(
+        `SELECT id, service, description, status, vendor_id, vendor_response, scheduled_at, completed_at, amount_cents,
+                invoice_status, invoice_amount_cents, invoice_notes, invoice_submitted_at, invoice_rejected_reason, created_at
+         FROM jobs WHERE account_id = ?1 OR vendor_id = ?1 ORDER BY created_at DESC LIMIT 100`
+      ).bind(session.user.id).all<JobRow>(),
+      env.DB.prepare(
+        `SELECT id, job_id, amount_cents, reason, created_at
+         FROM cashback_ledger WHERE account_id = ?1 ORDER BY created_at DESC LIMIT 200`
+      ).bind(session.user.id).all<LedgerRow>(),
+      // Same window/limit as POST /api/portal/request-service - computed here
+      // too so the form can be hidden server-side once the same account has
+      // hit it, rather than rendering a form that would just 429 on submit.
+      env.DB.prepare(`SELECT COUNT(*) AS n FROM leads WHERE account_id = ?1 AND created_at > ?2`)
+        .bind(session.user.id, since)
+        .first<{ n: number }>(),
+    ]);
+    balanceCents = balanceRow?.cents ?? 0;
+    jobCount = jobsRow?.n ?? 0;
+    jobs = jobsList.results ?? [];
+    ledgerEntries = ledgerList.results ?? [];
+    recentRequestCount = throttleRow?.n ?? 0;
+  } catch (e) {
+    // A signed-in user must never see a raw 500 here - the auth check above
+    // already succeeded, so this is specifically the D1 query layer, not
+    // the session. Most likely cause in this codebase's history: a query
+    // was changed to select a column a pending migration hasn't added to
+    // remote D1 yet (exactly what happened shipping the invoice columns -
+    // /api/health only checks table names, not columns, so it stayed green
+    // while every signed-in page load 500'd). Degrade to the same empty
+    // state a fresh account already renders correctly, rather than crash,
+    // and say so on the page instead of just silently showing zeros.
+    console.error('portal_dashboard_query_failed', String(e).slice(0, 300));
+    dashboardDataError = true;
+  }
 }
 
 const canRequestService = user?.role === 'client' && recentRequestCount < THROTTLE_MAX;
@@ -113,6 +129,13 @@ const licenseExpiresValue = user?.licenseExpires
 ---
 {session ? (
   <DashboardLayout title="Portal - Tristate Property Management" user={user}>
+    {dashboardDataError ? (
+      <div class="wrap">
+        <p class="form-note" style="margin-top:16px;padding:12px 16px;background:var(--red-soft);border-radius:8px;color:var(--red-dark)">
+          Your account data couldn't load just now - the numbers below may be incomplete. Try refreshing in a moment; contact us if this keeps happening.
+        </p>
+      </div>
+    ) : null}
     {user?.role === 'vendor' ? (
       <VendorDashboard
         user={user}

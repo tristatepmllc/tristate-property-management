@@ -38,16 +38,25 @@ type DocRow = {
   content_type: string | null; size_bytes: number | null; created_at: number;
 };
 
-const job = jobId
-  ? await env.DB.prepare(
-      `SELECT id, account_id, vendor_id, service, description, status,
-              vendor_response, vendor_responded_at, decline_reason,
-              scheduled_at, completed_at, amount_cents,
-              invoice_status, invoice_amount_cents, invoice_notes, invoice_submitted_at,
-              invoice_reviewed_at, invoice_paid_at, invoice_rejected_reason, created_at
-       FROM jobs WHERE id = ?1`
-    ).bind(jobId).first<JobRow>()
-  : null;
+let job: JobRow | null = null;
+try {
+  job = jobId
+    ? await env.DB.prepare(
+        `SELECT id, account_id, vendor_id, service, description, status,
+                vendor_response, vendor_responded_at, decline_reason,
+                scheduled_at, completed_at, amount_cents,
+                invoice_status, invoice_amount_cents, invoice_notes, invoice_submitted_at,
+                invoice_reviewed_at, invoice_paid_at, invoice_rejected_reason, created_at
+         FROM jobs WHERE id = ?1`
+      ).bind(jobId).first<JobRow>()
+    : null;
+} catch (e) {
+  // Same posture as portal.astro's dashboard query catch - a signed-in user
+  // must never see a raw 500 here. `job` stays null, which the existing
+  // "not found" redirect below already handles correctly; there is nothing
+  // useful to render on this page without the job row anyway.
+  console.error('job_detail_query_failed', jobId, String(e).slice(0, 300));
+}
 
 // No distinguishing 404 vs 403 message, same posture as /admin/'s role
 // gate: someone probing a job id they have no relationship to sees the
