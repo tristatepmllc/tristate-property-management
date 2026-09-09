@@ -152,6 +152,16 @@ CREATE TABLE IF NOT EXISTS jobs (
   scheduled_at  INTEGER,
   completed_at  INTEGER,
   amount_cents  INTEGER,
+  -- Invoice submission/review - one invoice per job, not a line-item
+  -- `invoices` table (see migration 0006). vendor submits against a
+  -- completed job; admin approves/rejects/marks paid.
+  invoice_status          TEXT NOT NULL DEFAULT 'none', -- none|submitted|approved|paid|rejected
+  invoice_amount_cents    INTEGER,
+  invoice_notes           TEXT,
+  invoice_submitted_at    INTEGER,
+  invoice_reviewed_at     INTEGER,
+  invoice_paid_at         INTEGER,
+  invoice_rejected_reason TEXT,
   created_at    INTEGER NOT NULL
 );
 CREATE INDEX IF NOT EXISTS idx_jobs_account ON jobs(account_id, created_at DESC);

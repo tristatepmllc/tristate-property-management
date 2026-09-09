@@ -1300,6 +1300,12 @@ a[href^="mailto:"]{overflow-wrap:anywhere}
 .admin-status--vr-pending{background:var(--red-soft);color:var(--red-dark)}
 .admin-status--vr-accepted{background:var(--navy-900);color:var(--white)}
 .admin-status--vr-declined{background:var(--paper);color:var(--red-dark)}
+/* jobs.invoice_status - one invoice per job, see db/schema.sql. */
+.admin-status--inv-none{background:var(--paper);color:var(--steel-light)}
+.admin-status--inv-submitted{background:var(--red-soft);color:var(--red-dark)}
+.admin-status--inv-approved{background:var(--paper-2);color:var(--navy-700)}
+.admin-status--inv-paid{background:var(--navy-900);color:var(--white)}
+.admin-status--inv-rejected{background:var(--paper);color:var(--red-dark)}
 
 /* Profile form inside the logged-in portal dashboard. */
 .form-card--wide{grid-column:1/-1}
@@ -1491,6 +1497,9 @@ a[href^="mailto:"]{overflow-wrap:anywhere}
 .vdash-invoice-col-count{font-family:var(--display);font-size:1.4rem;color:var(--navy-900);margin:0}
 .vdash-invoice-col.is-current .vdash-invoice-col-count{color:var(--white)}
 .vdash-invoice-col-amount{font-family:var(--body);font-size:.76rem;color:var(--steel-light);margin:4px 0 0}
+.vdash-invoice-jobs{list-style:none;margin:16px 0 0;padding:0;display:flex;flex-direction:column;gap:8px}
+.vdash-invoice-jobs li{display:flex;align-items:center;gap:8px;font-family:var(--body);font-size:.86rem}
+.vdash-invoice-jobs a{color:var(--navy-800);font-weight:600}
 
 /* ---------------------------------------------------------------------
    Dashboard app shell (DashboardLayout.astro) - signed-in pages only.

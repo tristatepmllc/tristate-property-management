@@ -766,10 +766,55 @@ this case from a totally fresh install (`missing` will list exactly `auth_creden
 `session`, `verification`, and its `fix` field says which command to run) so this is easy to
 tell apart from a database that was never touched at all.
 
+## Invoices
+
+One invoice per completed job, living as columns on `jobs` (`invoice_status`,
+`invoice_amount_cents`, `invoice_notes`, `invoice_submitted_at`, `invoice_reviewed_at`,
+`invoice_paid_at`, `invoice_rejected_reason` - see `db/migrations/0006_invoices.sql`), not a
+separate `invoices` table. This replaces the vendor dashboard's Invoices panel, which was
+previously a UI shell with four static `$0.00` columns and no backing data - the panel now
+buckets the vendor's own jobs live: `none`/`rejected` + `status = 'completed'` in "Review &
+submit", `submitted` in "Under review", `approved` in "Pending payment", `paid` in "Completed".
+
+**Lifecycle:** `none` -> vendor submits (`POST /api/portal/jobs/[id]/invoice`, only legal once
+`jobs.status = 'completed'`) -> `submitted` -> admin approves or rejects
+(`PATCH /api/admin/jobs/[id]/invoice`) -> `approved` -> admin marks paid -> `paid`. Rejecting
+requires a reason and loops back to `none`'s resubmit path (`invoice_status = 'rejected'` is
+treated the same as `'none'` for the purposes of "can this vendor submit"); the rejection reason
+is cleared on resubmission so a fixed invoice does not carry a stale complaint forward. Every
+transition is guarded server-side against the invoice's actual current state (e.g. `mark_paid`
+against anything other than `approved` is a 409, not a silent no-op) - verified with curl through
+the full happy path, the reject/resubmit loop, and five separate bad-transition attempts before
+this shipped.
+
+**Single-invoice-per-job, deliberately.** `jobs.amount_cents` already assumes one dollar figure
+per job; a line-item `invoices` table for partial/multi-invoice billing is a real schema decision
+to make later if a job ever needs to be billed in pieces, not a default to build against
+speculatively now.
+
+**The read-only "Invoice" summary card is visible to the client, the assigned vendor, and admin**
+(`isParticipant || isAdminViewer`, not `isParticipant` alone) - admin specifically needs to see
+the vendor's own notes when reviewing, which only render in this card, not in the Review-invoice
+form's one-line description. Caught in the first Playwright pass: the screenshot showed admin's
+Review panel with no invoice card above it, because the visibility check was `isParticipant`
+only. Fixed and re-verified.
+
+**No email notification on any step of this lifecycle** - vendor submits, admin has to notice
+`invoice_status = 'submitted'` on the job page; admin rejects, vendor has to notice
+`invoice_status = 'rejected'`. Same posture as the existing decline-notify gap in
+`respond.ts` - flagged, not silently skipped, and not built here because a submit/approve/reject
+email thread across two roles is a real feature (templates, who's Cc'd, what the "resubmit"
+link should say) worth its own pass rather than three quick `sendEmail()` calls bolted on.
+
+**No payment processing.** "Mark paid" is a status flip admin makes after paying the vendor by
+whatever means already exists (check, ACH, whatever) - there is no Stripe/ACH integration behind
+it, and the copy on that button says so ("this only records that it happened") rather than
+implying otherwise.
+
 ## Quote popup
 
 `src/components/QuotePopup.astro`. Offer: a free building walk-through with a written
-maintenance plan — not a newsletter. Facility buyers do not subscribe to vendors, they ask what
+maintenance plan - not a newsletter. Facility buyers do not subscribe to vendors, they ask what
 it costs and how fast you can get there.
 
 | | Desktop | Mobile (<=720px) |

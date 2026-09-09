@@ -28,6 +28,9 @@ type JobRow = {
   service: string | null; description: string | null; status: string;
   vendor_response: string; vendor_responded_at: number | null; decline_reason: string | null;
   scheduled_at: number | null; completed_at: number | null; amount_cents: number | null; created_at: number;
+  invoice_status: string; invoice_amount_cents: number | null; invoice_notes: string | null;
+  invoice_submitted_at: number | null; invoice_reviewed_at: number | null; invoice_paid_at: number | null;
+  invoice_rejected_reason: string | null;
 };
 type AccountRow = { id: string; name: string | null; email: string; phone: string | null; company: string | null };
 type DocRow = {
@@ -39,7 +42,9 @@ const job = jobId
   ? await env.DB.prepare(
       `SELECT id, account_id, vendor_id, service, description, status,
               vendor_response, vendor_responded_at, decline_reason,
-              scheduled_at, completed_at, amount_cents, created_at
+              scheduled_at, completed_at, amount_cents,
+              invoice_status, invoice_amount_cents, invoice_notes, invoice_submitted_at,
+              invoice_reviewed_at, invoice_paid_at, invoice_rejected_reason, created_at
        FROM jobs WHERE id = ?1`
     ).bind(jobId).first<JobRow>()
   : null;
@@ -137,6 +142,67 @@ const STATUS_OPTIONS = [
               </select>
             </div>
             <button type="submit" class="btn btn--navy">Update status</button>
+            <p class="form-status" role="status" aria-live="polite" hidden></p>
+          </form>
+        </div>
+      ) : null}
+
+      {job.invoice_status !== 'none' && (isParticipant || isAdminViewer) ? (
+        <div class="form-card form-card--wide">
+          <h3>Invoice</h3>
+          <p class="form-note">
+            Status: <span class={`admin-status admin-status--inv-${job.invoice_status}`}>{job.invoice_status.replace('_', ' ')}</span>
+            {job.invoice_amount_cents != null ? <> &nbsp;&middot;&nbsp; {fmtCents(job.invoice_amount_cents)}</> : null}
+            {job.invoice_submitted_at ? <> &nbsp;&middot;&nbsp; Submitted {fmtDate(job.invoice_submitted_at)}</> : null}
+          </p>
+          {job.invoice_notes ? <p class="form-note">{job.invoice_notes}</p> : null}
+          {job.invoice_status === 'rejected' && job.invoice_rejected_reason ? (
+            <p class="form-note">Rejected: {job.invoice_rejected_reason}</p>
+          ) : null}
+        </div>
+      ) : null}
+
+      {isVendorOnThisJob && job.status === 'completed' && (job.invoice_status === 'none' || job.invoice_status === 'rejected') ? (
+        <div class="form-card form-card--wide">
+          <h3>Submit invoice</h3>
+          <p class="form-note">This job is marked completed - submit your invoice for admin review.</p>
+          <form data-job-invoice-form data-job-id={job.id} novalidate>
+            <div class="field">
+              <label for="ji-amount">Amount ($) <span class="req">*</span></label>
+              <input type="number" id="ji-amount" name="amount" min="0.01" step="0.01" required />
+            </div>
+            <div class="field field--wide">
+              <label for="ji-notes">Notes</label>
+              <textarea id="ji-notes" name="notes" placeholder="Optional - anything admin should know reviewing this"></textarea>
+            </div>
+            <button type="submit" class="btn btn--navy">Submit invoice</button>
+            <p class="form-status" role="status" aria-live="polite" hidden></p>
+          </form>
+        </div>
+      ) : null}
+
+      {isAdminViewer && job.invoice_status === 'submitted' ? (
+        <div class="form-card form-card--wide">
+          <h3>Review invoice</h3>
+          <p class="form-note">Vendor submitted {job.invoice_amount_cents != null ? fmtCents(job.invoice_amount_cents) : 'an amount'}. Approve to move it to pending payment, or reject with a reason.</p>
+          <form data-job-invoice-review-form data-job-id={job.id} novalidate>
+            <div class="field field--wide">
+              <label for="jir-reason">Rejection reason (required only if rejecting)</label>
+              <textarea id="jir-reason" name="reason" placeholder="Why this needs to be resubmitted"></textarea>
+            </div>
+            <button type="submit" class="btn btn--navy" data-review-action="approve">Approve</button>
+            <button type="submit" class="btn btn--outline" data-review-action="reject">Reject</button>
+            <p class="form-status" role="status" aria-live="polite" hidden></p>
+          </form>
+        </div>
+      ) : null}
+
+      {isAdminViewer && job.invoice_status === 'approved' ? (
+        <div class="form-card form-card--wide">
+          <h3>Payment</h3>
+          <p class="form-note">Approved at {fmtCents(job.invoice_amount_cents ?? 0)}. Mark it paid once the payment has actually gone out - this only records that it happened.</p>
+          <form data-job-invoice-review-form data-job-id={job.id} novalidate>
+            <button type="submit" class="btn btn--navy" data-review-action="mark_paid">Mark paid</button>
             <p class="form-status" role="status" aria-live="polite" hidden></p>
           </form>
         </div>

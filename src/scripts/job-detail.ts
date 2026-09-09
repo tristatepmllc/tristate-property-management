@@ -1,7 +1,8 @@
 /**
- * Wires the three forms on /portal/jobs/[id] to their JSON APIs with plain
- * fetch - same posture as scripts/auth.ts: this is a handful of forms on
- * one page, not a reason to pull in a client-side framework. On success,
+ * Wires the forms on /portal/jobs/[id] (respond, status, invoice submit,
+ * invoice review, documents) to their JSON APIs with plain fetch - same
+ * posture as scripts/auth.ts: this is a handful of forms on one page, not
+ * a reason to pull in a client-side framework. On success,
  * every handler reloads the page rather than patching the DOM in place -
  * the page is SSR and already knows how to render every state (pending vs
  * accepted vs declined, document list with/without rows); re-requesting it
@@ -94,6 +95,86 @@ function initStatusForm(): void {
   });
 }
 
+function initInvoiceForm(): void {
+  const form = document.querySelector<HTMLFormElement>('[data-job-invoice-form]');
+  if (!form) return;
+  const jobId = form.dataset.jobId;
+  if (!jobId) return;
+
+  form.addEventListener('submit', async (e) => {
+    e.preventDefault();
+    const amountInput = form.querySelector('#ji-amount') as HTMLInputElement | null;
+    const amountDollars = Number(amountInput?.value);
+    if (!amountDollars || amountDollars <= 0) {
+      say(form, 'Enter an amount before submitting.');
+      return;
+    }
+    const notes = ((form.querySelector('#ji-notes') as HTMLTextAreaElement | null)?.value || '').trim();
+    say(form, 'Submitting…');
+    // Dollars in the UI, cents on the wire - same convention every other
+    // amount_cents column in this codebase already uses.
+    const result = await postJson(`/api/portal/jobs/${jobId}/invoice`, {
+      amountCents: Math.round(amountDollars * 100),
+      notes: notes || undefined,
+    });
+    if (result.ok) {
+      location.reload();
+    } else {
+      say(form, result.message || 'Could not submit your invoice.');
+    }
+  });
+}
+
+function initInvoiceReviewForm(): void {
+  // Admin's "Review invoice" (approve/reject) and "Payment" (mark_paid)
+  // are two separate <form>s that render as alternate states of the same
+  // job, but they share one selector and one handler - only one is ever
+  // present in the DOM at a time, so this is not a collision.
+  document.querySelectorAll<HTMLFormElement>('[data-job-invoice-review-form]').forEach((form) => {
+    const jobId = form.dataset.jobId;
+    if (!jobId) return;
+
+    let lastAction: 'approve' | 'reject' | 'mark_paid' = 'approve';
+    form.querySelectorAll<HTMLButtonElement>('[data-review-action]').forEach((btn) => {
+      btn.addEventListener('click', () => {
+        const a = btn.dataset.reviewAction;
+        if (a === 'approve' || a === 'reject' || a === 'mark_paid') lastAction = a;
+      });
+    });
+
+    form.addEventListener('submit', async (e) => {
+      e.preventDefault();
+      const reason = ((form.querySelector('#jir-reason') as HTMLTextAreaElement | null)?.value || '').trim();
+      if (lastAction === 'reject' && !reason) {
+        say(form, 'Add a reason before rejecting.');
+        return;
+      }
+      say(form, 'Saving…');
+      try {
+        const res = await fetch(`/api/admin/jobs/${jobId}/invoice`, {
+          method: 'PATCH',
+          headers: { 'content-type': 'application/json' },
+          body: JSON.stringify({ action: lastAction, reason: lastAction === 'reject' ? reason : undefined }),
+        });
+        if (res.ok) {
+          location.reload();
+          return;
+        }
+        let message = 'Could not save. Please try again.';
+        try {
+          const data = (await res.json()) as { error?: string };
+          if (data.error) message = data.error.replace(/_/g, ' ');
+        } catch {
+          /* keep generic message */
+        }
+        say(form, message);
+      } catch {
+        say(form, 'Network problem. Please try again.');
+      }
+    });
+  });
+}
+
 function initDocumentForm(): void {
   const form = document.querySelector<HTMLFormElement>('[data-job-document-form]');
   if (!form) return;
@@ -131,6 +212,8 @@ function initDocumentForm(): void {
 function init(): void {
   initRespondForm();
   initStatusForm();
+  initInvoiceForm();
+  initInvoiceReviewForm();
   initDocumentForm();
 }
 

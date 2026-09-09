@@ -7,10 +7,13 @@ type JobRow = {
   id: string; service: string | null; description: string | null; status: string;
   vendor_id: string | null; vendor_response: string;
   scheduled_at: number | null; completed_at: number | null; amount_cents: number | null; created_at: number;
+  invoice_status: string; invoice_amount_cents: number | null; invoice_notes: string | null;
+  invoice_submitted_at: number | null; invoice_rejected_reason: string | null;
 };
 
 interface Props {
   user: {
+    id?: string;
     role?: 'client' | 'vendor' | 'admin';
     name?: string | null; email?: string | null; company?: string | null; phone?: string | null;
     trade?: string | null; tradesOther?: string | null; serviceArea?: string | null;
@@ -56,6 +59,21 @@ const emergencyBadge: { tone: 'ok' | 'warn' | 'bad'; label: string } = user?.eme
 // two are real and change the moment an assignment happens.
 const pendingCount = jobs.filter((j) => j.vendor_response === 'pending').length;
 const acceptedCount = jobs.filter((j) => j.vendor_response === 'accepted').length;
+
+const fmtCents = (c: number) => (c / 100).toLocaleString('en-US', { style: 'currency', currency: 'USD' });
+
+// Invoice lifecycle: none/rejected (needs the vendor's action) -> submitted
+// (admin reviewing) -> approved (pending payment) -> paid. Only jobs where
+// this account is the assigned vendor count here - `jobs` can in principle
+// include account_id-side rows too (see portal.astro's query), which have
+// nothing to do with this vendor's own invoicing.
+const vendorJobs = jobs.filter((j) => j.vendor_id === user?.id);
+const needsInvoice = vendorJobs.filter((j) => j.status === 'completed' && (j.invoice_status === 'none' || j.invoice_status === 'rejected'));
+const underReview = vendorJobs.filter((j) => j.invoice_status === 'submitted');
+const pendingPayment = vendorJobs.filter((j) => j.invoice_status === 'approved');
+const paidInvoices = vendorJobs.filter((j) => j.invoice_status === 'paid');
+const sumCents = (rows: JobRow[], field: 'amount_cents' | 'invoice_amount_cents') =>
+  rows.reduce((total, j) => total + (j[field] ?? 0), 0);
 
 type ActivityItem = { created_at: number; title: string; sub: string };
 const activity: ActivityItem[] = jobs
@@ -322,40 +340,54 @@ const relTime = (ms: number) => {
       </div>
     </div>
 
-    <!-- Invoices panel: UI shell only - matches the shape of the reference
-         the user provided (four status columns: submit / reviewing /
-         pending payment / completed), but there is no `invoices` table,
-         no submission form, no data behind any of these numbers. Every
-         count and dollar figure here is a static zero, not a query
-         result. This is scaffolding for a real feature, not the feature -
-         flagged in-page (below), not just in this comment, so nobody
-         mistakes it for working. -->
+    <!-- Invoices panel: real data - four status columns matching the
+         reference the user provided (submit / reviewing / pending payment
+         / completed), each bucket a live filter over the same `jobs` prop
+         everything else on this page uses, no separate query. Column 1
+         doubles as the action list: a completed job with no invoice yet
+         (or a rejected one) links to /portal/jobs/[id], where the actual
+         submit form lives - same "job-specific actions live on the job
+         detail page" pattern as accept/decline and status updates, not a
+         second copy of that form inline here. -->
     <div class="vdash-panel" data-panel="invoices" hidden>
       <div class="vdash-profile-card">
         <h3>Invoices &amp; payments</h3>
-        <p class="form-note">Not wired up yet - this is the planned layout, not a working invoice system. No invoices table exists in the database yet.</p>
+        <p class="form-note">One invoice per completed job. Submit it from the job's own page.</p>
         <div class="vdash-invoice-cols">
           <div class="vdash-invoice-col is-current">
             <p class="vdash-invoice-col-title">1. Review &amp; submit</p>
-            <p class="vdash-invoice-col-count">0</p>
-            <p class="vdash-invoice-col-amount">$0.00</p>
+            <p class="vdash-invoice-col-count">{needsInvoice.length}</p>
+            <p class="vdash-invoice-col-amount">{fmtCents(sumCents(needsInvoice, 'amount_cents'))}</p>
           </div>
           <div class="vdash-invoice-col">
             <p class="vdash-invoice-col-title">2. Under review</p>
-            <p class="vdash-invoice-col-count">0</p>
-            <p class="vdash-invoice-col-amount">$0.00</p>
+            <p class="vdash-invoice-col-count">{underReview.length}</p>
+            <p class="vdash-invoice-col-amount">{fmtCents(sumCents(underReview, 'invoice_amount_cents'))}</p>
           </div>
           <div class="vdash-invoice-col">
             <p class="vdash-invoice-col-title">3. Pending payment</p>
-            <p class="vdash-invoice-col-count">0</p>
-            <p class="vdash-invoice-col-amount">$0.00</p>
+            <p class="vdash-invoice-col-count">{pendingPayment.length}</p>
+            <p class="vdash-invoice-col-amount">{fmtCents(sumCents(pendingPayment, 'invoice_amount_cents'))}</p>
           </div>
           <div class="vdash-invoice-col">
             <p class="vdash-invoice-col-title">4. Completed</p>
-            <p class="vdash-invoice-col-count">0</p>
-            <p class="vdash-invoice-col-amount">$0.00</p>
+            <p class="vdash-invoice-col-count">{paidInvoices.length}</p>
+            <p class="vdash-invoice-col-amount">{fmtCents(sumCents(paidInvoices, 'invoice_amount_cents'))}</p>
           </div>
         </div>
+
+        {needsInvoice.length > 0 ? (
+          <ul class="vdash-invoice-jobs">
+            {needsInvoice.map((j) => (
+              <li>
+                <a href={`/portal/jobs/${j.id}`}>{j.service || j.description || 'Job'}</a>
+                {j.invoice_status === 'rejected' ? <span class="admin-status admin-status--inv-rejected">rejected</span> : null}
+              </li>
+            ))}
+          </ul>
+        ) : (
+          <p class="form-note">Nothing waiting on an invoice right now.</p>
+        )}
       </div>
     </div>
   </div>
