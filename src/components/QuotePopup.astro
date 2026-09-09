@@ -65,6 +65,10 @@ const siteKey = import.meta.env.PUBLIC_TURNSTILE_SITE_KEY ?? '1x0000000000000000
               <input type="email" id="qp-email" name="email" autocomplete="email" placeholder="jane@company.com" required />
             </div>
           </div>
+          <div class="field">
+            <label for="qp-address">Building address <span class="req">*</span></label>
+            <input type="text" id="qp-address" name="address" autocomplete="street-address" placeholder="123 Main St, Bridgeport, CT" required />
+          </div>
 
           <div class="cf-turnstile" data-sitekey={siteKey} data-theme="light" data-appearance="interaction-only"></div>
 
