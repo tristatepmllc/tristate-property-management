@@ -1,0 +1,210 @@
+---
+import BaseLayout from '../layouts/BaseLayout.astro';
+import LeadFormExtras from '../components/LeadFormExtras.astro';
+import { SITE } from '../data/site';
+import { PP_SERVICES, PP_STATES } from '../data/property-preservation';
+import { graph, breadcrumbs } from '../lib/schema';
+
+const jsonLd = graph([
+  breadcrumbs([
+    { name: 'Home', path: '/' },
+    { name: 'Property Preservation', path: '/property-preservation/' },
+  ]),
+]);
+---
+<BaseLayout
+  title="Property Preservation Services - Vacant Property Care"
+  description="Vacant property maintenance, cleanouts, winterization and repairs for homeowners, estates and investors across CT, MA, FL and RI."
+  path="/property-preservation/"
+  active="/property-preservation/"
+  jsonLd={jsonLd}
+  preloadImage="/images/home-grounds.webp"
+>
+  <section class="page-hero">
+    <div class="page-hero-bg" style="background-image:url('/images/home-grounds.webp')"></div>
+    <div class="wrap">
+      <p class="crumb"><a href="/">Home</a> &nbsp;/&nbsp; <span>Property Preservation</span></p>
+      <h1>Property preservation for the properties you cannot check on yourself</h1>
+      <p>
+        Vacant homes, inherited properties, foreclosures and rentals between tenants - one
+        crew to maintain, clean out, secure and repair a property, with photos and a written
+        report every visit.
+      </p>
+      <div class="hero-actions" style="margin-top:24px">
+        <a class="btn btn--red" href="#quote">Get a free property assessment</a>
+        <a class="btn btn--ghost" href={SITE.telHref}>Call {SITE.phone}</a>
+      </div>
+    </div>
+  </section>
+
+  <!-- ============ SERVICES ============ -->
+  <section class="section section--paper">
+    <div class="wrap">
+      <div class="sec-head">
+        <p class="eyebrow">What we cover</p>
+        <h2>Twelve services, one crew</h2>
+        <p>
+          Whether the property is vacant for a season or has been sitting since a
+          foreclosure, these are the jobs that keep it safe, presentable and out of trouble.
+        </p>
+      </div>
+      <div class="pp-grid">
+        {PP_SERVICES.map((s) => (
+          <div class="pp-card" id={s.slug}>
+            <h3>{s.name}</h3>
+            <p>{s.blurb}</p>
+          </div>
+        ))}
+      </div>
+    </div>
+  </section>
+
+  <!-- ============ STATES ============ -->
+  <section class="section section--tight">
+    <div class="wrap">
+      <div class="sec-head">
+        <p class="eyebrow">Where we work</p>
+        <h2>Property preservation by state</h2>
+        <p>We also cover Illinois and Arkansas for commercial accounts - see <a href="/contact/">contact</a>.</p>
+      </div>
+      <div class="pp-states">
+        {PP_STATES.map((s) => (
+          <div class="pp-state-card">
+            <h3>{s.state}</h3>
+            <p>{s.blurb}</p>
+            <a class="card-link" href={s.path}>{s.state} property preservation <span>&rarr;</span></a>
+          </div>
+        ))}
+      </div>
+    </div>
+  </section>
+
+  <!-- ============ QUOTE FORM ============ -->
+  <section class="section" id="quote">
+    <div class="wrap">
+      <div class="contact-grid">
+
+        <div>
+          <p class="eyebrow">Need help with a property?</p>
+          <h2 style="font-size:1.9rem;text-transform:uppercase;margin-bottom:8px">Tell us what the property needs</h2>
+          <p style="color:var(--steel);font-size:.93rem;margin-bottom:26px">
+            Homeowners, landlords, investors and estate executors - give us the address and
+            what needs doing, and a written price comes back the same working day. Rather
+            talk now? <a href={SITE.telHref}>{SITE.phone}</a>.
+          </p>
+
+          <div class="form-card">
+            <form
+              action="/api/leads"
+              method="post"
+              data-lead-form
+              data-source="property-preservation"
+              data-thanks-heading="Thank you - we've got it."
+              data-success="We will call to confirm the property and scope, usually the same business day."
+              novalidate
+            >
+              <input type="hidden" name="urgency" value="Property preservation enquiry" />
+
+              <div class="field-row">
+                <div class="field">
+                  <label for="pp-name">Your name <span class="req">*</span></label>
+                  <input type="text" id="pp-name" name="name" autocomplete="name" placeholder="Jane Whitfield" required />
+                </div>
+                <div class="field">
+                  <label for="pp-phone">Phone <span class="req">*</span></label>
+                  <input type="tel" id="pp-phone" name="phone" autocomplete="tel" placeholder="(203) 000-0000" required />
+                </div>
+              </div>
+
+              <div class="field">
+                <label for="pp-address">Property address <span class="req">*</span></label>
+                <input type="text" id="pp-address" name="address" autocomplete="street-address" placeholder="Street, town, state" required />
+              </div>
+
+              <div class="field">
+                <label for="pp-service">Service needed <span class="req">*</span></label>
+                <select id="pp-service" name="service" required>
+                  <option value="">Choose a service&hellip;</option>
+                  {PP_SERVICES.map((s) => <option>{s.name}</option>)}
+                  <option>Multiple services / not sure yet</option>
+                </select>
+              </div>
+
+              <div class="field">
+                <label for="pp-email">Email</label>
+                <input type="email" id="pp-email" name="email" autocomplete="email" placeholder="jane@email.com" />
+              </div>
+
+              <div class="field">
+                <label for="pp-details">Anything we should know</label>
+                <textarea
+                  id="pp-details"
+                  name="details"
+                  placeholder="Example: inherited the house in March, vacant since, needs a cleanout and winterization before it goes on the market."
+                ></textarea>
+              </div>
+
+              <LeadFormExtras source="property-preservation" />
+
+              <button type="submit" class="btn btn--red btn--wide">Get my free property assessment</button>
+
+              <p class="form-note">
+                No cost, no obligation. Your details are never passed to a third party - see our
+                <a href="/privacy-policy/">privacy policy</a>.
+              </p>
+            </form>
+          </div>
+        </div>
+
+        <div>
+          <p class="eyebrow" aria-hidden="true" style="visibility:hidden">Need help with a property?</p>
+          <h2 aria-hidden="true" style="visibility:hidden;font-size:1.9rem;text-transform:uppercase;margin-bottom:8px">Tell us what the property needs</h2>
+          <p aria-hidden="true" style="visibility:hidden;font-size:.93rem;margin-bottom:26px">
+            Homeowners, landlords, investors and estate executors. {SITE.phone}.
+          </p>
+
+          <div class="info-block">
+            <h3>Who this is for</h3>
+            <div class="info-row"><span class="k">Homeowners</span><span class="v">Vacant or second properties</span></div>
+            <div class="info-row"><span class="k">Estates</span><span class="v">Inherited property cleanup</span></div>
+            <div class="info-row"><span class="k">Investors</span><span class="v">Rental turnover, foreclosures</span></div>
+            <div class="info-row"><span class="k">Agents</span><span class="v">Listing-ready cleanouts</span></div>
+          </div>
+
+          <div class="info-block">
+            <h3>Contact details</h3>
+            <div class="info-row"><span class="k">Phone</span><span class="v"><a href={SITE.telHref}>{SITE.phone}</a></span></div>
+            <div class="info-row"><span class="k">Email</span><span class="v"><a href={SITE.mailtoHref}>{SITE.email}</a></span></div>
+          </div>
+        </div>
+
+      </div>
+    </div>
+  </section>
+
+  <section class="cta-band cta-band--photo cta-band--fractured">
+    <div class="cta-bg" style="background-image:url('/images/home-crew-carrying-ladders-on-a-commercial-job-si.webp')"></div>
+    <svg class="cta-fracture" viewBox="0 0 1440 400" preserveAspectRatio="none" aria-hidden="true" focusable="false">
+      <polygon class="frac-plate" points="0,400 1440,400 1440,362 1306,382 1178,344 1012,370 872,322 706,346 566,300 432,324 268,270 176,292 0,262" />
+      <path class="frac-line" d="M0,262 L176,292 L268,270 L432,324 L566,300 L706,346 L872,322 L1012,370 L1178,344 L1306,382 L1440,362" />
+      <path class="frac-branch" d="M432,324 L466,262 L450,222" />
+      <path class="frac-branch" d="M872,322 L842,380 L860,400" />
+      <path class="frac-branch" d="M176,292 L152,350" />
+      <path class="frac-branch" d="M1178,344 L1206,296" />
+      <path class="frac-branch frac-branch--fine" d="M706,346 L680,394" />
+      <path class="frac-branch frac-branch--fine" d="M566,300 L588,254" />
+    </svg>
+    <div class="wrap">
+      <div class="cta-inner">
+        <div>
+          <h2>Something changed at the property?</h2>
+          <p>Broken lock, storm damage, a tenant just moved out - call and we will get someone out.</p>
+        </div>
+        <div class="cta-actions">
+          <a class="btn btn--red" href="#quote">Get a free assessment</a>
+          <a class="btn btn--ghost" href={SITE.telHref}>Call {SITE.phone}</a>
+        </div>
+      </div>
+    </div>
+  </section>
+</BaseLayout>

@@ -1,0 +1,25 @@
+---
+import BaseLayout from "../layouts/BaseLayout.astro";
+import PPStateBody from "../components/PPStateBody.astro";
+import { PP_STATES } from "../data/property-preservation";
+import { graph, breadcrumbs } from "../lib/schema";
+
+const pp = PP_STATES.find((s) => s.slug === "massachusetts")!;
+const jsonLd = graph([
+  breadcrumbs([
+    { name: "Home", path: "/" },
+    { name: "Property Preservation", path: "/property-preservation/" },
+    { name: pp.state, path: pp.path },
+  ]),
+]);
+---
+<BaseLayout
+  title={`${pp.state} Property Preservation Services`}
+  description={`Vacant property maintenance, cleanouts, winterization, board-up and repairs across ${pp.state}. Free property assessment, written report every visit.`}
+  path={pp.path}
+  active={pp.path}
+  jsonLd={jsonLd}
+  preloadImage="/images/home-handyman.webp"
+>
+  <PPStateBody pp={pp} heroImage="/images/home-handyman.webp" />
+</BaseLayout>

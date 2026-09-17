@@ -1618,3 +1618,33 @@ html:has(.dash-body){height:100%}
   border:none;border-radius:0;
 }
 .vdash-main{overflow-y:auto;height:100%}
+
+/* --- Property Preservation (homeowner vertical, added 2026-09) ---
+   No per-service photography exists yet, so these are text cards, not the
+   image-led .card/.card-media pattern the commercial services grid uses. */
+.pp-grid{
+  display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:20px;
+}
+.pp-card{
+  background:var(--white);border:1px solid var(--line);border-radius:var(--radius);
+  padding:22px 22px 20px;border-top:3px solid var(--red);
+}
+.pp-card h3{
+  font-family:var(--display);font-weight:700;font-size:1.12rem;
+  text-transform:uppercase;letter-spacing:.02em;color:var(--navy-900);margin:0 0 8px;
+}
+.pp-card p{color:var(--steel);font-size:.93rem;margin:0;line-height:1.55}
+
+.pp-states{
+  display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:20px;
+}
+.pp-state-card{
+  background:var(--paper);border:1px solid var(--line);border-radius:var(--radius);
+  padding:22px;display:flex;flex-direction:column;gap:10px;
+}
+.pp-state-card h3{
+  font-family:var(--display);font-weight:700;font-size:1.3rem;
+  text-transform:uppercase;color:var(--navy-900);margin:0;
+}
+.pp-state-card p{color:var(--steel);font-size:.92rem;margin:0;line-height:1.55;flex:1}
+.pp-state-card a.card-link{align-self:flex-start}

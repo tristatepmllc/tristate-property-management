@@ -19,7 +19,7 @@ const hasReviews = TESTIMONIALS.length > 0;
 ---
 <BaseLayout
   title="Property Management and Building Maintenance - Tristate"
-  description="Full-service property management and building maintenance in CT, MA, IL, FL and AR. Our own crews, one number to call, one invoice, 24/7 emergency response."
+  description={`Property maintenance & preservation for homeowners and commercial buildings in ${SERVED_ABBR}. Our own crews, one number to call, 24/7 emergency response.`}
   path="/"
   active="/"
   jsonLd={jsonLd}
@@ -225,6 +225,25 @@ const hasReviews = TESTIMONIALS.length > 0;
           <a class="btn btn--red" href="/contact/">Get a free quote</a>
           <a class="btn btn--outline" href="/why-tristate/">How we work</a>
         </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ================= HOMEOWNER CTA ================= -->
+<section class="cta-band">
+  <div class="wrap">
+    <div class="cta-inner">
+      <div>
+        <h2>Need help with a property?</h2>
+        <p>
+          Homeowners, landlords, investors and property owners - tell us what your property
+          needs, from a vacant-property check to a full cleanout.
+        </p>
+      </div>
+      <div class="cta-actions">
+        <a class="btn btn--red" href="/property-preservation/#quote">Get a free property assessment</a>
+        <a class="btn btn--ghost" href="/property-preservation/">See property preservation services</a>
       </div>
     </div>
   </div>

@@ -72,12 +72,19 @@ export const SITE = {
    * implies licensed brokerage where only facility work is performed. Leave it
    * empty until confirmed - nothing reads it yet, so nothing is claimed.
    */
+  // Order is deliberate: CT / MA / FL / RI are the primary homeowner /
+  // property-preservation marketing focus (added 2026-09, per client
+  // direction) and are listed first everywhere this array is read
+  // (coverage grid, JSON-LD areaServed, footer). IL and AR are kept - real
+  // commercial footprint, not being dropped - but moved to the end as the
+  // secondary pair rather than removed.
   areaServed: [
     { state: 'Connecticut',   abbr: 'CT', cities: [] as string[] },   // TODO: 3-8 metros
     { state: 'Massachusetts', abbr: 'MA', cities: [] as string[] },   // TODO
-    { state: 'Illinois',      abbr: 'IL', cities: [] as string[] },   // TODO
     { state: 'Florida',       abbr: 'FL', cities: [] as string[] },   // TODO
-    { state: 'Arkansas',      abbr: 'AR', cities: [] as string[] },   // TODO
+    { state: 'Rhode Island',  abbr: 'RI', cities: [] as string[] },   // TODO - added 2026-09
+    { state: 'Illinois',      abbr: 'IL', cities: [] as string[] },   // TODO - secondary
+    { state: 'Arkansas',      abbr: 'AR', cities: [] as string[] },   // TODO - secondary
   ] as AreaServed[],
   hours: [
     { days: ['Monday','Tuesday','Wednesday','Thursday','Friday'], opens: '07:00', closes: '18:00' },
@@ -191,6 +198,11 @@ export const GET_STARTED = [
     href: '/vendor-network/',
     label: 'Become a vendor',
     note: 'Licensed trades applying to take our work orders.',
+  },
+  {
+    href: '/property-preservation/',
+    label: 'Property preservation',
+    note: 'Vacant, inherited and foreclosed property care.',
   },
   {
     href: '/contact/',
