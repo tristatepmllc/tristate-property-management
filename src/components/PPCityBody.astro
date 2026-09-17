@@ -1,0 +1,135 @@
+---
+import { SITE } from '../data/site';
+import { PP_SERVICES, type PPCity } from '../data/property-preservation';
+import LeadFormExtras from './LeadFormExtras.astro';
+
+interface Props {
+  pp: PPCity;
+  heroImage: string;
+}
+const { pp, heroImage } = Astro.props;
+---
+<section class="page-hero">
+  <div class="page-hero-bg" style={`background-image:url('${heroImage}')`}></div>
+  <div class="wrap">
+    <p class="crumb">
+      <a href="/">Home</a> &nbsp;/&nbsp; <a href="/property-preservation/">Property Preservation</a>
+      &nbsp;/&nbsp; <span>{pp.city}, {pp.abbr}</span>
+    </p>
+    <h1>{pp.city} property preservation</h1>
+    <p>
+      Vacant property maintenance, cleanouts, winterization and repairs in and around
+      {pp.city}, {pp.state}. One crew, photos and a written report every visit.
+    </p>
+    <div class="hero-actions" style="margin-top:24px">
+      <a class="btn btn--red" href="#quote">Get a free property assessment</a>
+      <a class="btn btn--ghost" href={SITE.telHref}>Call {SITE.phone}</a>
+    </div>
+  </div>
+</section>
+
+<section class="section section--paper">
+  <div class="wrap">
+    <div class="sec-head">
+      <p class="eyebrow">Serving {pp.city}</p>
+      <h2>What we handle in {pp.city}</h2>
+      <p>Not on the list, or not sure what the property needs? Call and describe it - we will tell you honestly what applies.</p>
+    </div>
+    <div class="pp-grid">
+      {PP_SERVICES.map((s) => (
+        <div class="pp-card">
+          <h3>{s.name}</h3>
+          <p>{s.blurb}</p>
+        </div>
+      ))}
+    </div>
+  </div>
+</section>
+
+<section class="section" id="quote">
+  <div class="wrap">
+    <div class="contact-grid">
+
+      <div>
+        <p class="eyebrow">Need help with a property in {pp.city}?</p>
+        <h2 style="font-size:1.9rem;text-transform:uppercase;margin-bottom:8px">Tell us what the property needs</h2>
+        <p style="color:var(--steel);font-size:.93rem;margin-bottom:26px">
+          Give us the address and what needs doing, and a written price comes back the same
+          working day. Rather talk now? <a href={SITE.telHref}>{SITE.phone}</a>.
+        </p>
+
+        <div class="form-card">
+          <form
+            action="/api/leads"
+            method="post"
+            data-lead-form
+            data-source={`${pp.slug}-property-preservation`}
+            data-thanks-heading="Thank you - we've got it."
+            data-success="We will call to confirm the property and scope, usually the same business day."
+            novalidate
+          >
+            <input type="hidden" name="urgency" value="Property preservation enquiry" />
+            <input type="hidden" name="building" value={`${pp.city}, ${pp.abbr}`} />
+
+            <div class="field-row">
+              <div class="field">
+                <label for="ppc-name">Your name <span class="req">*</span></label>
+                <input type="text" id="ppc-name" name="name" autocomplete="name" placeholder="Jane Whitfield" required />
+              </div>
+              <div class="field">
+                <label for="ppc-phone">Phone <span class="req">*</span></label>
+                <input type="tel" id="ppc-phone" name="phone" autocomplete="tel" placeholder="(203) 000-0000" required />
+              </div>
+            </div>
+
+            <div class="field">
+              <label for="ppc-address">Property address <span class="req">*</span></label>
+              <input type="text" id="ppc-address" name="address" autocomplete="street-address" placeholder={`Street, ${pp.city}, ${pp.abbr}`} required />
+            </div>
+
+            <div class="field">
+              <label for="ppc-service">Service needed <span class="req">*</span></label>
+              <select id="ppc-service" name="service" required>
+                <option value="">Choose a service&hellip;</option>
+                {PP_SERVICES.map((s) => <option>{s.name}</option>)}
+                <option>Multiple services / not sure yet</option>
+              </select>
+            </div>
+
+            <div class="field">
+              <label for="ppc-email">Email</label>
+              <input type="email" id="ppc-email" name="email" autocomplete="email" placeholder="jane@email.com" />
+            </div>
+
+            <LeadFormExtras source={`${pp.slug}-property-preservation`} />
+
+            <button type="submit" class="btn btn--red btn--wide">Get my free property assessment</button>
+
+            <p class="form-note">
+              No cost, no obligation. Your details are never passed to a third party - see our
+              <a href="/privacy-policy/">privacy policy</a>.
+            </p>
+          </form>
+        </div>
+      </div>
+
+      <div>
+        <p class="eyebrow" aria-hidden="true" style="visibility:hidden">Need help with a property?</p>
+        <h2 aria-hidden="true" style="visibility:hidden;font-size:1.9rem;text-transform:uppercase;margin-bottom:8px">Tell us what the property needs</h2>
+        <p aria-hidden="true" style="visibility:hidden;font-size:.93rem;margin-bottom:26px">Rather talk now? {SITE.phone}.</p>
+
+        <div class="info-block">
+          <h3>Contact details</h3>
+          <div class="info-row"><span class="k">Phone</span><span class="v"><a href={SITE.telHref}>{SITE.phone}</a></span></div>
+          <div class="info-row"><span class="k">Email</span><span class="v"><a href={SITE.mailtoHref}>{SITE.email}</a></span></div>
+        </div>
+        <div class="info-block">
+          <h3>More coverage</h3>
+          <div class="info-row"><span class="k">{pp.state}</span><span class="v"><a href={`/${pp.stateSlug}-property-preservation/`}>All of {pp.state}</a></span></div>
+          <div class="info-row"><span class="k">All 12</span><span class="v"><a href="/property-preservation/">See every service</a></span></div>
+        </div>
+      </div>
+
+    </div>
+  </div>
+</section>

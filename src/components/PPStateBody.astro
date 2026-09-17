@@ -1,6 +1,6 @@
 ---
 import { SITE } from '../data/site';
-import { PP_SERVICES, type PPState } from '../data/property-preservation';
+import { PP_SERVICES, PP_CITIES, type PPState } from '../data/property-preservation';
 import LeadFormExtras from './LeadFormExtras.astro';
 
 interface Props {
@@ -8,6 +8,7 @@ interface Props {
   heroImage: string;
 }
 const { pp, heroImage } = Astro.props;
+const cities = PP_CITIES.filter((c) => c.stateSlug === pp.slug);
 ---
 <section class="page-hero">
   <div class="page-hero-bg" style={`background-image:url('${heroImage}')`}></div>
@@ -42,7 +43,27 @@ const { pp, heroImage } = Astro.props;
   </div>
 </section>
 
-<section class="section" id="quote">
+{cities.length > 0 && (
+  <section class="section section--tight">
+    <div class="wrap">
+      <div class="sec-head">
+        <p class="eyebrow">Cities in {pp.state}</p>
+        <h2>Local pages</h2>
+      </div>
+      <div class="pp-states">
+        {cities.map((c) => (
+          <div class="pp-state-card">
+            <h3>{c.city}</h3>
+            <p>Property preservation services in and around {c.city}, {c.abbr}.</p>
+            <a class="card-link" href={c.path}>{c.city} property preservation <span>&rarr;</span></a>
+          </div>
+        ))}
+      </div>
+    </div>
+  </section>
+)}
+
+<section class={`section${cities.length > 0 ? ' section--paper' : ''}`} id="quote">
   <div class="wrap">
     <div class="contact-grid">
 

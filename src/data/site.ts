@@ -79,10 +79,10 @@ export const SITE = {
   // commercial footprint, not being dropped - but moved to the end as the
   // secondary pair rather than removed.
   areaServed: [
-    { state: 'Connecticut',   abbr: 'CT', cities: [] as string[] },   // TODO: 3-8 metros
-    { state: 'Massachusetts', abbr: 'MA', cities: [] as string[] },   // TODO
-    { state: 'Florida',       abbr: 'FL', cities: [] as string[] },   // TODO
-    { state: 'Rhode Island',  abbr: 'RI', cities: [] as string[] },   // TODO - added 2026-09
+    { state: 'Connecticut',   abbr: 'CT', cities: ['Hartford'] as string[] },
+    { state: 'Massachusetts', abbr: 'MA', cities: ['Boston'] as string[] },
+    { state: 'Florida',       abbr: 'FL', cities: ['Jacksonville'] as string[] },
+    { state: 'Rhode Island',  abbr: 'RI', cities: ['Providence'] as string[] },   // added 2026-09
     { state: 'Illinois',      abbr: 'IL', cities: [] as string[] },   // TODO - secondary
     { state: 'Arkansas',      abbr: 'AR', cities: [] as string[] },   // TODO - secondary
   ] as AreaServed[],

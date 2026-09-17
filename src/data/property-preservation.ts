@@ -49,6 +49,33 @@ export const PP_SERVICES: PPService[] = [
     blurb: 'Cleaning and repairs between tenants so the unit is ready to re-list with as little vacancy time as possible.' },
 ];
 
+export type PPCity = {
+  slug: string;
+  city: string;
+  stateSlug: string;
+  state: string;
+  abbr: string;
+  path: string;
+};
+
+/**
+ * First flagship city per primary state - matches the one city each state
+ * in `SITE.areaServed` carries so far (added 2026-09). More metros can be
+ * added to both places together as they are confirmed; a city page should
+ * not exist for a town `SITE.areaServed` does not also list, and vice versa,
+ * or the coverage grid and the page set drift apart.
+ */
+export const PP_CITIES: PPCity[] = [
+  { slug: 'hartford', city: 'Hartford', stateSlug: 'connecticut', state: 'Connecticut', abbr: 'CT',
+    path: '/hartford-property-preservation/' },
+  { slug: 'boston', city: 'Boston', stateSlug: 'massachusetts', state: 'Massachusetts', abbr: 'MA',
+    path: '/boston-property-preservation/' },
+  { slug: 'jacksonville', city: 'Jacksonville', stateSlug: 'florida', state: 'Florida', abbr: 'FL',
+    path: '/jacksonville-property-preservation/' },
+  { slug: 'providence', city: 'Providence', stateSlug: 'rhode-island', state: 'Rhode Island', abbr: 'RI',
+    path: '/providence-property-preservation/' },
+];
+
 export type PPState = {
   slug: string;
   state: string;
