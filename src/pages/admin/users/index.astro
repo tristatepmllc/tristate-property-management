@@ -7,7 +7,7 @@ import { requireAdmin } from '../../../lib/require-admin';
 import { STAFF_ROLES, staffRoleOf, staffRoleLabel, toMs, fmtDate, relTime } from '../../../lib/admin';
 
 /**
- * Team & roles (owners only). Add staff with a role and a temporary
+ * Users (admins only). Add users with a role and a temporary
  * password, change roles, reset passwords, remove access. What each role
  * can do is listed on the page so nobody has to guess.
  */
@@ -31,12 +31,12 @@ const ALPHABET = 'ABCDEFGHJKMNPQRSTUVWXYZabcdefghjkmnpqrstuvwxyz23456789';
 const temp = () => Array.from(crypto.getRandomValues(new Uint32Array(12)), (n) => ALPHABET[n % ALPHABET.length]).join('');
 const newPassword = temp();
 ---
-<AdminLayout title="Team & roles" active="team" admin={admin} heading="Team & roles"
-  subheading="Who can sign in to the admin panel and what each person can do.">
+<AdminLayout title="Users" active="team" admin={admin} heading="Users"
+  subheading="Everyone who can sign in to the admin panel, and their role.">
   <div class="adm-grid-2">
     <div>
       <div class="adm-card">
-        <h2>Staff ({staff.length})</h2>
+        <h2>Users ({staff.length})</h2>
         <div class="adm-table-wrap">
           <table class="adm-table">
             <thead><tr><th>Person</th><th>Role</th><th>Last active</th><th></th></tr></thead>
@@ -90,14 +90,14 @@ const newPassword = temp();
 
     <div>
       <div class="adm-card">
-        <h2>Add staff member</h2>
+        <h2>Add new user</h2>
         <form class="adm-form" data-admin-form data-endpoint="/api/admin/team" data-method="POST">
           <div class="field"><label for="tm-name">Name <span class="req">*</span></label><input type="text" id="tm-name" name="name" required /></div>
           <div class="field"><label for="tm-email">Work email <span class="req">*</span></label><input type="email" id="tm-email" name="email" required /></div>
           <div class="field">
             <label for="tm-role">Role <span class="req">*</span></label>
             <select id="tm-role" name="staffRole" required>
-              {STAFF_ROLES.map((r) => <option value={r.value} selected={r.value === 'sales'}>{r.label}</option>)}
+              {STAFF_ROLES.map((r) => <option value={r.value} selected={r.value === 'editor'}>{r.label}</option>)}
             </select>
           </div>
           <div class="field">
@@ -105,13 +105,13 @@ const newPassword = temp();
             <input type="text" id="tm-pass" name="password" value={newPassword} minlength="10" required autocomplete="off" />
             <p class="form-note">Copy it first. They sign in at /tspm-admin.</p>
           </div>
-          <button type="submit" class="btn btn--red btn--wide">Add to team</button>
+          <button type="submit" class="btn btn--red btn--wide">Add user</button>
           <p class="form-status" role="status" aria-live="polite" hidden></p>
         </form>
       </div>
 
       <div class="adm-card">
-        <h2>What each role can do</h2>
+        <h2>Roles</h2>
         <dl class="adm-dl">
           {STAFF_ROLES.map((r) => <><dt>{r.label}</dt><dd>{r.blurb}</dd></>)}
         </dl>

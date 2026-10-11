@@ -8,13 +8,13 @@ import { STAFF_ROLE_VALUES, staffRoleOf } from '../../../../lib/admin';
 export const prerender = false;
 
 /**
- * PATCH /api/admin/team/[id] - owners only. One of:
+ * PATCH /api/admin/team/[id] - admins only (Users page). One of:
  *   { staffRole }            change role
  *   { password }             set a temporary password (signs them out)
  *   { action: 'disable' }    remove admin access: role -> 'disabled',
  *                            password removed, all sessions ended
- * Guards: you cannot change or disable yourself, and the last owner can
- * never be demoted or disabled.
+ * Guards: you cannot change or disable yourself, and the last admin can
+ * never be made an editor or removed.
  */
 export const PATCH: APIRoute = async ({ request, params }) => {
   const admin = await requireAdmin(request.headers, 'team');
@@ -31,11 +31,11 @@ export const PATCH: APIRoute = async ({ request, params }) => {
   if (!target || target.role !== 'admin') return json({ error: 'not_found' }, 404);
 
   const isSelf = target.id === admin.id;
-  const targetIsOwner = staffRoleOf(target.staff_role) === 'owner';
-  const owners = await env.DB.prepare(
-    `SELECT COUNT(*) AS n FROM accounts WHERE role = 'admin' AND (staff_role IS NULL OR staff_role = 'owner' OR staff_role NOT IN ('manager','dispatch','sales','viewer'))`
+  const targetIsAdmin = staffRoleOf(target.staff_role) === 'admin';
+  const admins = await env.DB.prepare(
+    `SELECT COUNT(*) AS n FROM accounts WHERE role = 'admin' AND (staff_role IS NULL OR staff_role NOT IN ('editor','dispatch','sales','viewer'))`
   ).first<{ n: number }>();
-  const lastOwner = targetIsOwner && (owners?.n ?? 0) <= 1;
+  const lastOwner = targetIsAdmin && (admins?.n ?? 0) <= 1;
 
   if (typeof b.password === 'string') {
     const pw = b.password;
@@ -59,7 +59,7 @@ export const PATCH: APIRoute = async ({ request, params }) => {
   if (isSelf) return json({ error: 'validation_failed', fields: ['you cannot change your own role or access'] }, 422);
 
   if (b.action === 'disable') {
-    if (lastOwner) return json({ error: 'validation_failed', fields: ['the last owner cannot be removed'] }, 422);
+    if (lastOwner) return json({ error: 'validation_failed', fields: ['the last admin cannot be removed'] }, 422);
     await env.DB.batch([
       env.DB.prepare(`UPDATE accounts SET role = 'disabled', updated_at = ?1 WHERE id = ?2`).bind(Date.now(), target.id),
       env.DB.prepare(`DELETE FROM auth_credentials WHERE account_id = ?1`).bind(target.id),
@@ -70,7 +70,7 @@ export const PATCH: APIRoute = async ({ request, params }) => {
 
   if (typeof b.staffRole === 'string') {
     if (!STAFF_ROLE_VALUES.includes(b.staffRole)) return json({ error: 'invalid_status' }, 422);
-    if (lastOwner && b.staffRole !== 'owner') return json({ error: 'validation_failed', fields: ['the last owner cannot be demoted'] }, 422);
+    if (lastOwner && b.staffRole !== 'admin') return json({ error: 'validation_failed', fields: ['the last admin cannot be made an editor'] }, 422);
     await env.DB.prepare(`UPDATE accounts SET staff_role = ?1, updated_at = ?2 WHERE id = ?3`).bind(b.staffRole, Date.now(), target.id).run();
     return json({ ok: true });
   }

@@ -64,7 +64,7 @@ const ALL_NAV: { key: Section; href: string; label: string; badge?: number; tone
     icon: '<path d="M14.7 6.3a1 1 0 0 0 0 1.4l1.6 1.6a1 1 0 0 0 1.4 0l3.77-3.77a6 6 0 0 1-7.94 7.94l-6.91 6.91a2.12 2.12 0 0 1-3-3l6.91-6.91a6 6 0 0 1 7.94-7.94z"/>' },
   { key: 'clients', perm: 'clients.view', href: '/admin/clients/', label: 'Clients',
     icon: '<circle cx="9" cy="7" r="3"/><path d="M2 21v-2a5 5 0 0 1 5-5h4a5 5 0 0 1 5 5v2"/><path d="M17 11a3 3 0 1 0 0-6M22 21v-2a4 4 0 0 0-3-3.87"/>' },
-  { key: 'team', perm: 'team', href: '/admin/team/', label: 'Team & roles',
+  { key: 'team', perm: 'team', href: '/admin/users/', label: 'Users',
     icon: '<circle cx="12" cy="8" r="4"/><path d="M4 21c0-4 3.5-7 8-7s8 3 8 7"/>' },
 ];
 const NAV = ALL_NAV.filter((n) => !n.perm || can(admin.staffRole, n.perm));
@@ -73,7 +73,6 @@ const SOON: { label: string; icon: string }[] = [
   { label: 'Two-way chat', icon: '<path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/>' },
 ];
 const roleLabel = staffRoleLabel(admin.staffRole);
-const readOnly = admin.staffRole === 'viewer';
 ---
 <!DOCTYPE html>
 <html lang="en-US">
@@ -143,7 +142,6 @@ const readOnly = admin.staffRole === 'viewer';
         </div>
       </header>
       <div class="adm-content">
-        {readOnly && <p class="adm-banner">You have view-only access. Ask an owner if you need to make changes.</p>}
         <slot />
       </div>
     </div>

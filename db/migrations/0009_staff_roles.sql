@@ -4,3 +4,5 @@
 -- Values: owner | manager | dispatch | sales | viewer.
 -- A removed staff member has accounts.role = 'disabled' and no credential.
 ALTER TABLE accounts ADD COLUMN staff_role TEXT;
+-- Update: roles simplified to admin | editor. Older values are read as:
+-- NULL/owner/manager -> admin, dispatch/sales/viewer -> editor (no rewrite needed).

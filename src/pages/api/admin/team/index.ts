@@ -10,7 +10,7 @@ export const prerender = false;
 const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/;
 
 /**
- * POST /api/admin/team - owners only. Add a staff member.
+ * POST /api/admin/team - admins only. Add a new user (Users page).
  * Body: { name, email, staffRole, password }  (temporary password, 10+).
  * Creates an admin-role account with that staff role and a Better Auth
  * credential. An email already used by a client/vendor account is refused

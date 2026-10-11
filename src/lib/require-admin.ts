@@ -18,7 +18,7 @@ export type AdminUser = {
  * pattern), never cached in the session token, so revoking admin access
  * takes effect on the very next request, no sign-out required.
  *
- * staffRole (owner/manager/dispatch/sales/viewer) is read from D1 here too,
+ * staffRole (admin/editor) is read from D1 here too,
  * so a role change applies on the next request. Pass `perm` to also require
  * a permission (APIs do; pages check `can()` for what to show).
  *
@@ -32,7 +32,7 @@ export async function requireAdmin(headers: Headers, perm?: Perm): Promise<Admin
   const user = session.user as typeof session.user & { role?: string };
   if (user.role !== 'admin') return null;
 
-  let staffRole: StaffRole = 'owner';
+  let staffRole: StaffRole = 'admin';
   try {
     await ensureAdminSchema(env.DB);
     const row = await env.DB.prepare(`SELECT role, staff_role FROM accounts WHERE id = ?1`)
@@ -42,7 +42,7 @@ export async function requireAdmin(headers: Headers, perm?: Perm): Promise<Admin
     staffRole = staffRoleOf(row.staff_role);
   } catch (e) {
     console.error('require_admin_role_lookup_failed', String(e).slice(0, 200));
-    staffRole = 'viewer';
+    staffRole = 'editor';
   }
   if (perm && !can(staffRole, perm)) return null;
 
