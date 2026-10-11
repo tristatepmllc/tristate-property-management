@@ -131,6 +131,10 @@ function init(): void {
           say(
             data.error === 'challenge_failed'
               ? 'The spam check did not pass. Please reload the page and try again.'
+              : data.error === 'rate_limited'
+              ? 'You have reached the daily limit for online requests. Please call us instead.'
+              : data.error === 'validation_failed'
+              ? 'Please fill in the required fields and try again.'
               : 'Something went wrong. Please call us instead - we answer 24/7.'
           );
         }

@@ -8,6 +8,8 @@ import { SITE } from '../data/site';
 import { getAuth } from '../lib/auth';
 import { THROTTLE_WINDOW_MS, THROTTLE_MAX } from './api/portal/request-service';
 import VendorDashboard from '../components/portal/VendorDashboard.astro';
+import ClientDashboard from '../components/portal/ClientDashboard.astro';
+import { ensureReviewsTable } from '../lib/reviews';
 import JobHistoryTable from '../components/portal/JobHistoryTable.astro';
 import CashbackLedgerTable from '../components/portal/CashbackLedgerTable.astro';
 import ProfileForm from '../components/portal/ProfileForm.astro';
@@ -118,6 +120,54 @@ if (session) {
   }
 }
 
+// ------------------------------------------------- client-only extras
+// Each in its own try so one failing query (e.g. a column a migration has
+// not reached yet) degrades only its own panel, not the whole dashboard.
+type RequestRow = {
+  id: string; service: string | null; urgency: string | null; address: string | null;
+  status: string; created_at: number;
+};
+type VendorRow = { id: string; name: string | null; company: string | null; trade: string | null };
+type ReviewRow = { job_id: string; vendor_id: string; rating: number; comment: string | null; updated_at: number };
+let requests: RequestRow[] = [];
+let vendors: VendorRow[] = [];
+let reviews: ReviewRow[] = [];
+
+if (session && user?.role === 'client') {
+  try {
+    const r = await env.DB.prepare(
+      `SELECT id, service, urgency, address, status, created_at
+       FROM leads WHERE account_id = ?1 ORDER BY created_at DESC LIMIT 100`
+    ).bind(session.user.id).all<RequestRow>();
+    requests = r.results ?? [];
+  } catch (e) {
+    console.error('portal_requests_query_failed', String(e).slice(0, 300));
+  }
+
+  const vendorIds = [...new Set(jobs.map((j) => j.vendor_id).filter((v): v is string => !!v))].slice(0, 90);
+  if (vendorIds.length > 0) {
+    try {
+      const placeholders = vendorIds.map((_, i) => `?${i + 1}`).join(',');
+      const v = await env.DB.prepare(
+        `SELECT id, name, company, trade FROM accounts WHERE id IN (${placeholders})`
+      ).bind(...vendorIds).all<VendorRow>();
+      vendors = v.results ?? [];
+    } catch (e) {
+      console.error('portal_vendors_query_failed', String(e).slice(0, 300));
+    }
+  }
+
+  try {
+    await ensureReviewsTable(env.DB);
+    const rv = await env.DB.prepare(
+      `SELECT job_id, vendor_id, rating, comment, updated_at FROM job_reviews WHERE account_id = ?1`
+    ).bind(session.user.id).all<ReviewRow>();
+    reviews = rv.results ?? [];
+  } catch (e) {
+    console.error('portal_reviews_query_failed', String(e).slice(0, 300));
+  }
+}
+
 const canRequestService = user?.role === 'client' && recentRequestCount < THROTTLE_MAX;
 
 const balance = (balanceCents / 100).toLocaleString('en-US', { style: 'currency', currency: 'USD' });
@@ -135,6 +185,19 @@ const licenseExpiresValue = user?.licenseExpires
         user={user}
         jobCount={jobCount}
         jobs={jobs}
+        licenseExpiresValue={licenseExpiresValue}
+      />
+    ) : user?.role === 'client' ? (
+      <ClientDashboard
+        user={{ ...user, id: session.user.id }}
+        jobs={jobs}
+        requests={requests}
+        vendors={vendors}
+        reviews={reviews}
+        ledgerEntries={ledgerEntries}
+        balanceCents={balanceCents}
+        canRequestService={canRequestService}
+        recentRequestCount={recentRequestCount}
         licenseExpiresValue={licenseExpiresValue}
       />
     ) : (

@@ -44,11 +44,10 @@ const { title, user } = Astro.props;
 const displayName = user?.name || user?.email || 'Account';
 const initial = displayName.charAt(0).toUpperCase();
 const roleLabel = user?.role === 'vendor' ? 'Vendor' : user?.role === 'admin' ? 'Admin' : 'Client';
-// Only vendor has a collapsible sidebar (.vdash-side) to toggle - client/
-// admin render the flat single-column dashboard with nothing to hide, so
-// the hamburger simply doesn't exist on their pages rather than sitting
-// there disabled with nothing to do.
-const hasSidebar = user?.role === 'vendor';
+// Vendor and client dashboards both use the .vdash sidebar shell; admin
+// still renders the flat single-column dashboard with nothing to hide, so
+// the hamburger simply doesn't exist there rather than sitting disabled.
+const hasSidebar = user?.role === 'vendor' || user?.role === 'client';
 ---
 <!DOCTYPE html>
 <html lang="en-US">
@@ -131,6 +130,10 @@ const hasSidebar = user?.role === 'vendor';
 
   <script>
     import '../scripts/vendor-dashboard';
+    import '../scripts/client-dashboard';
+    // Portal request-service form posts through the same handler as the
+    // public lead forms; without this import it fell back to a native GET.
+    import '../scripts/lead-form';
     import '../scripts/dashboard-shell';
     import '../scripts/account-settings';
   </script>

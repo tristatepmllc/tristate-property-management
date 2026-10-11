@@ -183,6 +183,22 @@ CREATE TABLE IF NOT EXISTS job_documents (
 );
 CREATE INDEX IF NOT EXISTS idx_job_documents_job ON job_documents(job_id, created_at DESC);
 
+-- ----------------------------------------------------------- job_reviews
+-- Client -> vendor rating, one per job (see migration 0007 and
+-- src/lib/reviews.ts, which also creates this table on first use).
+CREATE TABLE IF NOT EXISTS job_reviews (
+  id          TEXT PRIMARY KEY,
+  job_id      TEXT NOT NULL UNIQUE REFERENCES jobs(id) ON DELETE CASCADE,
+  account_id  TEXT NOT NULL REFERENCES accounts(id) ON DELETE CASCADE,
+  vendor_id   TEXT NOT NULL REFERENCES accounts(id) ON DELETE CASCADE,
+  rating      INTEGER NOT NULL CHECK (rating BETWEEN 1 AND 5),
+  comment     TEXT,
+  created_at  INTEGER NOT NULL,
+  updated_at  INTEGER NOT NULL
+);
+CREATE INDEX IF NOT EXISTS idx_job_reviews_vendor ON job_reviews(vendor_id);
+CREATE INDEX IF NOT EXISTS idx_job_reviews_account ON job_reviews(account_id);
+
 -- ---------------------------------------------------------------- cashback
 -- Append-only ledger. Balance = SUM(amount_cents). Never mutate a balance field.
 CREATE TABLE IF NOT EXISTS cashback_ledger (

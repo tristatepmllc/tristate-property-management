@@ -1667,3 +1667,186 @@ html:has(.dash-body){height:100%}
 @media (max-width:940px){
   .pp-local{grid-template-columns:1fr;gap:28px}
 }
+
+/* ==========================================================================
+   Client dashboard (.cdash) - layers on the shared .vdash shell.
+   ========================================================================== */
+.cdash .vdash-nav-item{position:relative}
+.cdash-nav-count{
+  margin-left:auto;min-width:20px;height:20px;padding:0 6px;border-radius:10px;
+  background:rgba(255,255,255,.14);color:var(--white);
+  font-size:.7rem;font-weight:700;display:inline-flex;align-items:center;justify-content:center;
+}
+.cdash-nav-count--red{background:var(--red)}
+.vdash-nav-item.is-active .cdash-nav-count{background:rgba(255,255,255,.25)}
+.vdash.is-sidebar-hidden .cdash-nav-count{display:none}
+.cdash-new-btn{padding:9px 16px;font-size:.84rem}
+
+.cdash-stats{grid-template-columns:repeat(4,1fr)}
+.cdash-stats--3{grid-template-columns:repeat(3,1fr)}
+.cdash-stat{text-align:left;cursor:pointer;font:inherit;width:100%;transition:border-color .15s,box-shadow .15s}
+.cdash-stat:hover{border-color:var(--navy-600);box-shadow:var(--shadow-sm)}
+@media (max-width:1100px){.cdash-stats{grid-template-columns:repeat(2,1fr)}}
+@media (max-width:520px){.cdash-stats,.cdash-stats--3{grid-template-columns:1fr}}
+
+.cdash-card-head{display:flex;align-items:center;justify-content:space-between;gap:12px;margin-bottom:12px}
+.cdash-card-head h3{margin:0}
+.cdash-empty{color:var(--steel);font-size:.9rem;margin:0}
+.cdash-muted{color:var(--steel-light);font-size:.85rem}
+.btn--sm{padding:7px 14px;font-size:.8rem}
+
+/* Needs-attention list */
+.cdash-todo{list-style:none;margin:0;padding:0;display:grid;gap:10px}
+.cdash-todo li{display:flex;align-items:center;gap:12px;padding:10px 12px;border:1px solid var(--line);border-radius:6px}
+.cdash-todo-dot{flex:none;width:9px;height:9px;border-radius:50%;background:var(--navy-600)}
+.cdash-todo-dot--red{background:var(--red)}
+.cdash-todo-dot--muted{background:var(--steel-light)}
+.cdash-todo-text{flex:1;font-size:.88rem;color:var(--navy-800)}
+.cdash-todo-text b{margin-right:4px}
+.cdash-todo-link{font-size:.84rem;font-weight:600;color:var(--red);text-decoration:none;white-space:nowrap}
+.cdash-todo-link:hover{color:var(--red-dark)}
+
+/* Progress dots */
+.cdash-progress{display:inline-flex;gap:4px;align-items:center}
+.cdash-progress span{width:22px;height:5px;border-radius:3px;background:var(--paper-2)}
+.cdash-progress span.is-done{background:var(--red)}
+.cdash-progress--lg span{width:30px;height:6px}
+
+/* Compact job rows (dashboard) */
+.cdash-joblist{display:grid;gap:8px}
+.cdash-jobrow{
+  display:grid;grid-template-columns:1fr auto;grid-template-areas:"title prog" "sub prog";
+  gap:2px 14px;align-items:center;padding:10px 12px;border:1px solid var(--line);border-radius:6px;
+  text-decoration:none;color:inherit;transition:border-color .15s;
+}
+.cdash-jobrow:hover{border-color:var(--navy-600)}
+.cdash-jobrow-title{grid-area:title;font-weight:600;color:var(--navy-900);font-size:.92rem}
+.cdash-jobrow-sub{grid-area:sub;color:var(--steel);font-size:.8rem}
+.cdash-jobrow .cdash-progress{grid-area:prog}
+
+/* Activity items as links */
+a.vdash-activity-item{text-decoration:none;color:inherit;border-radius:6px}
+a.vdash-activity-item:hover .vdash-activity-text p:first-child{color:var(--red)}
+
+/* Request form */
+.cdash-request form{max-width:760px}
+.cdash-howitworks{display:grid;grid-template-columns:repeat(4,1fr);gap:12px}
+.cdash-howitworks > div{display:flex;gap:10px;align-items:flex-start;padding:14px;border:1px solid var(--line);border-radius:8px;background:var(--paper)}
+.cdash-howitworks span{
+  flex:none;width:26px;height:26px;border-radius:50%;background:var(--navy-900);color:var(--white);
+  display:flex;align-items:center;justify-content:center;font-weight:700;font-size:.8rem;
+}
+.cdash-howitworks p{margin:0;font-size:.82rem;color:var(--steel);line-height:1.45}
+.cdash-howitworks b{display:block;color:var(--navy-900);font-size:.88rem;margin-bottom:2px}
+@media (max-width:900px){.cdash-howitworks{grid-template-columns:repeat(2,1fr)}}
+@media (max-width:480px){.cdash-howitworks{grid-template-columns:1fr}}
+
+/* Tabs */
+.cdash-tabs{display:flex;gap:6px;flex-wrap:wrap;margin:0 0 16px;border-bottom:1px solid var(--line);padding-bottom:10px}
+.cdash-tab{
+  border:1px solid var(--line);background:var(--white);border-radius:20px;padding:6px 14px;
+  font:500 .84rem var(--body);color:var(--navy-800);cursor:pointer;
+}
+.cdash-tab span{margin-left:4px;color:var(--steel-light);font-weight:600}
+.cdash-tab.is-active{background:var(--navy-900);border-color:var(--navy-900);color:var(--white)}
+.cdash-tab.is-active span{color:#B9C9DE}
+
+/* Job cards */
+.cdash-jobcards{display:grid;gap:10px}
+.cdash-jobcard{
+  display:grid;grid-template-columns:1.4fr 1fr auto;gap:16px;align-items:center;
+  padding:14px 16px;border:1px solid var(--line);border-radius:8px;background:var(--white);
+}
+.cdash-jobcard:hover{border-color:var(--navy-600)}
+.cdash-jobcard-title{font-weight:700;color:var(--navy-900);text-decoration:none;font-size:.98rem}
+.cdash-jobcard-title:hover{color:var(--red)}
+.cdash-jobcard-meta,.cdash-jobcard-vendor{margin:3px 0 0;font-size:.8rem;color:var(--steel)}
+.cdash-jobcard-vendor b{color:var(--navy-800)}
+.cdash-jobcard-steps{display:flex;flex-direction:column;gap:7px;align-items:flex-start}
+.cdash-jobcard-side{display:flex;flex-direction:column;align-items:flex-end;gap:7px}
+.cdash-jobcard-amount{margin:0;font-family:var(--display);font-size:1.15rem;color:var(--navy-900)}
+.cdash-stage{font-size:.74rem;font-weight:700;text-transform:uppercase;letter-spacing:.04em;padding:3px 9px;border-radius:12px}
+.cdash-stage--awaiting{background:var(--paper-2);color:var(--navy-700)}
+.cdash-stage--active{background:var(--red-soft);color:var(--red-dark)}
+.cdash-stage--completed{background:var(--navy-900);color:var(--white)}
+.cdash-stage--cancelled{background:var(--paper);color:var(--steel-light)}
+@media (max-width:760px){
+  .cdash-jobcard{grid-template-columns:1fr}
+  .cdash-jobcard-side{flex-direction:row;align-items:center;justify-content:space-between}
+}
+
+/* Stars */
+.cdash-stars{color:#E8A317;letter-spacing:2px;font-size:1rem;line-height:1}
+
+/* Vendors */
+.cdash-banner{
+  background:var(--red-soft);border:1px solid #F5C6C8;border-radius:8px;padding:12px 16px;
+  margin-bottom:16px;font-size:.88rem;color:var(--navy-800);display:flex;flex-wrap:wrap;gap:6px 10px;align-items:center;
+}
+.cdash-banner a{margin-left:auto;font-weight:700;color:var(--red);text-decoration:none}
+.cdash-vendors{display:grid;grid-template-columns:repeat(auto-fill,minmax(260px,1fr));gap:14px}
+.cdash-vendor{border:1px solid var(--line);border-radius:8px;padding:18px;background:var(--white)}
+.cdash-vendor-head{display:flex;gap:12px;align-items:center;margin-bottom:12px}
+.cdash-vendor-avatar{
+  flex:none;width:42px;height:42px;border-radius:50%;background:var(--navy-900);color:var(--white);
+  display:flex;align-items:center;justify-content:center;font-weight:700;font-size:1.05rem;
+}
+.cdash-vendor-name{margin:0;font-weight:700;color:var(--navy-900)}
+.cdash-vendor-trade{margin:2px 0 0;font-size:.8rem;color:var(--steel)}
+.cdash-vendor-rating{display:flex;align-items:center;gap:8px;font-size:.82rem;color:var(--steel);margin-bottom:14px;min-height:20px}
+.cdash-vendor-stats{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;border-top:1px solid var(--line);padding-top:12px}
+.cdash-vendor-stats div{display:flex;flex-direction:column;gap:2px}
+.cdash-vendor-stats b{font-size:.9rem;color:var(--navy-900)}
+.cdash-vendor-stats span{font-size:.72rem;color:var(--steel-light);text-transform:uppercase;letter-spacing:.03em}
+
+/* Tables: numeric column + stacked rows on phones */
+.cdash-table .num{text-align:right;white-space:nowrap}
+@media (max-width:640px){
+  .cdash-table thead{display:none}
+  .cdash-table tr{display:block;border-bottom:1px solid var(--line);padding:8px 0}
+  .cdash-table td{display:flex;justify-content:space-between;gap:12px;border:none;padding:4px 10px}
+  .cdash-table td::before{content:attr(data-label);color:var(--steel-light);font-size:.78rem}
+  .cdash-table td.num{text-align:right}
+}
+
+.cdash-cashback-balance{font-family:var(--display);font-size:2.2rem;color:var(--navy-900);margin:0 0 6px}
+
+/* Phone: sidebar becomes a horizontal, scrollable tab strip */
+@media (max-width:860px){
+  .cdash .vdash-side{flex-direction:row;overflow-x:auto;padding:10px;gap:6px;-webkit-overflow-scrolling:touch}
+  .cdash .vdash-nav-item{width:auto;flex:none;white-space:nowrap;padding:9px 12px}
+  .cdash .vdash-side-foot{display:none}
+  .cdash .vdash-main{padding:20px 16px 26px}
+}
+
+/* ==========================================================================
+   Job detail - client view: timeline, vendor card, rating
+   ========================================================================== */
+.jd-timeline{list-style:none;margin:18px 0 4px;padding:0;display:grid;grid-template-columns:repeat(5,1fr);gap:0}
+.jd-timeline li{position:relative;text-align:center;font-size:.8rem;color:var(--steel-light);padding-top:30px}
+.jd-timeline li::before{
+  content:"";position:absolute;top:6px;left:50%;transform:translateX(-50%);
+  width:16px;height:16px;border-radius:50%;background:var(--white);border:2px solid var(--line);z-index:1;
+}
+.jd-timeline li::after{content:"";position:absolute;top:13px;left:-50%;width:100%;height:2px;background:var(--line)}
+.jd-timeline li:first-child::after{display:none}
+.jd-timeline li.is-done{color:var(--navy-900);font-weight:600}
+.jd-timeline li.is-done::before{background:var(--red);border-color:var(--red)}
+.jd-timeline li.is-done::after{background:var(--red)}
+.jd-timeline li.is-current::before{box-shadow:0 0 0 4px var(--red-soft)}
+@media (max-width:560px){
+  .jd-timeline{grid-template-columns:1fr;gap:10px}
+  .jd-timeline li{text-align:left;padding:0 0 0 28px}
+  .jd-timeline li::before{top:0;left:0;transform:none}
+  .jd-timeline li::after{display:none}
+}
+
+.jd-rate-stars{display:inline-flex;flex-direction:row-reverse;gap:4px;margin:6px 0 14px}
+.jd-rate-stars input{position:absolute;opacity:0;width:1px;height:1px}
+.jd-rate-stars label{font-size:2rem;line-height:1;color:var(--paper-2);cursor:pointer;transition:color .1s}
+.jd-rate-stars label:hover,
+.jd-rate-stars label:hover ~ label,
+.jd-rate-stars input:checked ~ label{color:#E8A317}
+.jd-rate-stars input:focus-visible + label{outline:2px solid var(--navy-600);outline-offset:2px;border-radius:3px}
+.form-status.is-error{color:var(--red-dark)}
+.jd-rate-stars{border:0;padding:0;margin:6px 0 14px}

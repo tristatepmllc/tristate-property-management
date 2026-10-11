@@ -1,0 +1,675 @@
+---
+/**
+ * Client dashboard - the property owner's side of the portal.
+ *
+ * Same sidebar shell as VendorDashboard (.vdash / [data-panel-link] /
+ * [data-panel]) so both roles get one consistent app, not two designs.
+ * Reference category is a service-request platform (ServiceChannel,
+ * Housecall Pro customer portal), not a rent/lease tool - see the handoff
+ * notes on what this business is.
+ *
+ * Everything here is computed from props portal.astro already loaded:
+ * jobs, the client's own requests (leads.account_id), vendor display
+ * rows for vendors on those jobs, the client's own reviews, and the
+ * cashback ledger. No queries in this component.
+ *
+ * Vendor phone/email are deliberately NOT shown to clients: Tristate
+ * dispatches and stays the point of contact. Name/company and trade only.
+ */
+import ProfileForm from './ProfileForm.astro';
+import AccountSettingsPanel from './AccountSettingsPanel.astro';
+import CashbackLedgerTable from './CashbackLedgerTable.astro';
+import { SITE, SERVICE_CATEGORIES } from '../../data/site';
+import { PP_SERVICES } from '../../data/property-preservation';
+
+type JobRow = {
+  id: string; service: string | null; description: string | null; status: string;
+  vendor_id: string | null; vendor_response: string;
+  scheduled_at: number | null; completed_at: number | null; amount_cents: number | null; created_at: number;
+};
+type RequestRow = {
+  id: string; service: string | null; urgency: string | null; address: string | null;
+  status: string; created_at: number;
+};
+type VendorRow = { id: string; name: string | null; company: string | null; trade: string | null };
+type ReviewRow = { job_id: string; vendor_id: string; rating: number; comment: string | null; updated_at: number };
+type LedgerRow = { id: string; job_id: string | null; amount_cents: number; reason: string; created_at: number };
+
+interface Props {
+  user: {
+    id?: string;
+    name?: string | null; email?: string | null; company?: string | null; phone?: string | null;
+    address?: string | null; city?: string | null; state?: string | null; zip?: string | null;
+    propertyType?: string | null; preferredContact?: string | null; notes?: string | null;
+    role?: 'client' | 'vendor' | 'admin';
+  } | undefined;
+  jobs: JobRow[];
+  requests: RequestRow[];
+  vendors: VendorRow[];
+  reviews: ReviewRow[];
+  ledgerEntries: LedgerRow[];
+  balanceCents: number;
+  canRequestService: boolean;
+  recentRequestCount: number;
+  licenseExpiresValue: string;
+}
+const {
+  user, jobs, requests, vendors, reviews, ledgerEntries, balanceCents,
+  canRequestService, recentRequestCount, licenseExpiresValue,
+} = Astro.props;
+
+// Only jobs where this account is the client. portal.astro's query also
+// matches vendor_id = me, which never applies to a client account, but
+// filtering here keeps the meaning exact.
+const myJobs = jobs.filter((j) => j.vendor_id !== user?.id);
+
+// ---------------------------------------------------------------- helpers
+const TZ = 'America/New_York';
+const fmtDate = (ms: number) => new Date(ms).toLocaleDateString('en-US', { dateStyle: 'medium', timeZone: TZ });
+const fmtCents = (c: number) => (c / 100).toLocaleString('en-US', { style: 'currency', currency: 'USD' });
+const relTime = (ms: number) => {
+  const diffMin = Math.round((Date.now() - ms) / 60000);
+  if (diffMin < 60) return `${Math.max(diffMin, 0)} min ago`;
+  const diffH = Math.round(diffMin / 60);
+  if (diffH < 24) return `${diffH}h ago`;
+  const diffD = Math.round(diffH / 24);
+  return diffD < 30 ? `${diffD}d ago` : fmtDate(ms);
+};
+
+const vendorById = new Map(vendors.map((v) => [v.id, v]));
+const reviewByJob = new Map(reviews.map((r) => [r.job_id, r]));
+const vendorName = (id: string | null) => {
+  if (!id) return null;
+  const v = vendorById.get(id);
+  return v ? v.company || v.name || 'Assigned vendor' : 'Assigned vendor';
+};
+const titleCase = (s: string) => s.charAt(0).toUpperCase() + s.slice(1);
+
+// Where a job sits, from the client's point of view. One function so the
+// tabs, counts, progress bar and labels can never disagree.
+type Stage = 'awaiting' | 'active' | 'completed' | 'cancelled';
+const stageOf = (j: JobRow): Stage =>
+  j.status === 'cancelled' ? 'cancelled'
+  : j.status === 'completed' ? 'completed'
+  : j.status === 'in_progress' || j.vendor_response === 'accepted' ? 'active'
+  : 'awaiting';
+
+const STEPS = ['Requested', 'Vendor assigned', 'Scheduled', 'In progress', 'Completed'];
+const stepOf = (j: JobRow): number =>
+  j.status === 'completed' ? 4
+  : j.status === 'in_progress' ? 3
+  : j.vendor_response === 'accepted' ? 2
+  : j.vendor_response === 'pending' ? 1
+  : 0;
+const stageLabel = (j: JobRow): string => {
+  const s = stageOf(j);
+  if (s === 'cancelled') return 'Cancelled';
+  if (s === 'completed') return 'Completed';
+  if (j.status === 'in_progress') return 'In progress';
+  if (j.vendor_response === 'accepted') return 'Scheduled';
+  if (j.vendor_response === 'pending') return 'Vendor confirming';
+  return 'Assigning a vendor';
+};
+
+const awaiting = myJobs.filter((j) => stageOf(j) === 'awaiting');
+const active = myJobs.filter((j) => stageOf(j) === 'active');
+const completed = myJobs.filter((j) => stageOf(j) === 'completed');
+const cancelled = myJobs.filter((j) => stageOf(j) === 'cancelled');
+const toRate = completed.filter((j) => j.vendor_id && !reviewByJob.has(j.id));
+
+// Requests (leads) - client-facing words for the admin pipeline statuses.
+const REQUEST_LABEL: Record<string, string> = {
+  new: 'Received', contacted: 'In review', quoted: 'Quote sent', won: 'Scheduled', lost: 'Closed',
+};
+const openRequests = requests.filter((r) => r.status === 'new' || r.status === 'contacted' || r.status === 'quoted');
+
+// Vendors who have worked (or are working) on this client's jobs.
+type VendorSummary = {
+  id: string; name: string; trade: string | null;
+  done: number; activeCount: number; last: number; avg: number | null; ratedCount: number;
+};
+const vendorSummaries: VendorSummary[] = [...new Set(myJobs.map((j) => j.vendor_id).filter((v): v is string => !!v))]
+  .map((id) => {
+    const theirJobs = myJobs.filter((j) => j.vendor_id === id && j.vendor_response !== 'declined');
+    const theirReviews = reviews.filter((r) => r.vendor_id === id);
+    const avg = theirReviews.length
+      ? theirReviews.reduce((t, r) => t + r.rating, 0) / theirReviews.length
+      : null;
+    return {
+      id,
+      name: vendorName(id) ?? 'Vendor',
+      trade: vendorById.get(id)?.trade ?? null,
+      done: theirJobs.filter((j) => j.status === 'completed').length,
+      activeCount: theirJobs.filter((j) => stageOf(j) === 'active').length,
+      last: Math.max(...theirJobs.map((j) => j.completed_at ?? j.created_at), 0),
+      avg,
+      ratedCount: theirReviews.length,
+    };
+  })
+  .filter((v) => v.done + v.activeCount > 0)
+  .sort((a, b) => b.last - a.last);
+
+// Billing - job amounts on file. Completed jobs are what has been billed.
+const billed = myJobs.filter((j) => j.amount_cents != null && j.status !== 'cancelled');
+const yearStart = new Date(new Date().getFullYear(), 0, 1).getTime();
+const totalBilled = billed.filter((j) => j.status === 'completed').reduce((t, j) => t + (j.amount_cents ?? 0), 0);
+const ytdBilled = billed
+  .filter((j) => j.status === 'completed' && (j.completed_at ?? j.created_at) >= yearStart)
+  .reduce((t, j) => t + (j.amount_cents ?? 0), 0);
+const upcomingCents = billed.filter((j) => j.status !== 'completed').reduce((t, j) => t + (j.amount_cents ?? 0), 0);
+
+// Activity feed - requests and jobs together, newest first.
+type ActivityItem = { at: number; title: string; sub: string; href?: string; icon: 'req' | 'job' | 'done' };
+const activity: ActivityItem[] = [
+  ...requests.map((r): ActivityItem => ({
+    at: r.created_at, icon: 'req',
+    title: `Request: ${r.service || 'Service request'}`,
+    sub: REQUEST_LABEL[r.status] ?? titleCase(r.status),
+  })),
+  ...myJobs.map((j): ActivityItem => ({
+    at: j.completed_at ?? j.created_at, icon: j.status === 'completed' ? 'done' : 'job',
+    title: j.service || j.description || 'Job',
+    sub: `${stageLabel(j)}${vendorName(j.vendor_id) ? ` · ${vendorName(j.vendor_id)}` : ''}`,
+    href: `/portal/jobs/${j.id}`,
+  })),
+].sort((a, b) => b.at - a.at).slice(0, 7);
+
+const nyHour = Number(new Date().toLocaleString('en-US', { hour: 'numeric', hour12: false, timeZone: TZ }));
+const greeting = nyHour < 12 ? 'Good morning' : nyHour < 18 ? 'Good afternoon' : 'Good evening';
+const todayLabel = new Date().toLocaleDateString('en-US', { day: 'numeric', month: 'long', year: 'numeric', timeZone: TZ });
+const firstName = (user?.name || user?.email || '').split(' ')[0];
+
+const propertyLine = [user?.address, [user?.city, user?.state].filter(Boolean).join(', '), user?.zip]
+  .filter((x) => x && String(x).trim())
+  .join(' ');
+const PROPERTY_TYPE: Record<string, string> = {
+  single_family: 'Single-family', multifamily: 'Multifamily', commercial: 'Commercial',
+  mixed_use: 'Mixed use', other: 'Other',
+};
+const todayIso = new Date().toISOString().slice(0, 10);
+const stars = (n: number) => '★★★★★'.slice(0, Math.round(n)) + '☆☆☆☆☆'.slice(0, 5 - Math.round(n));
+---
+<div class="vdash cdash">
+  <aside class="vdash-side">
+    <button type="button" class="vdash-nav-item is-active" data-panel-link="dashboard" title="Dashboard">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="9" rx="1" /><rect x="14" y="3" width="7" height="5" rx="1" /><rect x="14" y="12" width="7" height="9" rx="1" /><rect x="3" y="16" width="7" height="5" rx="1" /></svg>
+      <span class="vdash-nav-label">Dashboard</span>
+    </button>
+    <button type="button" class="vdash-nav-item" data-panel-link="request" title="Request service">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="9" /><path d="M12 8v8M8 12h8" /></svg>
+      <span class="vdash-nav-label">Request service</span>
+    </button>
+    <button type="button" class="vdash-nav-item" data-panel-link="requests" title="My requests">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 11l3 3L22 4" /><path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11" /></svg>
+      <span class="vdash-nav-label">My requests</span>
+      {openRequests.length > 0 && <span class="cdash-nav-count">{openRequests.length}</span>}
+    </button>
+    <button type="button" class="vdash-nav-item" data-panel-link="jobs" title="My jobs">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="7" width="18" height="14" rx="2" /><path d="M8 7V5a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2" /></svg>
+      <span class="vdash-nav-label">My jobs</span>
+      {awaiting.length + active.length > 0 && <span class="cdash-nav-count">{awaiting.length + active.length}</span>}
+    </button>
+    <button type="button" class="vdash-nav-item" data-panel-link="vendors" title="My vendors">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="9" cy="7" r="3" /><path d="M2 21v-2a5 5 0 0 1 5-5h4a5 5 0 0 1 5 5v2" /><path d="M17 11a3 3 0 1 0 0-6M22 21v-2a4 4 0 0 0-3-3.87" /></svg>
+      <span class="vdash-nav-label">My vendors</span>
+      {toRate.length > 0 && <span class="cdash-nav-count cdash-nav-count--red">{toRate.length}</span>}
+    </button>
+    <button type="button" class="vdash-nav-item" data-panel-link="billing" title="Billing">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" /><path d="M14 2v6h6M9 13h6M9 17h6" /></svg>
+      <span class="vdash-nav-label">Billing</span>
+    </button>
+    <button type="button" class="vdash-nav-item" data-panel-link="cashback" title="Cashback rewards">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="9" /><path d="M15 9.5a3 3 0 0 0-3-1.5c-1.7 0-3 .9-3 2s1.3 1.8 3 2 3 .9 3 2-1.3 2-3 2a3 3 0 0 1-3-1.5M12 6v2M12 16v2" /></svg>
+      <span class="vdash-nav-label">Cashback</span>
+    </button>
+    <a class="vdash-nav-item" href={SITE.telHref} title="Call support">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="9" /><path d="M9.5 9a2.5 2.5 0 0 1 5 0c0 1.5-2.5 2-2.5 3.5" /><path d="M12 17h.01" /></svg>
+      <span class="vdash-nav-label">Help: {SITE.phone}</span>
+    </a>
+    <div class="vdash-side-foot">
+      <form data-logout-form>
+        <button type="submit" class="vdash-nav-item" title="Sign out">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4" /><path d="M16 17l5-5-5-5" /><path d="M21 12H9" /></svg>
+          <span class="vdash-nav-label">Sign out</span>
+        </button>
+      </form>
+    </div>
+  </aside>
+
+  <div class="vdash-main">
+    <div class="vdash-topbar">
+      <div class="vdash-greeting">
+        <h2>{greeting}, <span>{firstName}!</span></h2>
+        <p id="vdash-panel-subtitle">Everything on your property, in one place.</p>
+      </div>
+      <div class="vdash-topbar-right">
+        <span class="vdash-date-chip">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="4" width="18" height="18" rx="2" /><path d="M16 2v4M8 2v4M3 10h18" /></svg>
+          {todayLabel}
+        </span>
+        <button type="button" class="btn btn--red cdash-new-btn" data-panel-link="request">+ New request</button>
+      </div>
+    </div>
+
+    <!-- ============================================ DASHBOARD -->
+    <div class="vdash-panel is-active" data-panel="dashboard" data-subtitle="Everything on your property, in one place.">
+      <div class="vdash-stats cdash-stats">
+        <button type="button" class="vdash-stat cdash-stat" data-panel-link="requests">
+          <p class="vdash-stat-label">Open requests</p>
+          <p class="vdash-stat-value">{openRequests.length}</p>
+          <p class="vdash-stat-note">{openRequests.length === 0 ? 'Nothing waiting on us' : 'Being reviewed or quoted'}</p>
+        </button>
+        <button type="button" class="vdash-stat cdash-stat" data-panel-link="jobs" data-jobs-tab="active">
+          <p class="vdash-stat-label">Active jobs</p>
+          <p class="vdash-stat-value">{active.length + awaiting.length}</p>
+          <p class="vdash-stat-note">{awaiting.length > 0 ? `${awaiting.length} awaiting a vendor` : 'Scheduled or in progress'}</p>
+        </button>
+        <button type="button" class="vdash-stat cdash-stat" data-panel-link="jobs" data-jobs-tab="completed">
+          <p class="vdash-stat-label">Completed</p>
+          <p class="vdash-stat-value">{completed.length}</p>
+          <p class="vdash-stat-note">{completed.length === 0 ? 'No finished jobs yet' : `Last: ${fmtDate(Math.max(...completed.map((j) => j.completed_at ?? j.created_at)))}`}</p>
+        </button>
+        <button type="button" class="vdash-stat cdash-stat" data-panel-link="cashback">
+          <p class="vdash-stat-label">Cashback</p>
+          <p class="vdash-stat-value">{fmtCents(balanceCents)}</p>
+          <p class="vdash-stat-note">Rewards balance</p>
+        </button>
+      </div>
+
+      <div class="vdash-grid-2">
+        <div>
+          <div class="vdash-profile-card">
+            <h3>Needs your attention</h3>
+            {toRate.length === 0 && awaiting.length === 0 && requests.filter((r) => r.status === 'quoted').length === 0 ? (
+              <p class="cdash-empty">You're all caught up.</p>
+            ) : (
+              <ul class="cdash-todo">
+                {toRate.map((j) => (
+                  <li>
+                    <span class="cdash-todo-dot cdash-todo-dot--red"></span>
+                    <span class="cdash-todo-text"><b>Rate your vendor</b> {j.service || 'Job'} by {vendorName(j.vendor_id)}</span>
+                    <a class="cdash-todo-link" href={`/portal/jobs/${j.id}#rate`}>Rate</a>
+                  </li>
+                ))}
+                {requests.filter((r) => r.status === 'quoted').map((r) => (
+                  <li>
+                    <span class="cdash-todo-dot"></span>
+                    <span class="cdash-todo-text"><b>Quote sent</b> {r.service || 'Service request'} - check your email or call us to approve</span>
+                    <a class="cdash-todo-link" href={SITE.telHref}>Call</a>
+                  </li>
+                ))}
+                {awaiting.map((j) => (
+                  <li>
+                    <span class="cdash-todo-dot cdash-todo-dot--muted"></span>
+                    <span class="cdash-todo-text"><b>{stageLabel(j)}</b> {j.service || 'Job'} - no action needed</span>
+                    <a class="cdash-todo-link" href={`/portal/jobs/${j.id}`}>View</a>
+                  </li>
+                ))}
+              </ul>
+            )}
+          </div>
+
+          <div class="vdash-profile-card">
+            <div class="cdash-card-head">
+              <h3>Jobs in progress</h3>
+              <button type="button" class="link-btn" data-panel-link="jobs">View all</button>
+            </div>
+            {active.length + awaiting.length === 0 ? (
+              <p class="cdash-empty">No open jobs. <button type="button" class="link-btn" data-panel-link="request">Request service</button></p>
+            ) : (
+              <div class="cdash-joblist">
+                {[...active, ...awaiting].slice(0, 4).map((j) => (
+                  <a class="cdash-jobrow" href={`/portal/jobs/${j.id}`}>
+                    <span class="cdash-jobrow-title">{j.service || j.description || 'Job'}</span>
+                    <span class="cdash-jobrow-sub">{stageLabel(j)}{vendorName(j.vendor_id) && j.vendor_response !== 'declined' ? ` · ${vendorName(j.vendor_id)}` : ''}{j.scheduled_at ? ` · ${fmtDate(j.scheduled_at)}` : ''}</span>
+                    <span class="cdash-progress" aria-label={`Step ${stepOf(j) + 1} of ${STEPS.length}: ${STEPS[stepOf(j)]}`}>
+                      {STEPS.map((_, i) => <span class={i <= stepOf(j) ? 'is-done' : ''}></span>)}
+                    </span>
+                  </a>
+                ))}
+              </div>
+            )}
+          </div>
+        </div>
+
+        <div>
+          <div class="vdash-profile-card">
+            <div class="cdash-card-head">
+              <h3>Your property</h3>
+              <button type="button" class="link-btn" data-panel-link="profile">Edit</button>
+            </div>
+            <div class="vdash-profile-rows">
+              <p class="vdash-profile-row">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z" /><circle cx="12" cy="10" r="3" /></svg>
+                <b>Address</b>{propertyLine || 'Not set'}
+              </p>
+              <p class="vdash-profile-row">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 10l9-7 9 7v10a1 1 0 0 1-1 1H4a1 1 0 0 1-1-1z" /></svg>
+                <b>Type</b>{(user?.propertyType && PROPERTY_TYPE[user.propertyType]) || 'Not set'}
+              </p>
+              <p class="vdash-profile-row">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20.9 16.9a2 2 0 0 1-2.2.4c-1-.4-2-1-2.9-1.7a12.6 12.6 0 0 1-3.4-3.4c-.7-.9-1.3-1.9-1.7-2.9a2 2 0 0 1 .4-2.2l1-1a1 1 0 0 1 1.5.1l1.5 2a1 1 0 0 1-.1 1.3l-.6.6c.4.9 1 1.7 1.7 2.4.7.7 1.5 1.3 2.4 1.7l.6-.6a1 1 0 0 1 1.3-.1l2 1.5a1 1 0 0 1 .1 1.5z" /></svg>
+                <b>Phone</b>{user?.phone || 'Not set'}
+              </p>
+            </div>
+            {!propertyLine && <p class="form-note">Add your property address once and every request fills it in for you.</p>}
+          </div>
+
+          <div class="vdash-activity">
+            <h3>Recent activity</h3>
+            {activity.length === 0 ? (
+              <p class="vdash-activity-empty">Nothing yet. Your first request will show up here.</p>
+            ) : (
+              <div class="vdash-activity-list">
+                {activity.map((a) => {
+                  const Tag = a.href ? 'a' : 'div';
+                  return (
+                    <Tag class="vdash-activity-item" href={a.href}>
+                      <span class="vdash-activity-icon">
+                        {a.icon === 'req' ? (
+                          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="9" /><path d="M12 8v8M8 12h8" /></svg>
+                        ) : a.icon === 'done' ? (
+                          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 6L9 17l-5-5" /></svg>
+                        ) : (
+                          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="7" width="18" height="14" rx="2" /><path d="M8 7V5a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2" /></svg>
+                        )}
+                      </span>
+                      <div class="vdash-activity-text">
+                        <p>{a.title}</p>
+                        <p>{a.sub} &middot; {relTime(a.at)}</p>
+                      </div>
+                    </Tag>
+                  );
+                })}
+              </div>
+            )}
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ============================================ REQUEST SERVICE -->
+    <div class="vdash-panel" data-panel="request" data-subtitle="Tell us what the property needs. We confirm the same working day." hidden>
+      <div class="vdash-profile-card cdash-request">
+        <h3>Request service</h3>
+        {canRequestService ? (
+          <form data-lead-form action="/api/portal/request-service" data-source="portal-request-service"
+            data-thanks-heading="Request received"
+            data-success="We'll review it and confirm by your preferred contact method, usually the same working day. Track it under My requests."
+            novalidate>
+            <div class="field-row">
+              <div class="field">
+                <label for="rs-service">Service needed <span class="req">*</span></label>
+                <select id="rs-service" name="service" required>
+                  <option value="">Choose a service&hellip;</option>
+                  <optgroup label="Property maintenance &amp; preservation">
+                    {PP_SERVICES.map((s) => <option>{s.name}</option>)}
+                  </optgroup>
+                  <optgroup label="Trades &amp; building services">
+                    {SERVICE_CATEGORIES.map((c) => <option>{c.name}</option>)}
+                  </optgroup>
+                  <option>Multiple services / not sure</option>
+                </select>
+              </div>
+              <div class="field">
+                <label for="rs-urgency">How urgent?</label>
+                <select id="rs-urgency" name="urgency">
+                  <option value="">Choose&hellip;</option>
+                  <option>Emergency - today</option>
+                  <option>Within 48 hours</option>
+                  <option>This week</option>
+                  <option>Planning ahead / budgeting</option>
+                </select>
+              </div>
+            </div>
+
+            <div class="field">
+              <label for="rs-address">Property address <span class="req">*</span></label>
+              <input type="text" id="rs-address" name="address" autocomplete="street-address" value={propertyLine} required placeholder="Street, city, state" />
+            </div>
+
+            <div class="field-row">
+              <div class="field">
+                <label for="rs-date">Preferred date</label>
+                <input type="date" id="rs-date" name="preferred_date" min={todayIso} />
+              </div>
+              <div class="field">
+                <label for="rs-phone">Best phone <span class="req">*</span></label>
+                <input type="tel" id="rs-phone" name="phone" autocomplete="tel" value={user?.phone || ''} required />
+              </div>
+            </div>
+
+            <div class="field">
+              <label for="rs-details">Describe the job <span class="req">*</span></label>
+              <textarea id="rs-details" name="details" required placeholder="What needs doing, and where on the property. The more detail, the more accurate the quote."></textarea>
+            </div>
+
+            <div class="field">
+              <label for="rs-access">Access notes</label>
+              <textarea id="rs-access" name="access_notes" placeholder="Lockbox code, gate, tenant to contact, pets on site...">{user?.notes || ''}</textarea>
+            </div>
+
+            <input type="hidden" name="source" value="portal-request-service" />
+            <button type="submit" class="btn btn--red">Submit request</button>
+            <p class="form-status" role="status" aria-live="polite" hidden></p>
+            <p class="form-note">Need someone right now? Call <a href={SITE.telHref}>{SITE.phone}</a>.</p>
+          </form>
+        ) : (
+          <p class="form-note">
+            You've sent {recentRequestCount} requests in the last 24 hours, which is the limit for online
+            requests. For anything else today, call <a href={SITE.telHref}>{SITE.phone}</a>.
+          </p>
+        )}
+      </div>
+
+      <div class="cdash-howitworks">
+        <div><span>1</span><p><b>You request</b>Tell us the job and the address.</p></div>
+        <div><span>2</span><p><b>We review &amp; quote</b>Written price before any work starts.</p></div>
+        <div><span>3</span><p><b>Vendor assigned</b>A vetted, insured pro is scheduled.</p></div>
+        <div><span>4</span><p><b>Done &amp; rated</b>Photos on completion. You rate the vendor.</p></div>
+      </div>
+    </div>
+
+    <!-- ============================================ MY REQUESTS -->
+    <div class="vdash-panel" data-panel="requests" data-subtitle="Every request you've sent us, and where it stands." hidden>
+      <div class="vdash-profile-card">
+        <div class="cdash-card-head">
+          <h3>My requests</h3>
+          <button type="button" class="btn btn--outline btn--sm" data-panel-link="request">+ New request</button>
+        </div>
+        {requests.length === 0 ? (
+          <p class="cdash-empty">No requests yet. <button type="button" class="link-btn" data-panel-link="request">Send your first one</button></p>
+        ) : (
+          <div class="admin-table-wrap">
+            <table class="admin-table cdash-table">
+              <thead><tr><th>Submitted</th><th>Service</th><th>Property</th><th>Urgency</th><th>Status</th></tr></thead>
+              <tbody>
+                {requests.map((r) => (
+                  <tr>
+                    <td data-label="Submitted">{fmtDate(r.created_at)}</td>
+                    <td data-label="Service">{r.service || '-'}</td>
+                    <td data-label="Property">{r.address || '-'}</td>
+                    <td data-label="Urgency">{r.urgency || '-'}</td>
+                    <td data-label="Status"><span class={`admin-status admin-status--${r.status}`}>{REQUEST_LABEL[r.status] ?? titleCase(r.status)}</span></td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        )}
+        <p class="form-note">Once a request is approved it becomes a job under <button type="button" class="link-btn" data-panel-link="jobs">My jobs</button>.</p>
+      </div>
+    </div>
+
+    <!-- ============================================ MY JOBS -->
+    <div class="vdash-panel" data-panel="jobs" data-subtitle="Track every job from request to completion." hidden>
+      <div class="vdash-profile-card">
+        <h3>My jobs</h3>
+        <div class="cdash-tabs" role="tablist" data-jobs-tabs>
+          <button type="button" role="tab" class="cdash-tab is-active" data-jobs-filter="all" aria-selected="true">All <span>{myJobs.length}</span></button>
+          <button type="button" role="tab" class="cdash-tab" data-jobs-filter="active" aria-selected="false">Active <span>{active.length}</span></button>
+          <button type="button" role="tab" class="cdash-tab" data-jobs-filter="awaiting" aria-selected="false">Awaiting vendor <span>{awaiting.length}</span></button>
+          <button type="button" role="tab" class="cdash-tab" data-jobs-filter="completed" aria-selected="false">Completed <span>{completed.length}</span></button>
+          <button type="button" role="tab" class="cdash-tab" data-jobs-filter="cancelled" aria-selected="false">Cancelled <span>{cancelled.length}</span></button>
+        </div>
+
+        {myJobs.length === 0 ? (
+          <p class="cdash-empty">No jobs yet. Approved requests show up here with live progress.</p>
+        ) : (
+          <div class="cdash-jobcards">
+            {myJobs.map((j) => {
+              const review = reviewByJob.get(j.id);
+              const showVendor = j.vendor_id && j.vendor_response !== 'declined';
+              return (
+                <div class="cdash-jobcard" data-job-stage={stageOf(j)}>
+                  <div class="cdash-jobcard-main">
+                    <a class="cdash-jobcard-title" href={`/portal/jobs/${j.id}`}>{j.service || j.description || 'Job'}</a>
+                    <p class="cdash-jobcard-meta">
+                      Requested {fmtDate(j.created_at)}
+                      {j.scheduled_at ? <> &middot; Scheduled {fmtDate(j.scheduled_at)}</> : null}
+                      {j.completed_at ? <> &middot; Completed {fmtDate(j.completed_at)}</> : null}
+                    </p>
+                    <p class="cdash-jobcard-vendor">
+                      {showVendor ? <>Vendor: <b>{vendorName(j.vendor_id)}</b></> : 'Vendor: being assigned'}
+                    </p>
+                  </div>
+                  <div class="cdash-jobcard-steps">
+                    <span class={`cdash-stage cdash-stage--${stageOf(j)}`}>{stageLabel(j)}</span>
+                    {stageOf(j) !== 'cancelled' && (
+                      <span class="cdash-progress cdash-progress--lg" aria-label={`Step ${stepOf(j) + 1} of ${STEPS.length}: ${STEPS[stepOf(j)]}`}>
+                        {STEPS.map((_, i) => <span class={i <= stepOf(j) ? 'is-done' : ''}></span>)}
+                      </span>
+                    )}
+                  </div>
+                  <div class="cdash-jobcard-side">
+                    <p class="cdash-jobcard-amount">{j.amount_cents != null ? fmtCents(j.amount_cents) : '-'}</p>
+                    {review ? (
+                      <span class="cdash-stars" aria-label={`You rated ${review.rating} of 5`}>{stars(review.rating)}</span>
+                    ) : j.status === 'completed' && j.vendor_id ? (
+                      <a class="btn btn--red btn--sm" href={`/portal/jobs/${j.id}#rate`}>Rate vendor</a>
+                    ) : (
+                      <a class="btn btn--outline btn--sm" href={`/portal/jobs/${j.id}`}>View</a>
+                    )}
+                  </div>
+                </div>
+              );
+            })}
+            <p class="cdash-empty" data-jobs-empty hidden>No jobs in this view.</p>
+          </div>
+        )}
+      </div>
+    </div>
+
+    <!-- ============================================ MY VENDORS -->
+    <div class="vdash-panel" data-panel="vendors" data-subtitle="The pros who've worked on your property, and how you rated them." hidden>
+      {toRate.length > 0 && (
+        <div class="cdash-banner">
+          <b>{toRate.length} completed job{toRate.length === 1 ? '' : 's'} waiting for your rating.</b>
+          Your ratings decide which vendors we send back to your property.
+          <a href={`/portal/jobs/${toRate[0].id}#rate`}>Rate now</a>
+        </div>
+      )}
+      {vendorSummaries.length === 0 ? (
+        <div class="vdash-profile-card"><h3>My vendors</h3><p class="cdash-empty">No vendors yet. Once a vendor takes one of your jobs, they show up here.</p></div>
+      ) : (
+        <div class="cdash-vendors">
+          {vendorSummaries.map((v) => (
+            <div class="cdash-vendor">
+              <div class="cdash-vendor-head">
+                <span class="cdash-vendor-avatar">{v.name.charAt(0).toUpperCase()}</span>
+                <div>
+                  <p class="cdash-vendor-name">{v.name}</p>
+                  <p class="cdash-vendor-trade">{v.trade ? titleCase(v.trade) : 'Tristate vendor'}</p>
+                </div>
+              </div>
+              <div class="cdash-vendor-rating">
+                {v.avg != null ? (
+                  <>
+                    <span class="cdash-stars" aria-hidden="true">{stars(v.avg)}</span>
+                    <span>{v.avg.toFixed(1)} &middot; your {v.ratedCount} rating{v.ratedCount === 1 ? '' : 's'}</span>
+                  </>
+                ) : (
+                  <span class="cdash-muted">Not rated yet</span>
+                )}
+              </div>
+              <div class="cdash-vendor-stats">
+                <div><b>{v.done}</b><span>Completed</span></div>
+                <div><b>{v.activeCount}</b><span>Active</span></div>
+                <div><b>{v.last ? fmtDate(v.last) : '-'}</b><span>Last job</span></div>
+              </div>
+            </div>
+          ))}
+        </div>
+      )}
+    </div>
+
+    <!-- ============================================ BILLING -->
+    <div class="vdash-panel" data-panel="billing" data-subtitle="Job amounts on your account." hidden>
+      <div class="vdash-stats cdash-stats cdash-stats--3">
+        <div class="vdash-stat">
+          <p class="vdash-stat-label">Billed this year</p>
+          <p class="vdash-stat-value">{fmtCents(ytdBilled)}</p>
+          <p class="vdash-stat-note">Completed jobs since Jan 1</p>
+        </div>
+        <div class="vdash-stat">
+          <p class="vdash-stat-label">Billed all time</p>
+          <p class="vdash-stat-value">{fmtCents(totalBilled)}</p>
+          <p class="vdash-stat-note">All completed jobs</p>
+        </div>
+        <div class="vdash-stat">
+          <p class="vdash-stat-label">Upcoming</p>
+          <p class="vdash-stat-value">{fmtCents(upcomingCents)}</p>
+          <p class="vdash-stat-note">Quoted on open jobs</p>
+        </div>
+      </div>
+      <div class="vdash-profile-card">
+        <h3>Job amounts</h3>
+        {billed.length === 0 ? (
+          <p class="cdash-empty">Nothing billed yet. Amounts appear here once a job is priced.</p>
+        ) : (
+          <div class="admin-table-wrap">
+            <table class="admin-table cdash-table">
+              <thead><tr><th>Date</th><th>Job</th><th>Vendor</th><th>Status</th><th class="num">Amount</th></tr></thead>
+              <tbody>
+                {billed.map((j) => (
+                  <tr>
+                    <td data-label="Date">{fmtDate(j.completed_at ?? j.created_at)}</td>
+                    <td data-label="Job"><a href={`/portal/jobs/${j.id}`}>{j.service || j.description || 'Job'}</a></td>
+                    <td data-label="Vendor">{vendorName(j.vendor_id) ?? '-'}</td>
+                    <td data-label="Status"><span class={`admin-status admin-status--job-${j.status}`}>{j.status.replace('_', ' ')}</span></td>
+                    <td data-label="Amount" class="num">{fmtCents(j.amount_cents ?? 0)}</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        )}
+        <p class="form-note">Questions about a bill? Email <a href={SITE.mailtoHref}>{SITE.email}</a> or call <a href={SITE.telHref}>{SITE.phone}</a>.</p>
+      </div>
+    </div>
+
+    <!-- ============================================ CASHBACK -->
+    <div class="vdash-panel" data-panel="cashback" data-subtitle="Rewards earned on completed jobs." hidden>
+      <div class="vdash-profile-card">
+        <h3>Cashback rewards</h3>
+        <p class="cdash-cashback-balance">{fmtCents(balanceCents)}</p>
+        <p class="form-note">Cashback posts to your account when an eligible job is completed. Ask us how to redeem it on your next job.</p>
+        <CashbackLedgerTable entries={ledgerEntries} />
+      </div>
+    </div>
+
+    <!-- ============================================ PROFILE / SETTINGS (header dropdown) -->
+    <div class="vdash-panel" data-panel="profile" data-subtitle="Your contact details and property." hidden>
+      <div class="vdash-profile-card">
+        <h3>Profile</h3>
+        <ProfileForm user={user} licenseExpiresValue={licenseExpiresValue} />
+      </div>
+    </div>
+    <div class="vdash-panel" data-panel="settings" data-subtitle="Account email and password." hidden>
+      <div class="vdash-profile-card">
+        <h3>Settings</h3>
+        <AccountSettingsPanel email={user?.email} />
+      </div>
+    </div>
+  </div>
+</div>

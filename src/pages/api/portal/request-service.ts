@@ -10,7 +10,9 @@ export const prerender = false;
 // real gate, the UI check just has to agree with it, not duplicate its own
 // separate rule that could drift out of sync.
 export const THROTTLE_WINDOW_MS = 24 * 60 * 60 * 1000;
-export const THROTTLE_MAX = 3;
+// 10, not 3: a client with several properties can reasonably send more
+// than three requests in a day; still low enough to stop a runaway script.
+export const THROTTLE_MAX = 10;
 
 /**
  * POST /api/portal/request-service - client-role only.
@@ -63,7 +65,17 @@ export const POST: APIRoute = async ({ request }) => {
   const phone = str('phone', 40);
   const service = str('service', 80);
   const urgency = str('urgency', 40);
-  const message = str('details', 4000);
+  const details = str('details', 4000);
+  const address = str('address', 300);
+  const preferredDate = str('preferred_date', 20);
+  const access = str('access_notes', 1000);
+
+  // leads has no columns for preferred date / access notes; they go into
+  // the message with labels so the admin leads list shows them as-is.
+  const extra: string[] = [];
+  if (preferredDate) extra.push(`Preferred date: ${preferredDate}`);
+  if (access) extra.push(`Access notes: ${access}`);
+  const message = [details, extra.join('\n')].filter(Boolean).join('\n\n');
 
   const errors: string[] = [];
   if (!phone || phone.replace(/\D/g, '').length < 7) errors.push('phone');
@@ -86,7 +98,7 @@ export const POST: APIRoute = async ({ request }) => {
         user.email,
         phone,
         (user as typeof user & { company?: string | null }).company ?? null,
-        (user as typeof user & { address?: string | null }).address ?? null,
+        address || (user as typeof user & { address?: string | null }).address || null,
         service,
         urgency || null,
         message || null,

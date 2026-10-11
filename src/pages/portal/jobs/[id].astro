@@ -4,6 +4,7 @@ export const prerender = false;
 import { env } from 'cloudflare:workers';
 import DashboardLayout from '../../../layouts/DashboardLayout.astro';
 import { getAuth } from '../../../lib/auth';
+import { ensureReviewsTable } from '../../../lib/reviews';
 
 /**
  * Job detail - the vendor-side workflow (#17-#20 of the job-assignment
@@ -32,7 +33,7 @@ type JobRow = {
   invoice_submitted_at: number | null; invoice_reviewed_at: number | null; invoice_paid_at: number | null;
   invoice_rejected_reason: string | null;
 };
-type AccountRow = { id: string; name: string | null; email: string; phone: string | null; company: string | null };
+type AccountRow = { id: string; name: string | null; email: string; phone: string | null; company: string | null; trade?: string | null };
 type DocRow = {
   id: string; account_id: string; kind: string; filename: string;
   content_type: string | null; size_bytes: number | null; created_at: number;
@@ -72,7 +73,7 @@ const [client, vendor, docsResult] = await Promise.all([
     .bind(job.account_id)
     .first<AccountRow>(),
   job.vendor_id
-    ? env.DB.prepare(`SELECT id, name, email, phone, company FROM accounts WHERE id = ?1`)
+    ? env.DB.prepare(`SELECT id, name, email, phone, company, trade FROM accounts WHERE id = ?1`)
         .bind(job.vendor_id)
         .first<AccountRow>()
     : Promise.resolve(null),
@@ -88,6 +89,35 @@ const fmtDate = (ms: number) =>
 const fmtCents = (c: number) => (c / 100).toLocaleString('en-US', { style: 'currency', currency: 'USD' });
 const fmtBytes = (n: number | null) => (n == null ? '—' : n < 1024 ? `${n} B` : n < 1048576 ? `${(n / 1024).toFixed(1)} KB` : `${(n / 1048576).toFixed(1)} MB`);
 
+// ---------------------------------------------------- client view
+// The job's own client gets a progress timeline and, once the job is
+// completed, a rating form for the vendor (POST .../review). Vendor
+// contact details are not shown to the client - Tristate stays the point
+// of contact.
+const isClientOnThisJob = job.account_id === user.id;
+const CLIENT_STEPS = ['Requested', 'Vendor assigned', 'Scheduled', 'In progress', 'Completed'];
+const clientStep =
+  job.status === 'completed' ? 4
+  : job.status === 'in_progress' ? 3
+  : job.vendor_response === 'accepted' ? 2
+  : job.vendor_response === 'pending' ? 1
+  : 0;
+const canRate = isClientOnThisJob && job.status === 'completed' && !!job.vendor_id;
+
+type ReviewRow = { rating: number; comment: string | null; updated_at: number };
+let review: ReviewRow | null = null;
+if (isClientOnThisJob && job.vendor_id) {
+  try {
+    await ensureReviewsTable(env.DB);
+    review = await env.DB.prepare(`SELECT rating, comment, updated_at FROM job_reviews WHERE job_id = ?1`)
+      .bind(job.id)
+      .first<ReviewRow>();
+  } catch (e) {
+    console.error('job_review_query_failed', job.id, String(e).slice(0, 300));
+  }
+}
+const vendorDisplay = vendor ? vendor.company || vendor.name || 'Assigned vendor' : null;
+
 const STATUS_OPTIONS = [
   { value: 'in_progress', label: 'In progress' },
   { value: 'completed', label: 'Completed' },
@@ -97,7 +127,25 @@ const STATUS_OPTIONS = [
 <DashboardLayout title={`Job - ${job.service || 'Detail'} - Tristate Property Management`} user={user}>
   <div class="dash-content">
     <div class="wrap">
-      <p class="crumb"><a href="/portal/">Portal</a> &nbsp;/&nbsp; <span>Job</span></p>
+      <p class="crumb"><a href={isClientOnThisJob ? '/portal/#jobs' : '/portal/'}>{isClientOnThisJob ? 'My jobs' : 'Portal'}</a> &nbsp;/&nbsp; <span>Job</span></p>
+
+      {isClientOnThisJob && job.status !== 'cancelled' ? (
+        <div class="form-card form-card--wide">
+          <h3>Progress</h3>
+          <ol class="jd-timeline">
+            {CLIENT_STEPS.map((label, i) => (
+              <li class={`${i <= clientStep ? 'is-done' : ''} ${i === clientStep ? 'is-current' : ''}`}>{label}</li>
+            ))}
+          </ol>
+          <p class="form-note">
+            {clientStep === 0 && 'We have your job and are lining up the right vendor.'}
+            {clientStep === 1 && 'A vendor has been offered the job and is confirming.'}
+            {clientStep === 2 && `${vendorDisplay ?? 'Your vendor'} has accepted the job${job.scheduled_at ? ` for ${fmtDate(job.scheduled_at)}` : ''}.`}
+            {clientStep === 3 && 'Work is under way.'}
+            {clientStep === 4 && `Completed${job.completed_at ? ` ${fmtDate(job.completed_at)}` : ''}.`}
+          </p>
+        </div>
+      ) : null}
 
       <div class="form-card form-card--wide">
         <h3>{job.service || job.description || 'Job'}</h3>
@@ -212,6 +260,32 @@ const STATUS_OPTIONS = [
           <p class="form-note">Approved at {fmtCents(job.invoice_amount_cents ?? 0)}. Mark it paid once the payment has actually gone out - this only records that it happened.</p>
           <form data-job-invoice-review-form data-job-id={job.id} novalidate>
             <button type="submit" class="btn btn--navy" data-review-action="mark_paid">Mark paid</button>
+            <p class="form-status" role="status" aria-live="polite" hidden></p>
+          </form>
+        </div>
+      ) : null}
+
+      {canRate ? (
+        <div class="form-card form-card--wide" id="rate">
+          <h3>{review ? 'Your rating' : 'Rate your vendor'}</h3>
+          <p class="form-note">
+            How did {vendorDisplay ?? 'the vendor'} do? Your rating helps us decide who we send back to your property.
+            {review ? ' You can change it any time.' : ''}
+          </p>
+          <form data-review-form data-job-id={job.id} novalidate>
+            <fieldset class="jd-rate-stars" aria-label="Rating out of 5">
+              {[5, 4, 3, 2, 1].map((n) => (
+                <>
+                  <input type="radio" id={`jr-star-${n}`} name="rating" value={String(n)} checked={review?.rating === n} />
+                  <label for={`jr-star-${n}`} title={`${n} star${n === 1 ? '' : 's'}`}>&#9733;</label>
+                </>
+              ))}
+            </fieldset>
+            <div class="field">
+              <label for="jr-comment">Comments (optional)</label>
+              <textarea id="jr-comment" name="comment" maxlength="1000" placeholder="On time? Clean work? Anything we should know?">{review?.comment ?? ''}</textarea>
+            </div>
+            <button type="submit" class="btn btn--red">{review ? 'Update rating' : 'Submit rating'}</button>
             <p class="form-status" role="status" aria-live="polite" hidden></p>
           </form>
         </div>
