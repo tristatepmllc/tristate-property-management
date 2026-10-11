@@ -3,6 +3,7 @@ import { getCollection } from 'astro:content';
 import BaseLayout from '../layouts/BaseLayout.astro';
 import { SERVICE_CATEGORIES } from '../data/site';
 import { PP_STATES, PP_CITIES } from '../data/property-preservation';
+import { AREA_STATES } from '../data/service-areas';
 import { graph, breadcrumbs } from '../lib/schema';
 
 const industries = (await getCollection('industries', ({ data }) => !data.draft))
@@ -72,6 +73,16 @@ const jsonLd = graph([breadcrumbs([{ name: 'Home', path: '/' }, { name: 'Site in
             ))}
             {PP_CITIES.map((c) => (
               <li><a href={c.path}>{c.city} property preservation</a></li>
+            ))}
+          </ul>
+        </div>
+
+        <div>
+          <h2>Service areas</h2>
+          <ul class="footer-links">
+            <li><a href="/service-areas/">All service areas</a></li>
+            {AREA_STATES.map((s) => (
+              <li><a href={`/service-areas/${s.slug}/`}>{s.name}</a></li>
             ))}
           </ul>
         </div>

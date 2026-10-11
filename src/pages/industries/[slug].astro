@@ -5,6 +5,7 @@ import type { GetStaticPaths } from 'astro';
 import BaseLayout from '../../layouts/BaseLayout.astro';
 import { SITE, SERVICE_CATEGORIES, SERVED_SENTENCE } from '../../data/site';
 import { graph, breadcrumbs, industryService, faqPage } from '../../lib/schema';
+import { SERVICE_COUNT } from '../../data/services-catalog';
 
 /**
  * One page per building type.
@@ -129,7 +130,7 @@ const jsonLd = graph([
       </div>
       <div class="areas">
         {trades.map((t) => <span class="area"><a href={`/services/${t.slug}/`}>{t.name}</a></span>)}
-        <span class="area area--wide"><a href="/services/">See all 52 services</a></span>
+        <span class="area area--wide"><a href="/services/">See all {SERVICE_COUNT}+ services</a></span>
       </div>
     </div>
   </section>

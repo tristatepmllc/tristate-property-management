@@ -20,6 +20,7 @@ import ProfileForm from './ProfileForm.astro';
 import AccountSettingsPanel from './AccountSettingsPanel.astro';
 import CashbackLedgerTable from './CashbackLedgerTable.astro';
 import { SITE, SERVICE_CATEGORIES } from '../../data/site';
+import { MOST_REQUESTED, SERVICE_OPTIONS } from '../../data/services-catalog';
 import { PP_SERVICES } from '../../data/property-preservation';
 
 type JobRow = {
@@ -403,12 +404,12 @@ const stars = (n: number) => '★★★★★'.slice(0, Math.round(n)) + '☆☆
                 <label for="rs-service">Service needed <span class="req">*</span></label>
                 <select id="rs-service" name="service" required>
                   <option value="">Choose a service&hellip;</option>
-                  <optgroup label="Property maintenance &amp; preservation">
-                    {PP_SERVICES.map((s) => <option>{s.name}</option>)}
-                  </optgroup>
-                  <optgroup label="Trades &amp; building services">
-                    {SERVICE_CATEGORIES.map((c) => <option>{c.name}</option>)}
-                  </optgroup>
+                  <optgroup label="Most requested">
+        {MOST_REQUESTED.map((s) => <option>{s.name}</option>)}
+      </optgroup>
+      <optgroup label="All service categories">
+        {SERVICE_OPTIONS.map((n) => <option>{n}</option>)}
+      </optgroup>
                   <option>Multiple services / not sure</option>
                 </select>
               </div>

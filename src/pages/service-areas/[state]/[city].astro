@@ -1,0 +1,169 @@
+---
+import type { GetStaticPaths } from 'astro';
+import BaseLayout from '../../../layouts/BaseLayout.astro';
+import QuickQuoteForm from '../../../components/QuickQuoteForm.astro';
+import { SITE } from '../../../data/site';
+import { SERVICE_CATALOG } from '../../../data/services-catalog';
+import { ALL_CITY_PAGES, type CityPage } from '../../../data/service-areas';
+import { graph, breadcrumbs, faqPage } from '../../../lib/schema';
+
+/**
+ * One page per city. Same service catalogue everywhere; what is local is the
+ * city note, county, nearby towns, the state's climate and seasonal work,
+ * and the FAQ answers. See src/data/service-areas.ts.
+ */
+export const getStaticPaths: GetStaticPaths = () =>
+  ALL_CITY_PAGES.map((c) => ({ params: { state: c.state.slug, city: c.slug }, props: { c } }));
+
+const { c } = Astro.props as { c: CityPage };
+const s = c.state;
+const place = `${c.name}, ${s.abbr}`;
+const near = c.nearby.slice(0, 4).map((n) => n.name);
+const nearText = near.length ? `, along with ${near.slice(0, -1).join(', ')}${near.length > 1 ? ' and ' : ''}${near[near.length - 1]}` : '';
+
+const faq = [
+  {
+    q: `Do you provide property maintenance in ${place}?`,
+    a: `Yes. We cover ${c.name} and the rest of ${c.county}${nearText}. The full service list applies here: exterior and interior maintenance, plumbing, electrical, HVAC, cleaning, property preservation, renovations, commercial property services and 24/7 emergency response.`,
+  },
+  {
+    q: `What does a vacant property in ${c.name} need?`,
+    a: s.vacantFaq,
+  },
+  {
+    q: `Can you look after a ${c.name} property if I live out of state?`,
+    a: `Yes. Many of our clients are owners, investors, asset managers and servicers who are not local. Every visit is documented with date-stamped photos and a written report, so you know the condition of the property without being there.`,
+  },
+  {
+    q: `How do I get a quote for a property in ${c.name}?`,
+    a: `Send the address and what needs doing using the form on this page, or call ${SITE.phone}. Most quotes come back in writing the same business day, and photos of the issue help us price it faster.`,
+  },
+];
+
+const jsonLd = graph([
+  breadcrumbs([
+    { name: 'Home', path: '/' },
+    { name: 'Service areas', path: '/service-areas/' },
+    { name: s.name, path: `/service-areas/${s.slug}/` },
+    { name: c.name, path: c.path },
+  ]),
+  {
+    '@type': 'Service',
+    '@id': `${SITE.url}${c.path}#service`,
+    name: `Property maintenance in ${place}`,
+    serviceType: 'Property maintenance',
+    url: `${SITE.url}${c.path}`,
+    provider: { '@id': `${SITE.url}/#localbusiness` },
+    areaServed: {
+      '@type': 'City',
+      name: c.name,
+      containedInPlace: { '@type': 'AdministrativeArea', name: s.name },
+    },
+  },
+  faqPage(faq),
+]);
+---
+<BaseLayout
+  title={`Property Maintenance in ${place} | Tristate`}
+  description={`Property maintenance, repairs and preservation in ${place} (${c.county}): lawn care, gutters, roofing, handyman, plumbing, cleanouts, winterization and 24/7 emergency service.`.slice(0, 160)}
+  path={c.path}
+  active="/services/"
+  jsonLd={jsonLd}
+>
+  <section class="page-hero">
+    <div class="page-hero-bg" style="background-image:url('/images/home-crew-carrying-ladders-on-a-commercial-job-si.webp')"></div>
+    <div class="wrap">
+      <p class="crumb">
+        <a href="/">Home</a> &nbsp;/&nbsp; <a href="/service-areas/">Service areas</a>
+        &nbsp;/&nbsp; <a href={`/service-areas/${s.slug}/`}>{s.name}</a> &nbsp;/&nbsp; <span>{c.name}</span>
+      </p>
+      <h1>Property maintenance in {place}</h1>
+      <p>
+        Repairs, upkeep and property preservation for homes, rentals, vacant properties and
+        commercial buildings in {c.name} and across {c.county}. One call, one crew, photos on every job.
+      </p>
+      <div class="hero-actions" style="margin-top:24px">
+        <a class="btn btn--red" href="#quote">Get a free quote</a>
+        <a class="btn btn--ghost" href={SITE.telHref}>Call {SITE.phone}</a>
+      </div>
+    </div>
+  </section>
+
+  <section class="section section--paper">
+    <div class="wrap">
+      <div class="pp-local">
+        <div>
+          <p class="eyebrow">{c.county}</p>
+          <h2>Looking after property in {c.name}</h2>
+          <p class="pp-local-intro">{c.note}</p>
+          <p class="pp-local-intro">{s.climate}</p>
+          {c.nearby.length > 0 && (
+            <p class="pp-nearby"><strong>Also serving nearby:</strong>{' '}
+              {c.nearby.map((n, i) => (<><a href={n.path}>{n.name}</a>{i < c.nearby.length - 1 ? ', ' : '.'}</>))}
+            </p>
+          )}
+          {c.pp && <p class="pp-nearby"><a href={c.pp}>Property preservation in {c.name} in detail &rarr;</a></p>}
+        </div>
+        <div class="pp-local-list">
+          {s.seasonal.map((x) => (
+            <div class="pp-card">
+              <h3>{x.title}</h3>
+              <p>{x.body}</p>
+            </div>
+          ))}
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section class="section">
+    <div class="wrap">
+      <div class="sec-head">
+        <p class="eyebrow">Services in {c.name}</p>
+        <h2>What we handle in {place}</h2>
+        <p>The same full catalogue we offer everywhere. Not sure what the property needs? Call and describe it.</p>
+      </div>
+      <div class="area-cats">
+        {SERVICE_CATALOG.map((cat) => (
+          <div class="pp-card area-cat">
+            <h3><a href={`/services/#${cat.id}`}>{cat.name}</a></h3>
+            <ul>
+              {cat.items.slice(0, 6).map((i) => <li>{i.name}</li>)}
+            </ul>
+            {cat.items.length > 6 && <a class="area-cat-more" href={`/services/#${cat.id}`}>+ {cat.items.length - 6} more</a>}
+          </div>
+        ))}
+      </div>
+    </div>
+  </section>
+
+  <section class="section section--paper">
+    <div class="wrap">
+      <div class="sec-head">
+        <p class="eyebrow">Straight answers</p>
+        <h2>{c.name} property questions</h2>
+      </div>
+      <div class="faq">
+        {faq.map((f) => (
+          <details>
+            <summary>{f.q}</summary>
+            <div class="answer">{f.a}</div>
+          </details>
+        ))}
+      </div>
+    </div>
+  </section>
+
+  <section class="section" id="quote">
+    <div class="wrap">
+      <div class="sec-head">
+        <p class="eyebrow">{place}</p>
+        <h2>Get a free quote for your {c.name} property</h2>
+        <p>Name, phone, address and the service. We call back with a written price, usually the same business day.</p>
+      </div>
+      <div class="form-card form-card--narrow">
+        <QuickQuoteForm source={`area-${s.abbr.toLowerCase()}-${c.slug}`} idPrefix="aq" />
+      </div>
+    </div>
+  </section>
+</BaseLayout>

@@ -116,6 +116,8 @@ const SOURCE_LABELS: Record<string, string> = {
 export function sourceLabel(src: string | null | undefined): string {
   if (!src) return 'Not tracked';
   if (SOURCE_LABELS[src]) return SOURCE_LABELS[src];
+  const area = src.match(/^area-([a-z]{2})-(.+)$/);
+  if (area) return `City page: ${titleCase(area[2].replace(/-/g, ' '))}, ${area[1].toUpperCase()}`;
   const pp = src.match(/^(.+)-property-preservation$/);
   if (pp) return `Preservation: ${titleCase(pp[1].replace(/-/g, ' '))}`;
   return titleCase(src.replace(/[-_]/g, ' '));

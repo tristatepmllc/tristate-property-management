@@ -46,6 +46,7 @@ const services = defineCollection({
     category: z.enum([
       'cleaning', 'plumbing', 'electrical', 'hvac',
       'handyman', 'painting', 'grounds', 'projects',
+      'commercial', 'emergency',
     ]),
     h1: z.string(),
     /** One-line label above the H1. */

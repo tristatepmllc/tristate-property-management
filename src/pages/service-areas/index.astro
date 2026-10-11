@@ -1,0 +1,61 @@
+---
+import BaseLayout from '../../layouts/BaseLayout.astro';
+import { SITE, SERVED_SENTENCE } from '../../data/site';
+import { AREA_STATES, cityPath, CITY_COUNT } from '../../data/service-areas';
+import { graph, breadcrumbs } from '../../lib/schema';
+
+const jsonLd = graph([breadcrumbs([{ name: 'Home', path: '/' }, { name: 'Service areas', path: '/service-areas/' }])]);
+---
+<BaseLayout
+  title="Service Areas | Tristate Property Management"
+  description={`Property maintenance and preservation in ${CITY_COUNT}+ cities across ${SERVED_SENTENCE}. Find your city and get a free quote.`.slice(0, 160)}
+  path="/service-areas/"
+  active="/services/"
+  jsonLd={jsonLd}
+>
+  <section class="page-hero">
+    <div class="page-hero-bg" style="background-image:url('/images/home-hero-commercial-facility-crew.webp')"></div>
+    <div class="wrap">
+      <p class="crumb"><a href="/">Home</a> &nbsp;/&nbsp; <span>Service areas</span></p>
+      <h1>Service areas</h1>
+      <p>Property maintenance, repairs and property preservation across {SERVED_SENTENCE}. Find your state and city below.</p>
+      <div class="jump">
+        {AREA_STATES.map((s) => <a href={`#${s.slug}`}>{s.name}</a>)}
+      </div>
+    </div>
+  </section>
+
+  {AREA_STATES.map((s, i) => (
+    <section class={`section section--tight${i % 2 === 0 ? ' section--paper' : ''}`} id={s.slug}>
+      <div class="wrap">
+        <div class="sec-head sec-head--wide">
+          <p class="eyebrow">{s.abbr}</p>
+          <h2><a href={`/service-areas/${s.slug}/`}>{s.name}</a></h2>
+          <p>{s.intro}</p>
+        </div>
+        <div class="area-city-grid">
+          {[...s.cities].sort((a, b) => a.name.localeCompare(b.name)).map((c) => (
+            <a class="area-city" href={cityPath(s, c)}>
+              <strong>{c.name}</strong>
+              <span>{c.county}</span>
+            </a>
+          ))}
+        </div>
+      </div>
+    </section>
+  ))}
+
+  <section class="section">
+    <div class="wrap">
+      <div class="sec-head sec-head--wide">
+        <p class="eyebrow">Not listed?</p>
+        <h2>Ask anyway</h2>
+        <p>Our crews cover the towns around every city listed here. Call {SITE.phone} or send the address and we will tell you straight away.</p>
+        <div class="hero-actions">
+          <a class="btn btn--red" href="/contact/">Request a quote</a>
+          <a class="btn btn--outline" href={SITE.telHref}>Call {SITE.phone}</a>
+        </div>
+      </div>
+    </div>
+  </section>
+</BaseLayout>

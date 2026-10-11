@@ -1,5 +1,6 @@
 ---
 import { SITE, SERVED_SENTENCE, SERVED_ABBR } from '../data/site';
+import { SERVICE_CATALOG } from '../data/services-catalog';
 const year = new Date().getFullYear();
 ---
 <footer class="footer">
@@ -33,15 +34,8 @@ const year = new Date().getFullYear();
       <div>
         <h3>Services</h3>
         <ul class="footer-links">
-          <li><a href="/services/cleaning/">Janitorial &amp; Cleaning</a></li>
-          <li><a href="/services/plumbing/">Plumbing &amp; Drains</a></li>
-          <li><a href="/services/electrical/">Electrical &amp; Lighting</a></li>
-          <li><a href="/services/hvac/">HVAC &amp; Refrigeration</a></li>
-          <li><a href="/services/handyman/">Handyman &amp; Repairs</a></li>
-          <li><a href="/services/painting/">Painting &amp; Finishes</a></li>
-          <li><a href="/services/grounds/">Grounds &amp; Exterior</a></li>
-          <li><a href="/services/projects/">Restoration &amp; Build-Out</a></li>
-          <li><a href="/property-preservation/">Property Preservation</a></li>
+          {SERVICE_CATALOG.map((c) => <li><a href={`/services/#${c.id}`}>{c.name.replace(/ \(.*\)$/, '')}</a></li>)}
+          <li><a href="/service-areas/">Service areas</a></li>
         </ul>
       </div>
 

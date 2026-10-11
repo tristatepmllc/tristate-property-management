@@ -4,6 +4,7 @@ import LeadFormExtras from '../components/LeadFormExtras.astro';
 import QuickQuoteForm from '../components/QuickQuoteForm.astro';
 import { SITE, SERVED_SENTENCE, SERVED_ABBR } from '../data/site';
 import Coverage from '../components/Coverage.astro';
+import { SERVICE_COUNT } from '../data/services-catalog';
 import { PP_STATES } from '../data/property-preservation';
 import { TESTIMONIALS, REVIEWS_NOTE } from '../data/testimonials';
 import Testimonials from '../components/Testimonials.astro';
@@ -298,8 +299,8 @@ const hasReviews = TESTIMONIALS.length > 0;
   <div class="wrap">
     <div class="stats">
       <div class="stat">
-        <div class="stat-num">52</div>
-        <div class="stat-label">Services in-house</div>
+        <div class="stat-num">{SERVICE_COUNT}<em>+</em></div>
+        <div class="stat-label">Property services</div>
       </div>
       <div class="stat">
         <div class="stat-num">4<em>h</em></div>
@@ -435,6 +436,7 @@ const hasReviews = TESTIMONIALS.length > 0;
       <p>We cover {SERVED_SENTENCE}. If you are just outside, ask anyway - we will tell you honestly whether we can cover you properly.</p>
     </div>
     <Coverage />
+    <p class="cat-detail-link"><a href="/service-areas/">See every city we serve &rarr;</a></p>
   </div>
 </section>
 

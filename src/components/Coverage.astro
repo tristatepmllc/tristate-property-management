@@ -1,5 +1,14 @@
 ---
 import { SITE } from '../data/site';
+import { AREA_STATES, cityPath } from '../data/service-areas';
+
+// Link each state / town to its service-area page when one exists.
+const stateOf = (name: string) => AREA_STATES.find((s) => s.name === name);
+const townHref = (state: string, town: string) => {
+  const s = stateOf(state);
+  const c = s?.cities.find((x) => x.name === town);
+  return s && c ? cityPath(s, c) : undefined;
+};
 
 /**
  * The coverage grid.
@@ -25,11 +34,16 @@ const { columns } = Astro.props;
 <div class="coverage-states">
   {SITE.areaServed.map((a) => (
     <div class="coverage-state">
-      {a.cities.length > 0 && <p class="area-state">{a.state}</p>}
+      {a.cities.length > 0 && <p class="area-state">{stateOf(a.state) ? <a href={`/service-areas/${stateOf(a.state)!.slug}/`}>{a.state}</a> : a.state}</p>}
       <div class="areas" style={columns ? `grid-template-columns:${columns}` : undefined}>
         {a.cities.length > 0
-          ? a.cities.map((town) => <span class="area">{town}</span>)
-          : <span class="area area--state">{a.state}</span>}
+          ? a.cities.map((town) => {
+              const href = townHref(a.state, town);
+              return href ? <a class="area" href={href}>{town}</a> : <span class="area">{town}</span>;
+            })
+          : stateOf(a.state)
+            ? <a class="area area--state" href={`/service-areas/${stateOf(a.state)!.slug}/`}>{a.state}</a>
+            : <span class="area area--state">{a.state}</span>}
       </div>
     </div>
   ))}

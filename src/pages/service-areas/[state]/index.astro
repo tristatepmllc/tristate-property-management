@@ -1,0 +1,109 @@
+---
+import type { GetStaticPaths } from 'astro';
+import BaseLayout from '../../../layouts/BaseLayout.astro';
+import { SITE } from '../../../data/site';
+import { SERVICE_CATALOG } from '../../../data/services-catalog';
+import { AREA_STATES, cityPath, type AreaState } from '../../../data/service-areas';
+import { graph, breadcrumbs } from '../../../lib/schema';
+
+export const getStaticPaths: GetStaticPaths = () =>
+  AREA_STATES.map((s) => ({ params: { state: s.slug }, props: { s } }));
+
+const { s } = Astro.props as { s: AreaState };
+const path = `/service-areas/${s.slug}/`;
+const cities = [...s.cities].sort((a, b) => a.name.localeCompare(b.name));
+const counties = [...new Set(s.cities.map((c) => c.county))].sort();
+
+const jsonLd = graph([
+  breadcrumbs([
+    { name: 'Home', path: '/' },
+    { name: 'Service areas', path: '/service-areas/' },
+    { name: s.name, path },
+  ]),
+  {
+    '@type': 'Service',
+    '@id': `${SITE.url}${path}#service`,
+    name: `Property maintenance in ${s.name}`,
+    serviceType: 'Property maintenance',
+    url: `${SITE.url}${path}`,
+    provider: { '@id': `${SITE.url}/#localbusiness` },
+    areaServed: { '@type': 'State', name: s.name },
+  },
+]);
+---
+<BaseLayout
+  title={`Property Maintenance in ${s.name} | Tristate`}
+  description={`Property maintenance, repairs and property preservation in ${cities.length} ${s.name} cities. Lawn care, roofing, handyman, plumbing, REO preservation and 24/7 emergency service.`.slice(0, 160)}
+  path={path}
+  active="/services/"
+  jsonLd={jsonLd}
+>
+  <section class="page-hero">
+    <div class="page-hero-bg" style="background-image:url('/images/home-hero-commercial-facility-crew.webp')"></div>
+    <div class="wrap">
+      <p class="crumb"><a href="/">Home</a> &nbsp;/&nbsp; <a href="/service-areas/">Service areas</a> &nbsp;/&nbsp; <span>{s.name}</span></p>
+      <h1>Property maintenance in {s.name}</h1>
+      <p>{s.intro}</p>
+      <div class="hero-actions" style="margin-top:24px">
+        <a class="btn btn--red" href="/contact/">Get a free quote</a>
+        <a class="btn btn--ghost" href={SITE.telHref}>Call {SITE.phone}</a>
+      </div>
+    </div>
+  </section>
+
+  <section class="section section--paper">
+    <div class="wrap">
+      <div class="sec-head sec-head--wide">
+        <p class="eyebrow">{s.abbr} cities</p>
+        <h2>Cities we serve in {s.name}</h2>
+        <p>Choose your city for local details. Nearby towns are covered by the same crews - if yours is not listed, call and ask.</p>
+      </div>
+      <div class="area-city-grid">
+        {cities.map((c) => (
+          <a class="area-city" href={cityPath(s, c)}>
+            <strong>{c.name}</strong>
+            <span>{c.county}</span>
+          </a>
+        ))}
+      </div>
+      <p class="area-counties"><strong>Counties covered include:</strong> {counties.join(', ')}.</p>
+    </div>
+  </section>
+
+  <section class="section">
+    <div class="wrap">
+      <div class="pp-local">
+        <div>
+          <p class="eyebrow">Local conditions</p>
+          <h2>What {s.name} properties need</h2>
+          <p class="pp-local-intro">{s.climate}</p>
+        </div>
+        <div class="pp-local-list">
+          {s.seasonal.map((x) => (
+            <div class="pp-card">
+              <h3>{x.title}</h3>
+              <p>{x.body}</p>
+            </div>
+          ))}
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section class="section section--paper">
+    <div class="wrap">
+      <div class="sec-head">
+        <p class="eyebrow">Services</p>
+        <h2>Services across {s.name}</h2>
+      </div>
+      <div class="area-cats">
+        {SERVICE_CATALOG.map((cat) => (
+          <div class="pp-card area-cat">
+            <h3><a href={`/services/#${cat.id}`}>{cat.name}</a></h3>
+            <p>{cat.intro}</p>
+          </div>
+        ))}
+      </div>
+    </div>
+  </section>
+</BaseLayout>

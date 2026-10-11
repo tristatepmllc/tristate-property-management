@@ -84,6 +84,7 @@ export const SITE = {
     { state: 'Florida',       abbr: 'FL', cities: ['Jacksonville', 'Orlando', 'Tampa'] as string[] },
     { state: 'Rhode Island',  abbr: 'RI', cities: ['Providence', 'Warwick'] as string[] },   // added 2026-09
     { state: 'Illinois',      abbr: 'IL', cities: [] as string[] },   // TODO - secondary
+    { state: 'Missouri',      abbr: 'MO', cities: [] as string[] },   // added 2026-10, per client
     { state: 'Arkansas',      abbr: 'AR', cities: [] as string[] },   // TODO - secondary
   ] as AreaServed[],
   hours: [
@@ -231,4 +232,6 @@ export const SERVICE_CATEGORIES = [
   { slug: 'painting',   name: 'Painting & Finishes' },
   { slug: 'grounds',    name: 'Grounds & Exterior' },
   { slug: 'projects',   name: 'Restoration & Build-Out' },
+  { slug: 'commercial', name: 'Commercial Property Services' },
+  { slug: 'emergency',  name: 'Emergency Services' },
 ] as const;
