@@ -13,7 +13,12 @@
  * Everything the server returns is rendered with textContent, never HTML.
  */
 
-type Msg = { id: string; sender: 'visitor' | 'agent' | 'system'; author_name: string | null; body: string; created_at: number };
+import { shrinkImage, VoiceRecorder, canRecord, fmtDuration } from './chat-media';
+
+type Msg = {
+  id: string; sender: 'visitor' | 'agent' | 'system'; author_name: string | null; body: string; created_at: number;
+  kind?: 'text' | 'image' | 'audio'; media_type?: string | null; duration_ms?: number | null;
+};
 type Stored = { id: string; token: string };
 
 const STORE = 'tpm_chat_v2';
@@ -51,7 +56,7 @@ function init(): void {
   const panel = root.querySelector<HTMLElement>('.chat-panel');
   const launcher = root.querySelector<HTMLButtonElement>('.chat-launcher');
   const body = root.querySelector<HTMLElement>('.chat-body');
-  const input = root.querySelector<HTMLInputElement>('.chat-input input');
+  const input = root.querySelector<HTMLInputElement>('.chat-input input[type="text"]');
   const send = root.querySelector<HTMLButtonElement>('.chat-send');
   const chips = root.querySelector<HTMLElement>('.chat-chips');
   const badge = root.querySelector<HTMLElement>('.chat-badge');
@@ -95,11 +100,159 @@ function init(): void {
       lastAt = Math.max(lastAt, m.created_at);
       if (seen.has(m.id)) continue;
       seen.add(m.id);
-      if (m.sender === 'visitor') bubble(m.body, 'me');
+      if (m.kind === 'image' || m.kind === 'audio') mediaBubble(m);
+      else if (m.sender === 'visitor') bubble(m.body, 'me');
       else if (m.sender === 'agent') bubble(m.body, 'them', `${m.author_name || 'Tristate'} · Tristate`);
       else bubble(m.body, 'sys');
     }
   }
+
+  // ------------------------------------------------------------ media
+  /** Put a photo or a voice player into a bubble from a URL. */
+  function fillMedia(el: HTMLElement, kind: 'image' | 'audio', url: string, durationMs?: number | null): void {
+    el.querySelector('.bubble-media')?.remove();
+    const wrap = document.createElement('div');
+    wrap.className = 'bubble-media';
+    if (kind === 'image') {
+      const a = document.createElement('a');
+      a.href = url;
+      a.target = '_blank';
+      a.rel = 'noopener';
+      const img = document.createElement('img');
+      img.src = url;
+      img.alt = 'Photo';
+      img.className = 'chat-img';
+      img.addEventListener('load', () => (body!.scrollTop = body!.scrollHeight));
+      a.appendChild(img);
+      wrap.appendChild(a);
+    } else {
+      const audio = document.createElement('audio');
+      audio.controls = true;
+      audio.preload = 'metadata';
+      audio.src = url;
+      audio.className = 'chat-audio';
+      wrap.appendChild(audio);
+      if (durationMs) {
+        const d = document.createElement('small');
+        d.className = 'chat-audio-len';
+        d.textContent = fmtDuration(durationMs);
+        wrap.appendChild(d);
+      }
+    }
+    el.appendChild(wrap);
+    body!.scrollTop = body!.scrollHeight;
+  }
+
+  function mediaShell(who: 'me' | 'them', label: string, author?: string | null): HTMLElement {
+    const el = bubble(label, who, author);
+    el.classList.add('bubble--media');
+    return el;
+  }
+
+  function mediaBubble(m: Msg): void {
+    const who = m.sender === 'visitor' ? 'me' : 'them';
+    const author = m.sender === 'agent' ? `${m.author_name || 'Tristate'} · Tristate` : null;
+    const kind = m.kind === 'image' ? 'image' : 'audio';
+    const el = mediaShell(who, kind === 'image' ? 'Loading photo...' : 'Loading voice message...', author);
+    if (!conv) return;
+    fetch('/api/chat/media', {
+      method: 'POST', headers: { 'content-type': 'application/json' },
+      body: JSON.stringify({ id: conv.id, token: conv.token, msgId: m.id }),
+    })
+      .then((r) => (r.ok ? r.blob() : Promise.reject(new Error(String(r.status)))))
+      .then((blob) => {
+        el.querySelector('span')?.remove();
+        fillMedia(el, kind, URL.createObjectURL(blob), m.duration_ms);
+      })
+      .catch(() => {
+        const t = el.querySelector('span');
+        if (t) t.textContent = kind === 'image' ? 'Photo could not load.' : 'Voice message could not load.';
+      });
+  }
+
+  async function upload(file: File, kind: 'image' | 'audio', durationMs?: number): Promise<void> {
+    if (!conv) return;
+    const el = mediaShell('me', kind === 'image' ? 'Sending photo...' : 'Sending voice message...');
+    el.classList.add('is-sending');
+    fillMedia(el, kind, URL.createObjectURL(file), durationMs);
+    const fd = new FormData();
+    fd.append('id', conv.id);
+    fd.append('token', conv.token);
+    fd.append('file', file);
+    if (durationMs) fd.append('duration', String(Math.round(durationMs)));
+    try {
+      const res = await fetch('/api/chat/upload', { method: 'POST', body: fd });
+      const data = (await res.json().catch(() => ({}))) as { message?: Msg; fields?: string[]; error?: string };
+      el.classList.remove('is-sending');
+      el.querySelector(':scope > span')?.remove();
+      if (res.ok && data.message) {
+        seen.add(data.message.id);
+        lastAt = Math.max(lastAt, data.message.created_at);
+        return;
+      }
+      el.classList.add('is-failed');
+      bubble(data.fields?.[0] || (data.error === 'rate_limited' ? 'Slow down a little - try again in a moment.' : 'Not sent. Please try again.'), 'sys');
+    } catch {
+      el.classList.remove('is-sending');
+      el.classList.add('is-failed');
+      bubble('Not sent - check your connection.', 'sys');
+    }
+  }
+
+  const fileInput = root.querySelector<HTMLInputElement>('[data-chat-file]');
+  root.querySelector('[data-chat-attach]')?.addEventListener('click', () => fileInput?.click());
+  fileInput?.addEventListener('change', async () => {
+    const f = fileInput.files?.[0];
+    fileInput.value = '';
+    if (!f) return;
+    if (!f.type.startsWith('image/')) {
+      bubble('Only photos can be attached.', 'sys');
+      return;
+    }
+    void upload(await shrinkImage(f), 'image');
+  });
+
+  const recBar = root.querySelector<HTMLElement>('[data-chat-rec]');
+  const recTime = root.querySelector<HTMLElement>('[data-chat-rec-time]');
+  const micBtn = root.querySelector<HTMLButtonElement>('[data-chat-mic]');
+  const recorder = new VoiceRecorder();
+  let recTick: number | undefined;
+  if (micBtn && !canRecord()) micBtn.hidden = true;
+
+  function recUi(on: boolean): void {
+    if (recBar) recBar.hidden = !on;
+    root!.classList.toggle('is-recording', on);
+    window.clearInterval(recTick);
+    if (on) recTick = window.setInterval(() => { if (recTime) recTime.textContent = fmtDuration(recorder.elapsed()); }, 250);
+    if (recTime) recTime.textContent = '0:00';
+  }
+  async function finishRecording(): Promise<void> {
+    try {
+      const { file, durationMs } = await recorder.stop();
+      recUi(false);
+      if (durationMs < 700) {
+        bubble('That was too short - tap the mic and speak, then press Send.', 'sys');
+        return;
+      }
+      void upload(file, 'audio', durationMs);
+    } catch {
+      recUi(false);
+    }
+  }
+  recorder.onLimit = () => void finishRecording();
+  micBtn?.addEventListener('click', async () => {
+    try {
+      await recorder.start();
+      recUi(true);
+    } catch {
+      bubble('Microphone access was blocked. Allow it in your browser settings to send a voice message.', 'sys');
+    }
+  });
+  root.querySelector('[data-chat-rec-cancel]')?.addEventListener('click', () => {
+    recorder.cancel();
+    recUi(false);
+  });
+  root.querySelector('[data-chat-rec-send]')?.addEventListener('click', () => void finishRecording());
 
   function setBadge(n: number): void {
     if (!badge) return;
@@ -109,12 +262,14 @@ function init(): void {
 
   function goLive(): void {
     step = 'live';
+    root!.classList.add('is-live');
     if (chips) chips.style.display = 'none';
     if (status) status.textContent = 'Live chat - we usually reply within minutes';
     input!.placeholder = 'Type a message...';
   }
 
   function reset(): void {
+    root!.classList.remove('is-live');
     save(null);
     conv = null;
     step = 'message';

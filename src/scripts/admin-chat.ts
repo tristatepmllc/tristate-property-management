@@ -16,7 +16,12 @@ type Conv = {
   unread_admin: number; last_message_at: number; last_preview: string | null; lead_id: string | null;
   visitor_seen_at: number | null;
 };
-type Msg = { id: string; sender: 'visitor' | 'agent' | 'system'; author_name: string | null; body: string; created_at: number };
+import { shrinkImage, VoiceRecorder, canRecord, fmtDuration } from './chat-media';
+
+type Msg = {
+  id: string; sender: 'visitor' | 'agent' | 'system'; author_name: string | null; body: string; created_at: number;
+  kind?: 'text' | 'image' | 'audio'; media_type?: string | null; duration_ms?: number | null;
+};
 
 const TZ = 'America/New_York';
 const timeFmt = (ms: number) => {
@@ -176,7 +181,12 @@ function init(): void {
     row.className = `achat-msg achat-msg--${m.sender}`;
     const bub = document.createElement('div');
     bub.className = 'achat-bubble';
-    bub.textContent = m.body;
+    if (m.kind === 'image' || m.kind === 'audio') {
+      bub.classList.add('achat-bubble--media');
+      mediaInto(bub, m.kind, localUrls.get(m.id) ?? `/api/admin/chat/media/${m.id}`, m.duration_ms);
+    } else {
+      bub.textContent = m.body;
+    }
     const meta = document.createElement('small');
     meta.textContent = `${m.sender === 'agent' ? (m.author_name || 'Staff') + ' · ' : ''}${timeFmt(m.created_at)}`;
     row.append(bub, meta);
@@ -184,6 +194,110 @@ function init(): void {
     msgsEl.appendChild(row);
     if (nearBottom || m.sender === 'agent') msgsEl.scrollTop = msgsEl.scrollHeight;
   }
+
+  const localUrls = new Map<string, string>();
+
+  function mediaInto(el: HTMLElement, kind: 'image' | 'audio', url: string, durationMs?: number | null): void {
+    if (kind === 'image') {
+      const a = document.createElement('a');
+      a.href = url;
+      a.target = '_blank';
+      a.rel = 'noopener';
+      const img = document.createElement('img');
+      img.src = url;
+      img.alt = 'Photo';
+      img.className = 'achat-img';
+      img.addEventListener('load', () => {
+        if (msgsEl.scrollHeight - msgsEl.scrollTop - msgsEl.clientHeight < 400) msgsEl.scrollTop = msgsEl.scrollHeight;
+      });
+      a.appendChild(img);
+      el.appendChild(a);
+    } else {
+      const audio = document.createElement('audio');
+      audio.controls = true;
+      audio.preload = 'metadata';
+      audio.src = url;
+      el.appendChild(audio);
+      if (durationMs) {
+        const d = document.createElement('small');
+        d.className = 'achat-audio-len';
+        d.textContent = fmtDuration(durationMs);
+        el.appendChild(d);
+      }
+    }
+  }
+
+  async function uploadMedia(file: File, kind: 'image' | 'audio', durationMs?: number): Promise<void> {
+    if (!activeId) return;
+    const fd = new FormData();
+    fd.append('file', file);
+    if (durationMs) fd.append('duration', String(Math.round(durationMs)));
+    try {
+      const res = await fetch(`/api/admin/chat/${activeId}/upload`, { method: 'POST', body: fd });
+      const data = (await res.json().catch(() => ({}))) as { message?: Msg; fields?: string[] };
+      if (res.ok && data.message) {
+        localUrls.set(data.message.id, URL.createObjectURL(file));
+        addMsg(data.message);
+        void loadList();
+      } else {
+        alert(data.fields?.[0] || (res.status === 403 ? 'Your role cannot send in chats.' : 'Not sent. Please try again.'));
+      }
+    } catch {
+      alert('Not sent - check your connection.');
+    }
+    void kind;
+  }
+
+  const fileInput = app.querySelector<HTMLInputElement>('[data-chat-file]');
+  app.querySelector('[data-chat-attach]')?.addEventListener('click', () => fileInput?.click());
+  fileInput?.addEventListener('change', async () => {
+    const f = fileInput.files?.[0];
+    fileInput.value = '';
+    if (!f) return;
+    if (!f.type.startsWith('image/')) {
+      alert('Only photos can be attached.');
+      return;
+    }
+    void uploadMedia(await shrinkImage(f), 'image');
+  });
+
+  const recBar = app.querySelector<HTMLElement>('[data-chat-rec]');
+  const recTime = app.querySelector<HTMLElement>('[data-chat-rec-time]');
+  const micBtn = app.querySelector<HTMLButtonElement>('[data-chat-mic]');
+  const recorder = new VoiceRecorder();
+  let recTick: number | undefined;
+  if (micBtn && !canRecord()) micBtn.hidden = true;
+  const recUi = (on: boolean) => {
+    if (recBar) recBar.hidden = !on;
+    compose.hidden = on;
+    window.clearInterval(recTick);
+    if (recTime) recTime.textContent = '0:00';
+    if (on) recTick = window.setInterval(() => { if (recTime) recTime.textContent = fmtDuration(recorder.elapsed()); }, 250);
+  };
+  const finishRec = async () => {
+    try {
+      const { file, durationMs } = await recorder.stop();
+      recUi(false);
+      if (durationMs >= 700) void uploadMedia(file, 'audio', durationMs);
+    } catch {
+      recUi(false);
+    }
+  };
+  recorder.onLimit = () => void finishRec();
+  micBtn?.addEventListener('click', async () => {
+    if (!activeId) return;
+    try {
+      await recorder.start();
+      recUi(true);
+    } catch {
+      alert('Microphone access was blocked. Allow it for this site in your browser to send voice messages.');
+    }
+  });
+  app.querySelector('[data-chat-rec-cancel]')?.addEventListener('click', () => {
+    recorder.cancel();
+    recUi(false);
+  });
+  app.querySelector('[data-chat-rec-send]')?.addEventListener('click', () => void finishRec());
 
   async function loadThread(): Promise<void> {
     if (!activeId) return;

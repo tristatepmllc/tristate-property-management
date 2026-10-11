@@ -1,7 +1,7 @@
 import type { APIRoute } from 'astro';
 import { env } from 'cloudflare:workers';
 import { json, methodNotAllowed } from '../../../lib/http';
-import { ensureChatSchema, visitorConversation, type ChatMessage } from '../../../lib/chat';
+import { ensureChatSchema, visitorConversation, type ChatMessage, MSG_COLS } from '../../../lib/chat';
 
 export const prerender = false;
 
@@ -25,7 +25,7 @@ export const POST: APIRoute = async ({ request }) => {
 
   const after = Math.max(0, Number(raw.after) || 0);
   const msgs = await env.DB.prepare(
-    `SELECT id, sender, author_name, body, created_at FROM chat_messages
+    `SELECT ${MSG_COLS} FROM chat_messages
      WHERE conversation_id = ?1 AND created_at > ?2 ORDER BY created_at ASC LIMIT 200`
   ).bind(conv.id, after).all<ChatMessage>();
 

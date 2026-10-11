@@ -24,8 +24,23 @@ const siteKey = import.meta.env.PUBLIC_TURNSTILE_SITE_KEY ?? '1x0000000000000000
       <button type="button" data-msg="Do you cover my area?">Coverage</button>
     </div>
 
+    <div class="chat-rec" data-chat-rec hidden>
+      <span class="chat-rec-dot" aria-hidden="true"></span>
+      <span class="chat-rec-time" data-chat-rec-time>0:00</span>
+      <span class="chat-rec-label">Recording...</span>
+      <button type="button" class="chat-rec-cancel" data-chat-rec-cancel>Cancel</button>
+      <button type="button" class="chat-rec-send" data-chat-rec-send>Send</button>
+    </div>
+
     <div class="chat-input">
+      <button type="button" class="chat-tool" data-chat-attach aria-label="Send a photo" title="Send a photo">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="5" width="18" height="15" rx="2"/><circle cx="12" cy="12.5" r="3.5"/><path d="M8 5l1.5-2h5L16 5"/></svg>
+      </button>
+      <input type="file" accept="image/*" data-chat-file hidden />
       <input type="text" placeholder="Type your message&hellip;" aria-label="Type your message">
+      <button type="button" class="chat-tool" data-chat-mic aria-label="Record a voice message" title="Voice message">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="3" width="6" height="11" rx="3"/><path d="M5 11a7 7 0 0 0 14 0M12 18v3"/></svg>
+      </button>
       <button type="button" class="chat-send" aria-label="Send message">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 2 11 13M22 2l-7 20-4-9-9-4z"/></svg>
       </button>

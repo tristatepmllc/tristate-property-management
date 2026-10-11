@@ -2213,3 +2213,34 @@ img.adm-avatar{object-fit:cover}
   .achat-head .adm-actions .btn{padding:6px 9px}
   .achat-msg{max-width:88%}
 }
+
+/* Chat photos & voice notes */
+.chat-widget:not(.is-live) .chat-tool{display:none}
+.chat-tool{flex:none;width:36px;height:36px;border:0;background:none;color:var(--steel);cursor:pointer;display:flex;align-items:center;justify-content:center;border-radius:50%}
+.chat-tool:hover{color:var(--navy-800);background:var(--paper)}
+.chat-tool svg{width:20px;height:20px}
+.chat-widget.is-recording .chat-input{display:none}
+.chat-rec,.achat-rec{display:flex;align-items:center;gap:10px;padding:10px 12px;border-top:1px solid var(--line);background:var(--white)}
+.chat-rec[hidden],.achat-rec[hidden]{display:none}
+.chat-rec-dot{width:10px;height:10px;border-radius:50%;background:var(--red);animation:rec-pulse 1s ease-in-out infinite}
+@keyframes rec-pulse{50%{opacity:.25}}
+.chat-rec-time{font:600 .9rem var(--mono);color:var(--navy-900)}
+.chat-rec-label{flex:1;font-size:.82rem;color:var(--steel)}
+.chat-rec-cancel,.chat-rec-send{border:0;border-radius:6px;padding:7px 11px;font:600 .8rem var(--body);cursor:pointer}
+.chat-rec-cancel{background:var(--paper);color:var(--navy-800)}
+.chat-rec-send{background:var(--red);color:var(--white)}
+.achat-rec{justify-content:flex-start}
+.achat-rec .adm-muted{flex:1}
+.bubble--media{padding:6px}
+.bubble--media > span{display:block;padding:4px 6px;font-size:.8rem}
+.bubble-media{display:flex;flex-direction:column;gap:4px}
+.chat-img{display:block;max-width:220px;max-height:260px;border-radius:10px;object-fit:cover}
+.chat-audio{width:220px;max-width:100%;height:40px}
+.chat-audio-len,.achat-audio-len{font-size:.7rem;opacity:.75;padding:0 4px}
+.achat-tool{flex:none;width:40px;height:40px;border:1px solid var(--line);background:var(--white);color:var(--navy-700);border-radius:8px;cursor:pointer;display:flex;align-items:center;justify-content:center}
+.achat-tool:hover{border-color:var(--navy-600)}
+.achat-bubble--media{padding:6px}
+.achat-img{display:block;max-width:280px;max-height:320px;border-radius:10px;object-fit:cover}
+.achat-bubble audio{width:260px;max-width:100%;height:40px}
+.achat-compose[hidden]{display:none}
+@media (prefers-reduced-motion:reduce){.chat-rec-dot{animation:none}}

@@ -28,3 +28,11 @@ CREATE TABLE IF NOT EXISTS chat_messages (
   created_at       INTEGER NOT NULL
 );
 CREATE INDEX IF NOT EXISTS idx_chat_msg_conv ON chat_messages(conversation_id, created_at);
+
+-- Photos and voice notes (applied automatically by ensureChatSchema when missing).
+-- Files live in R2 under chat/<conversation_id>/<message_id>.
+ALTER TABLE chat_messages ADD COLUMN kind TEXT NOT NULL DEFAULT 'text'; -- text|image|audio
+ALTER TABLE chat_messages ADD COLUMN media_key TEXT;
+ALTER TABLE chat_messages ADD COLUMN media_type TEXT;
+ALTER TABLE chat_messages ADD COLUMN media_size INTEGER;
+ALTER TABLE chat_messages ADD COLUMN duration_ms INTEGER;
