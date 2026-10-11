@@ -2115,5 +2115,4 @@ img.adm-avatar{object-fit:cover}
   body{padding-bottom:calc(66px + env(safe-area-inset-bottom))}
   .chat-launcher{bottom:calc(76px + env(safe-area-inset-bottom)) !important}
   .chat-panel{bottom:calc(140px + env(safe-area-inset-bottom)) !important}
-  .qp{display:none !important}
 }

@@ -4,9 +4,9 @@ const siteKey = import.meta.env.PUBLIC_TURNSTILE_SITE_KEY ?? '1x0000000000000000
 ---
 <!--
   Quote popup.
-  Desktop only: centre modal after 45s, exit-intent as a second chance.
-  Phones never see it - the sticky Call / Get a quote bar (StickyCta) is the
-  mobile path instead.
+  Desktop: centre modal after 45s, exit-intent as a second chance.
+  Phones: same modal after 25s. Once per session, 30 days after a dismissal,
+  never after the visitor converts.
   Hidden on /contact/ (the page already is the form) and after conversion.
 -->
 <div class="qp" data-quote-popup hidden>

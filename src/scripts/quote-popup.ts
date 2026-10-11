@@ -1,15 +1,17 @@
 /**
  * Quote popup.
  *
- * Desktop only: centre modal after 45s on the page, or earlier on exit
- * intent. Never on phones - the sticky Call / Get a quote bar (StickyCta)
- * covers mobile, and a modal over a small screen costs more leads than it
- * wins.
+ * Desktop: centre modal after 45s on the page, or earlier on exit intent.
+ * Phones: the same modal after 25s (owner requirement). Timed rather than
+ * on load, so it never covers the page the moment someone arrives from a
+ * Google result (Google's intrusive-interstitial guidance targets exactly
+ * that). Sits above the sticky Call / Get a quote bar.
  *
  * Frequency: once per session, 30 days after a dismissal, never after a convert.
  */
 
-const DELAY_MS = 45_000; // only visitors who are actually reading see it
+const DELAY_DESKTOP_MS = 45_000;
+const DELAY_MOBILE_MS = 25_000;
 const DISMISS_DAYS = 30;
 const KEY_DISMISS = 'tpm_qp_dismissed_until';
 const KEY_CONVERTED = 'tpm_qp_converted';
@@ -50,7 +52,6 @@ function init(): void {
   if (!backdrop || !modal) return;
 
   const isMobile = window.matchMedia('(max-width: 860px)');
-  if (isMobile.matches) return;
   let lastFocus: HTMLElement | null = null;
   let armed = true;
 
@@ -83,12 +84,11 @@ function init(): void {
     armed = false;
     safeSet(sessionStorage, SESSION_SHOWN, '1');
     root!.hidden = false;
-    if (isMobile.matches) root!.classList.add('is-bar');
-    else openModal();
+    openModal();
     window.dispatchEvent(new CustomEvent('popup:shown'));
   }
 
-  const timer = window.setTimeout(showEntry, DELAY_MS);
+  const timer = window.setTimeout(showEntry, isMobile.matches ? DELAY_MOBILE_MS : DELAY_DESKTOP_MS);
 
   // Desktop second chance: the cursor leaves toward the browser chrome.
   document.addEventListener('mouseout', (event) => {
