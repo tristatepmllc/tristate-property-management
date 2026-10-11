@@ -18,6 +18,7 @@ import '@fontsource/ibm-plex-mono/600.css';
 import '../styles/global.css';
 import '../styles/additions.css';
 import { env } from 'cloudflare:workers';
+import { ensureChatSchema } from '../lib/chat';
 import { ensureAdminSchema, fmtDate, TZ, can, staffRoleLabel, type StaffRole, type Perm } from '../lib/admin';
 
 type Section = 'overview' | 'leads' | 'messages' | 'jobs' | 'vendors' | 'clients' | 'account' | 'team' | 'search';
@@ -44,6 +45,15 @@ try {
   if (row) badges = row;
 } catch (e) {
   console.error('admin_badges_failed', String(e).slice(0, 300));
+}
+// Live chat badge = unread visitor messages in open two-way chats.
+try {
+  await ensureChatSchema(env.DB);
+  const c = await env.DB.prepare(`SELECT COALESCE(SUM(unread_admin), 0) AS n FROM chat_conversations WHERE status = 'open'`)
+    .first<{ n: number }>();
+  badges.messages = c?.n ?? 0;
+} catch (e) {
+  console.error('admin_chat_badge_failed', String(e).slice(0, 200));
 }
 
 const displayName = admin.name || admin.email;

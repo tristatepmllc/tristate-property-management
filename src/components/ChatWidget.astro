@@ -8,18 +8,18 @@ const siteKey = import.meta.env.PUBLIC_TURNSTILE_SITE_KEY ?? '1x0000000000000000
       <span class="chat-avatar" aria-hidden="true">T</span>
       <span>
         <strong>Tristate Support</strong>
-        <span class="status">Messages go straight to dispatch</span>
+        <span class="status">Usually replies within minutes</span>
       </span>
     </div>
 
     <div class="chat-body">
       <span class="chat-time">Today</span>
-      <div class="bubble them">Hi - leave a message here and it goes straight to our dispatch desk. What&rsquo;s going on at your building?</div>
-      <div class="bubble them">If it's an emergency, call <strong>{SITE.phone}</strong> and we'll get a crew moving straight away.</div>
+      <div class="bubble them">Hi! Chat with the Tristate team right here. What can we help you with?</div>
+      <div class="bubble them">Emergency? Call <strong>{SITE.phone}</strong> and we'll get a crew moving straight away.</div>
     </div>
 
     <div class="chat-chips">
-      <button type="button" data-msg="I'd like a quote for cleaning">Get a quote</button>
+      <button type="button" data-msg="I'd like a free quote">Get a quote</button>
       <button type="button" data-msg="Something is leaking right now">Emergency</button>
       <button type="button" data-msg="Do you cover my area?">Coverage</button>
     </div>
@@ -31,11 +31,11 @@ const siteKey = import.meta.env.PUBLIC_TURNSTILE_SITE_KEY ?? '1x0000000000000000
       </button>
     </div>
     <div class="cf-turnstile chat-turnstile" data-sitekey={siteKey} data-size="flexible" data-appearance="interaction-only"></div>
-    <p class="chat-foot">Answered during business hours. For anything urgent, call {SITE.phone} - 24/7.</p>
+    <p class="chat-foot">Live during business hours; we reply to every chat. Urgent? Call {SITE.phone}.</p>
   </div>
 
   <button type="button" class="chat-launcher" aria-label="Open live chat" aria-expanded="false">
-    <span class="chat-badge">1</span>
+    <span class="chat-badge" hidden aria-label="New messages">1</span>
     <svg class="ic-open" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M21 11.5a8.4 8.4 0 0 1-9 8.4 9 9 0 0 1-3.4-.6L3 21l1.8-5A8.3 8.3 0 0 1 4 11.5 8.4 8.4 0 0 1 12.5 3 8.4 8.4 0 0 1 21 11.5z"/></svg>
     <svg class="ic-close" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="M18 6 6 18M6 6l12 12"/></svg>
   </button>
