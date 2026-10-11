@@ -84,6 +84,10 @@ function initForms(): void {
 
       const { ok, data } = await send(form.dataset.endpoint || '', form.dataset.method || 'POST', body);
       if (ok) {
+        form.querySelectorAll<HTMLInputElement>('input[name="password"]').forEach((i) => {
+          i.value = '';
+          i.type = 'password';
+        });
         if (status) {
           status.hidden = false;
           status.classList.remove('is-error');
@@ -159,7 +163,21 @@ function initFilters(): void {
   });
 }
 
+function initPasswordToggles(): void {
+  document.querySelectorAll<HTMLButtonElement>('[data-toggle-password]').forEach((btn) => {
+    btn.addEventListener('click', () => {
+      const input = btn.parentElement?.querySelector<HTMLInputElement>('input');
+      if (!input) return;
+      const show = input.type === 'password';
+      input.type = show ? 'text' : 'password';
+      btn.textContent = show ? 'Hide' : 'Show';
+      btn.setAttribute('aria-label', show ? 'Hide password' : 'Show password');
+    });
+  });
+}
+
 function init(): void {
+  initPasswordToggles();
   initForms();
   initQuick();
   initRows();

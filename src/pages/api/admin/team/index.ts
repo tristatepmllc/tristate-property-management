@@ -3,15 +3,16 @@ import { env } from 'cloudflare:workers';
 import { hashPassword } from 'better-auth/crypto';
 import { requireAdmin } from '../../../../lib/require-admin';
 import { json, methodNotAllowed } from '../../../../lib/http';
-import { STAFF_ROLE_VALUES } from '../../../../lib/admin';
+import { ASSIGNABLE_ROLE_VALUES } from '../../../../lib/admin';
 
 export const prerender = false;
 
 const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/;
 
 /**
- * POST /api/admin/team - admins only. Add a new user (Users page).
- * Body: { name, email, staffRole, password }  (temporary password, 10+).
+ * POST /api/admin/team - Super Admin and Admins only. Add a new user.
+ * Body: { name, email, staffRole: 'admin'|'editor', password } (10+ chars).
+ * Super Admin can never be assigned here.
  * Creates an admin-role account with that staff role and a Better Auth
  * credential. An email already used by a client/vendor account is refused
  * - staff logins are kept separate from customer logins on purpose.
@@ -35,7 +36,7 @@ export const POST: APIRoute = async ({ request }) => {
   const errors: string[] = [];
   if (!name) errors.push('name');
   if (!EMAIL_RE.test(email)) errors.push('email');
-  if (!STAFF_ROLE_VALUES.includes(staffRole)) errors.push('role');
+  if (!ASSIGNABLE_ROLE_VALUES.includes(staffRole)) errors.push('role');
   if (password.length < 10 || password.length > 128) errors.push('password (10+ characters)');
   if (errors.length) return json({ error: 'validation_failed', fields: errors }, 422);
 

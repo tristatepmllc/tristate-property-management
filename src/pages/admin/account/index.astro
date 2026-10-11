@@ -4,15 +4,81 @@ export const prerender = false;
 import AdminLayout from '../../../layouts/AdminLayout.astro';
 import AccountSettingsPanel from '../../../components/portal/AccountSettingsPanel.astro';
 import { requireAdmin } from '../../../lib/require-admin';
+import { staffRoleLabel } from '../../../lib/admin';
 
-/** The signed-in staff member's own account: email and password change. */
+/**
+ * My account - every staff user (Super Admin, Admin, Editor): own photo
+ * and own password. The only self-service there is; nobody changes
+ * another person's photo, and passwords are never displayed.
+ */
 const admin = await requireAdmin(Astro.request.headers);
 if (!admin) return Astro.redirect('/tspm-admin', 302);
+const display = admin.name || admin.email;
 ---
 <AdminLayout title="My account" active="account" admin={admin} heading="My account"
-  subheading="Change your password. Use something only you know - this account can see every client and lead.">
-  <div class="adm-card" style="max-width:560px">
-    <h2>Sign-in details</h2>
-    <AccountSettingsPanel email={admin.email} />
+  subheading={`${staffRoleLabel(admin.staffRole)} · ${admin.email}`}>
+  <div class="adm-grid-2 adm-grid-2--even" style="max-width:1040px">
+    <div class="adm-card">
+      <h2>Profile photo</h2>
+      <div class="adm-person" style="margin-bottom:16px">
+        {admin.avatar
+          ? <img class="adm-person-photo adm-person-photo--lg" src={admin.avatar} alt="Your photo" width="72" height="72" />
+          : <span class="adm-person-photo adm-person-photo--lg">{display.charAt(0).toUpperCase()}</span>}
+        <div>
+          <span class="adm-strong">{display}</span>
+          <div class="adm-muted">JPG, PNG or WebP, up to 2 MB. Square photos look best.</div>
+        </div>
+      </div>
+      <form data-photo-form class="adm-form">
+        <div class="field"><input type="file" name="photo" accept="image/jpeg,image/png,image/webp" required aria-label="Choose a photo" /></div>
+        <div class="adm-actions">
+          <button type="submit" class="btn btn--navy btn--sm">Upload photo</button>
+          {admin.avatar && <button type="button" class="btn btn--outline btn--sm" data-photo-remove>Remove photo</button>}
+        </div>
+        <p class="form-status" role="status" aria-live="polite" hidden></p>
+      </form>
+    </div>
+
+    <div class="adm-card">
+      <h2>Password</h2>
+      <p class="adm-dl" style="display:block;margin:0 0 12px">Current password: <span class="adm-pw">••••••••</span></p>
+      <AccountSettingsPanel email={admin.email} />
+    </div>
   </div>
 </AdminLayout>
+
+<script>
+  const form = document.querySelector<HTMLFormElement>('[data-photo-form]');
+  const status = form?.querySelector<HTMLElement>('.form-status');
+  const say = (msg: string, err = false) => {
+    if (!status) return;
+    status.hidden = false;
+    status.textContent = msg;
+    status.classList.toggle('is-error', err);
+  };
+  form?.addEventListener('submit', async (e) => {
+    e.preventDefault();
+    const input = form.querySelector<HTMLInputElement>('input[type="file"]');
+    const file = input?.files?.[0];
+    if (!file) return say('Choose a photo first.', true);
+    if (file.size > 2 * 1024 * 1024) return say('That photo is over 2 MB.', true);
+    const fd = new FormData();
+    fd.append('photo', file);
+    say('Uploading...');
+    try {
+      const res = await fetch('/api/admin/me/photo', { method: 'POST', body: fd });
+      if (!res.ok) {
+        const data = (await res.json().catch(() => ({}))) as { fields?: string[] };
+        return say(data.fields?.[0] ? `Could not upload: ${data.fields[0]}.` : 'Could not upload. Try a JPG or PNG under 2 MB.', true);
+      }
+      location.reload();
+    } catch {
+      say('Network problem. Please try again.', true);
+    }
+  });
+  document.querySelector<HTMLButtonElement>('[data-photo-remove]')?.addEventListener('click', async () => {
+    if (!confirm('Remove your photo?')) return;
+    await fetch('/api/admin/me/photo', { method: 'DELETE' });
+    location.reload();
+  });
+</script>

@@ -185,6 +185,7 @@ const ADD_COLUMNS: { table: string; column: string; type: string }[] = [
   { table: 'vendors', column: 'admin_notes', type: 'TEXT' },
   { table: 'vendors', column: 'reviewed_at', type: 'INTEGER' },
   { table: 'accounts', column: 'staff_role', type: 'TEXT' },
+  { table: 'accounts', column: 'avatar_key', type: 'TEXT' },
 ];
 
 let ensured = false;
@@ -205,6 +206,15 @@ export async function ensureAdminSchema(db: D1Database): Promise<void> {
       cols.add(column);
     }
   }
+  // The owner account (see lib/bootstrap-admin.ts) is the Super Admin.
+  // Only applied while no Super Admin exists, so it runs once.
+  await db
+    .prepare(
+      `UPDATE accounts SET staff_role = 'super_admin'
+       WHERE id = 'admin-tristate-owner' AND role = 'admin'
+         AND NOT EXISTS (SELECT 1 FROM accounts WHERE staff_role = 'super_admin')`
+    )
+    .run();
   ensured = true;
 }
 
@@ -249,18 +259,26 @@ export function sinceSql(col: string, msParam: string, isoParam: string): string
 /**
  * Every staff user is an accounts row with role = 'admin' (so the
  * requireAdmin gate applies) plus a staff_role:
- *   admin  - everything, including Users and CSV export
- *   editor - works leads, chat, jobs, vendors and clients; cannot manage
- *            users or export
+ *   super_admin - everything; manages every user; can never be removed,
+ *                 demoted or reset by anyone else. Not assignable from the
+ *                 UI or API - it is the owner account.
+ *   admin       - everything, incl. adding/removing admins and editors and
+ *                 resetting their passwords (never the super admin's)
+ *   editor      - leads, chat, jobs, vendors, clients; no users, no export;
+ *                 can change only their own password and photo
  * NULL and the older values owner/manager read as admin; dispatch/sales/
- * viewer read as editor - so nobody loses or gains access unexpectedly.
+ * viewer read as editor.
  */
 export const STAFF_ROLES = [
-  { value: 'admin', label: 'Admin', blurb: 'Everything, including adding users and exporting data' },
-  { value: 'editor', label: 'Editor', blurb: 'Leads, live chat, jobs, vendors and clients - no users, no export' },
+  { value: 'super_admin', label: 'Super Admin', blurb: 'Full control of everything and every user. Cannot be removed or changed by anyone.' },
+  { value: 'admin', label: 'Admin', blurb: 'Everything, including adding, removing and resetting Admins and Editors. Cannot touch the Super Admin.' },
+  { value: 'editor', label: 'Editor', blurb: 'Works leads, live chat, jobs, vendors and clients. Cannot manage users or export. Can change only their own password and photo.' },
 ] as const;
 export type StaffRole = (typeof STAFF_ROLES)[number]['value'];
 export const STAFF_ROLE_VALUES: readonly string[] = STAFF_ROLES.map((r) => r.value);
+/** Roles that can be given to someone from the Users page. */
+export const ASSIGNABLE_ROLES = STAFF_ROLES.filter((r) => r.value !== 'super_admin');
+export const ASSIGNABLE_ROLE_VALUES: readonly string[] = ASSIGNABLE_ROLES.map((r) => r.value);
 
 export type Perm =
   | 'leads.view' | 'leads.edit' | 'messages' | 'jobs.view' | 'jobs.edit'
@@ -271,11 +289,13 @@ const EDITOR: Perm[] = [
   'vendors.view', 'vendors.edit', 'clients.view', 'clients.edit',
 ];
 const PERMS: Record<StaffRole, Perm[]> = {
+  super_admin: [...EDITOR, 'team', 'export'],
   admin: [...EDITOR, 'team', 'export'],
   editor: EDITOR,
 };
 
 export function staffRoleOf(v: string | null | undefined): StaffRole {
+  if (v === 'super_admin') return 'super_admin';
   if (v === 'editor' || v === 'dispatch' || v === 'sales' || v === 'viewer') return 'editor';
   return 'admin';
 }
@@ -284,4 +304,10 @@ export function can(staffRole: StaffRole, perm: Perm): boolean {
 }
 export function staffRoleLabel(v: string | null | undefined): string {
   return STAFF_ROLES.find((r) => r.value === staffRoleOf(v))?.label ?? 'Admin';
+}
+/** Can `actor` add/remove/re-role/reset `target`? Never the super admin; never yourself (use My account). */
+export function canManageUser(actor: StaffRole, actorId: string, target: { id: string; staff_role: string | null }): boolean {
+  if (!can(actor, 'team')) return false;
+  if (target.id === actorId) return false;
+  return staffRoleOf(target.staff_role) !== 'super_admin';
 }

@@ -5,7 +5,7 @@ import { env } from 'cloudflare:workers';
 import AdminLayout from '../../../layouts/AdminLayout.astro';
 import { requireAdmin } from '../../../lib/require-admin';
 import {
-  fmtDate, fmtDateTime, fmtCents, toMs, titleCase, sourceLabel, leadStatusLabel, leadStatusTone,
+  fmtDate, fmtDateTime, fmtCents, toMs, titleCase, sourceLabel, leadStatusLabel, leadStatusTone, can,
 } from '../../../lib/admin';
 import { ensureReviewsTable } from '../../../lib/reviews';
 import { SERVICE_CATEGORIES } from '../../../data/site';
@@ -216,18 +216,20 @@ const property = [acc.address, acc.city, acc.state, acc.zip].filter(Boolean).joi
         </form>
       </div>
 
+      {can(admin.staffRole, 'team') && (
       <div class="adm-card">
         <h2>{hasLogin ? 'Reset password' : 'Create login'}</h2>
         <form class="adm-form" data-admin-form data-endpoint={`/api/admin/accounts/${acc.id}/password`} data-method="POST"
-          data-confirm={hasLogin ? 'Set this temporary password and sign the client out everywhere?' : 'Create a login for this client with this password?'}>
+          data-confirm={hasLogin ? 'Set this new password and sign the client out everywhere?' : 'Create a login for this client with this password?'}>
           <div class="field">
-            <input type="text" name="password" value={tempPassword} minlength="10" required autocomplete="off" aria-label="Temporary password" />
-            <p class="form-note">Copy it first. The client signs in at /portal/ with {acc.email} and changes it under Settings.</p>
+            <span class="adm-pw-field"><input type="password" name="password" minlength="10" required autocomplete="new-password" placeholder="New password (10+ characters)" aria-label="New password" /><button type="button" class="adm-pw-eye" data-toggle-password aria-label="Show password">Show</button></span>
+            <p class="form-note">Tell the client this password directly. They sign in at /portal/ with {acc.email}.</p>
           </div>
-          <button type="submit" class="btn btn--outline btn--sm">{hasLogin ? 'Set temporary password' : 'Create login'}</button>
+          <button type="submit" class="btn btn--outline btn--sm">{hasLogin ? 'Set new password' : 'Create login'}</button>
           <p class="form-status" role="status" aria-live="polite" hidden></p>
         </form>
       </div>
+      )}
     </div>
   </div>
 </AdminLayout>

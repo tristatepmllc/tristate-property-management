@@ -25,7 +25,7 @@ type Section = 'overview' | 'leads' | 'messages' | 'jobs' | 'vendors' | 'clients
 interface Props {
   title: string;
   active: Section;
-  admin: { id: string; name: string | null; email: string; staffRole: StaffRole };
+  admin: { id: string; name: string | null; email: string; staffRole: StaffRole; avatar?: string | null };
   heading: string;
   subheading?: string;
 }
@@ -135,8 +135,8 @@ const roleLabel = staffRoleLabel(admin.staffRole);
             <input type="search" name="q" placeholder="Search leads, clients, vendors, jobs..." aria-label="Search everything" />
           </form>
           <span class="adm-chip" title="Business time zone">{today} &middot; {nowEt} ET</span>
-          <a class="adm-user" href="/admin/account/" title="My account - change password">
-            <span class="adm-avatar">{initial}</span>
+          <a class="adm-user" href="/admin/account/" title="My account - photo and password">
+            {admin.avatar ? <img class="adm-avatar" src={admin.avatar} alt="" width="32" height="32" /> : <span class="adm-avatar">{initial}</span>}
             <span class="adm-user-name">{displayName}<small>{roleLabel}</small></span>
           </a>
         </div>

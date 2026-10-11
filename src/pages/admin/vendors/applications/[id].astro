@@ -4,7 +4,7 @@ export const prerender = false;
 import { env } from 'cloudflare:workers';
 import AdminLayout from '../../../../layouts/AdminLayout.astro';
 import { requireAdmin } from '../../../../lib/require-admin';
-import { ensureAdminSchema, fmtDateTime, relTime, titleCase, VENDOR_APP_STATUSES } from '../../../../lib/admin';
+import { ensureAdminSchema, fmtDateTime, relTime, titleCase, VENDOR_APP_STATUSES, can } from '../../../../lib/admin';
 
 /**
  * One vendor application. Staff check what the vendor declared (licence,
@@ -86,7 +86,9 @@ const now = Date.now();
     <div>
       <div class="adm-card">
         <h2>Approve &amp; create login</h2>
-        {account ? (
+        {!can(admin.staffRole, 'team') ? (
+          <p class="adm-muted">Only an Admin or the Super Admin can approve a vendor and create their login.</p>
+        ) : account ? (
           <p>An account already exists for this email. <a class="adm-link" href={account.role === 'vendor' ? `/admin/vendors/${account.id}` : `/admin/clients/${account.id}`}>Open {account.role} account &rarr;</a></p>
         ) : (
           <>
@@ -101,9 +103,9 @@ const now = Date.now();
               data-confirm="Approve this vendor and create their login?">
               <input type="hidden" name="applicationId" value={app.id} />
               <div class="field">
-                <label for="va-pass">Temporary password</label>
-                <input type="text" id="va-pass" name="password" value={tempPassword} minlength="10" required autocomplete="off" />
-                <p class="form-note">Copy this before you approve. Read it to the vendor; they log in with {String(app.email)} and change it under Settings.</p>
+                <label for="va-pass">Login password</label>
+                <span class="adm-pw-field"><input type="password" id="va-pass" name="password" minlength="10" required autocomplete="new-password" placeholder="New password (10+ characters)" aria-label="New password" /><button type="button" class="adm-pw-eye" data-toggle-password aria-label="Show password">Show</button></span>
+                <p class="form-note">Type a password for the vendor and tell them directly. They log in with {String(app.email)}.</p>
               </div>
               <button type="submit" class="btn btn--red btn--wide">Approve &amp; create login</button>
               <p class="form-status" role="status" aria-live="polite" hidden></p>

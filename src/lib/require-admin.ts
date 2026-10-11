@@ -8,6 +8,8 @@ export type AdminUser = {
   name: string;
   role: 'admin';
   staffRole: StaffRole;
+  /** URL of the profile photo, or null. */
+  avatar: string | null;
 };
 
 /**
@@ -18,7 +20,7 @@ export type AdminUser = {
  * pattern), never cached in the session token, so revoking admin access
  * takes effect on the very next request, no sign-out required.
  *
- * staffRole (admin/editor) is read from D1 here too,
+ * staffRole (super_admin/admin/editor) and the photo are read from D1 here too,
  * so a role change applies on the next request. Pass `perm` to also require
  * a permission (APIs do; pages check `can()` for what to show).
  *
@@ -33,18 +35,20 @@ export async function requireAdmin(headers: Headers, perm?: Perm): Promise<Admin
   if (user.role !== 'admin') return null;
 
   let staffRole: StaffRole = 'admin';
+  let avatar: string | null = null;
   try {
     await ensureAdminSchema(env.DB);
-    const row = await env.DB.prepare(`SELECT role, staff_role FROM accounts WHERE id = ?1`)
+    const row = await env.DB.prepare(`SELECT role, staff_role, avatar_key, updated_at FROM accounts WHERE id = ?1`)
       .bind(user.id)
-      .first<{ role: string; staff_role: string | null }>();
+      .first<{ role: string; staff_role: string | null; avatar_key: string | null; updated_at: unknown }>();
     if (!row || row.role !== 'admin') return null;
     staffRole = staffRoleOf(row.staff_role);
+    avatar = row.avatar_key ? `/api/avatar/${user.id}?v=${encodeURIComponent(row.avatar_key.split('/').pop() ?? '')}` : null;
   } catch (e) {
     console.error('require_admin_role_lookup_failed', String(e).slice(0, 200));
     staffRole = 'editor';
   }
   if (perm && !can(staffRole, perm)) return null;
 
-  return { id: user.id, email: user.email, name: user.name, role: 'admin', staffRole };
+  return { id: user.id, email: user.email, name: user.name, role: 'admin', staffRole, avatar };
 }

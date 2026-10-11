@@ -4,78 +4,103 @@ export const prerender = false;
 import { env } from 'cloudflare:workers';
 import AdminLayout from '../../../layouts/AdminLayout.astro';
 import { requireAdmin } from '../../../lib/require-admin';
-import { STAFF_ROLES, staffRoleOf, staffRoleLabel, toMs, fmtDate, relTime } from '../../../lib/admin';
+import { ASSIGNABLE_ROLES, STAFF_ROLES, staffRoleOf, staffRoleLabel, canManageUser, toMs, fmtDate, relTime } from '../../../lib/admin';
 
 /**
- * Users (admins only). Add users with a role and a temporary
- * password, change roles, reset passwords, remove access. What each role
- * can do is listed on the page so nobody has to guess.
+ * Users (Super Admin and Admins). Add users, change Admin/Editor role,
+ * reset passwords, remove access - per canManageUser(): the Super Admin
+ * row is protected from everyone, your own row is managed under My
+ * account. Passwords are never shown or stored readably: every row shows
+ * ••••••••, and new passwords are typed into masked fields.
  */
 const admin = await requireAdmin(Astro.request.headers, 'team');
-if (!admin) return Astro.redirect('/tspm-admin', 302);
+if (!admin) return Astro.redirect('/admin/', 302);
 
-type Staff = { id: string; name: string | null; email: string; staff_role: string | null; created_at: unknown; last_seen: unknown };
+type Staff = { id: string; name: string | null; email: string; staff_role: string | null; avatar_key: string | null; created_at: unknown; last_seen: unknown };
 let staff: Staff[] = [];
 try {
   const r = await env.DB.prepare(
-    `SELECT a.id, a.name, a.email, a.staff_role, a.created_at,
+    `SELECT a.id, a.name, a.email, a.staff_role, a.avatar_key, a.created_at,
             (SELECT MAX(s.updated_at) FROM session s WHERE s.account_id = a.id) AS last_seen
-     FROM accounts a WHERE a.role = 'admin' ORDER BY a.name`
+     FROM accounts a WHERE a.role = 'admin'
+     ORDER BY CASE WHEN a.staff_role = 'super_admin' THEN 0 WHEN a.staff_role = 'editor' THEN 2 ELSE 1 END, a.name`
   ).all<Staff>();
   staff = r.results ?? [];
 } catch (e) {
-  console.error('admin_team_failed', String(e).slice(0, 300));
+  console.error('admin_users_failed', String(e).slice(0, 300));
 }
 const now = Date.now();
-const ALPHABET = 'ABCDEFGHJKMNPQRSTUVWXYZabcdefghjkmnpqrstuvwxyz23456789';
-const temp = () => Array.from(crypto.getRandomValues(new Uint32Array(12)), (n) => ALPHABET[n % ALPHABET.length]).join('');
-const newPassword = temp();
+const counts: Record<string, number> = { super_admin: 0, admin: 0, editor: 0 };
+for (const m of staff) counts[staffRoleOf(m.staff_role)]++;
+const tone: Record<string, string> = { super_admin: 'red', admin: 'navy', editor: 'blue' };
 ---
 <AdminLayout title="Users" active="team" admin={admin} heading="Users"
-  subheading="Everyone who can sign in to the admin panel, and their role.">
+  subheading={`${staff.length} user${staff.length === 1 ? '' : 's'} · ${counts.admin} admin${counts.admin === 1 ? '' : 's'} · ${counts.editor} editor${counts.editor === 1 ? '' : 's'}`}>
   <div class="adm-grid-2">
     <div>
       <div class="adm-card">
-        <h2>Users ({staff.length})</h2>
+        <h2>All users</h2>
         <div class="adm-table-wrap">
           <table class="adm-table">
-            <thead><tr><th>Person</th><th>Role</th><th>Last active</th><th></th></tr></thead>
+            <thead><tr><th>User</th><th>Role</th><th>Password</th><th>Last active</th><th></th></tr></thead>
             <tbody>
               {staff.map((m) => {
                 const self = m.id === admin.id;
+                const role = staffRoleOf(m.staff_role);
+                const manage = canManageUser(admin.staffRole, admin.id, m);
                 const seen = toMs(m.last_seen);
+                const display = m.name || m.email;
                 return (
                   <tr>
                     <td>
-                      <span class="adm-strong">{m.name || m.email}</span>{self && <span class="adm-pill adm-pill--blue" style="margin-left:6px">You</span>}
-                      <div class="adm-muted">{m.email}</div>
-                      {toMs(m.created_at) ? <div class="adm-muted">Added {fmtDate(toMs(m.created_at))}</div> : null}
+                      <div class="adm-person">
+                        {m.avatar_key
+                          ? <img class="adm-person-photo" src={`/api/avatar/${m.id}`} alt="" width="38" height="38" loading="lazy" />
+                          : <span class="adm-person-photo">{display.charAt(0).toUpperCase()}</span>}
+                        <div>
+                          <span class="adm-strong">{display}</span>{self && <span class="adm-pill adm-pill--blue" style="margin-left:6px">You</span>}
+                          <div class="adm-muted">{m.email}</div>
+                          {toMs(m.created_at) ? <div class="adm-muted">Added {fmtDate(toMs(m.created_at))}</div> : null}
+                        </div>
+                      </div>
                     </td>
                     <td>
-                      {self ? (
-                        <span class="adm-pill adm-pill--navy">{staffRoleLabel(m.staff_role)}</span>
-                      ) : (
+                      {manage ? (
                         <form class="adm-inline-form" data-admin-form data-endpoint={`/api/admin/team/${m.id}`} data-method="PATCH">
-                          <select name="staffRole" aria-label="Role">
-                            {STAFF_ROLES.map((r) => <option value={r.value} selected={r.value === staffRoleOf(m.staff_role)}>{r.label}</option>)}
+                          <select name="staffRole" aria-label={`Role for ${display}`}>
+                            {ASSIGNABLE_ROLES.map((r) => <option value={r.value} selected={r.value === role}>{r.label}</option>)}
                           </select>
                           <button type="submit" class="btn btn--outline btn--sm">Save</button>
                           <p class="form-status" role="status" aria-live="polite" hidden></p>
                         </form>
+                      ) : (
+                        <>
+                          <span class={`adm-pill adm-pill--${tone[role]}`}>{staffRoleLabel(m.staff_role)}</span>
+                          {role === 'super_admin' && <div class="adm-muted" style="margin-top:4px">Protected</div>}
+                        </>
                       )}
+                    </td>
+                    <td>
+                      <span class="adm-pw" aria-label="Password hidden">••••••••</span>
+                      {manage && (
+                        <form class="adm-inline-form" style="margin-top:6px" data-admin-form data-endpoint={`/api/admin/team/${m.id}`} data-method="PATCH"
+                          data-confirm={`Set a new password for ${display}? They will be signed out.`}>
+                          <span class="adm-pw-field">
+                            <input type="password" name="password" minlength="10" required autocomplete="new-password" placeholder="New password" aria-label={`New password for ${display}`} />
+                            <button type="button" class="adm-pw-eye" data-toggle-password aria-label="Show password">Show</button>
+                          </span>
+                          <button type="submit" class="btn btn--outline btn--sm">Reset</button>
+                          <p class="form-status" role="status" aria-live="polite" hidden></p>
+                        </form>
+                      )}
+                      {self && <div style="margin-top:6px"><a class="adm-link" href="/admin/account/">Change in My account</a></div>}
                     </td>
                     <td>{seen ? relTime(seen, now) : <span class="adm-muted">Never</span>}</td>
                     <td>
-                      <form class="adm-inline-form" data-admin-form data-endpoint={`/api/admin/team/${m.id}`} data-method="PATCH"
-                        data-confirm={`Set this temporary password for ${m.name || m.email}?${self ? '' : ' They will be signed out.'}`}>
-                        <input type="text" name="password" value={temp()} minlength="10" required autocomplete="off" aria-label="Temporary password" style="width:130px" />
-                        <button type="submit" class="btn btn--outline btn--sm">Reset password</button>
-                        <p class="form-status" role="status" aria-live="polite" hidden></p>
-                      </form>
-                      {!self && (
-                        <button type="button" class="btn btn--outline btn--sm" style="margin-top:6px" data-admin-quick data-method="PATCH"
+                      {manage && (
+                        <button type="button" class="btn btn--outline btn--sm" data-admin-quick data-method="PATCH"
                           data-endpoint={`/api/admin/team/${m.id}`} data-body='{"action":"disable"}'
-                          data-confirm={`Remove admin access for ${m.name || m.email}? They are signed out immediately.`}>Remove access</button>
+                          data-confirm={`Remove access for ${display}? They are signed out immediately and cannot sign in again.`}>Remove</button>
                       )}
                     </td>
                   </tr>
@@ -84,7 +109,7 @@ const newPassword = temp();
             </tbody>
           </table>
         </div>
-        <p class="adm-note">Copy a temporary password before saving it, then give it to the person directly. They change it under My account.</p>
+        <p class="adm-note">Nobody can see anyone's password - only set a new one. Tell the person their new password directly; they can change it under My account.</p>
       </div>
     </div>
 
@@ -92,18 +117,21 @@ const newPassword = temp();
       <div class="adm-card">
         <h2>Add new user</h2>
         <form class="adm-form" data-admin-form data-endpoint="/api/admin/team" data-method="POST">
-          <div class="field"><label for="tm-name">Name <span class="req">*</span></label><input type="text" id="tm-name" name="name" required /></div>
-          <div class="field"><label for="tm-email">Work email <span class="req">*</span></label><input type="email" id="tm-email" name="email" required /></div>
+          <div class="field"><label for="nu-name">Name <span class="req">*</span></label><input type="text" id="nu-name" name="name" required /></div>
+          <div class="field"><label for="nu-email">Email <span class="req">*</span></label><input type="email" id="nu-email" name="email" required autocomplete="off" /></div>
           <div class="field">
-            <label for="tm-role">Role <span class="req">*</span></label>
-            <select id="tm-role" name="staffRole" required>
-              {STAFF_ROLES.map((r) => <option value={r.value} selected={r.value === 'editor'}>{r.label}</option>)}
+            <label for="nu-role">Role <span class="req">*</span></label>
+            <select id="nu-role" name="staffRole" required>
+              {ASSIGNABLE_ROLES.map((r) => <option value={r.value} selected={r.value === 'editor'}>{r.label}</option>)}
             </select>
           </div>
           <div class="field">
-            <label for="tm-pass">Temporary password <span class="req">*</span></label>
-            <input type="text" id="tm-pass" name="password" value={newPassword} minlength="10" required autocomplete="off" />
-            <p class="form-note">Copy it first. They sign in at /tspm-admin.</p>
+            <label for="nu-pass">Password <span class="req">*</span></label>
+            <span class="adm-pw-field">
+              <input type="password" id="nu-pass" name="password" minlength="10" required autocomplete="new-password" />
+              <button type="button" class="adm-pw-eye" data-toggle-password aria-label="Show password">Show</button>
+            </span>
+            <p class="form-note">At least 10 characters. They sign in at /tspm-admin.</p>
           </div>
           <button type="submit" class="btn btn--red btn--wide">Add user</button>
           <p class="form-status" role="status" aria-live="polite" hidden></p>

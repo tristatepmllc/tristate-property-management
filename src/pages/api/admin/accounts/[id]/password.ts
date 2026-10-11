@@ -30,7 +30,8 @@ export const POST: APIRoute = async ({ request, params }) => {
   const acc = await env.DB.prepare(`SELECT id, role FROM accounts WHERE id = ?1`).bind(params.id ?? '').first<{ id: string; role: string }>();
   if (!acc) return json({ error: 'not_found' }, 404);
   if (acc.role === 'admin') return json({ error: 'forbidden' }, 403);
-  if (!can(admin.staffRole, acc.role === 'vendor' ? 'vendors.edit' : 'clients.edit')) return json({ error: 'forbidden' }, 403);
+  // Setting a login password grants access - Super Admin / Admin only.
+  if (!can(admin.staffRole, 'team')) return json({ error: 'forbidden' }, 403);
 
   const hash = await hashPassword(password);
   const now = Date.now();

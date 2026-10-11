@@ -4,7 +4,7 @@ export const prerender = false;
 import { env } from 'cloudflare:workers';
 import AdminLayout from '../../../layouts/AdminLayout.astro';
 import { requireAdmin } from '../../../lib/require-admin';
-import { ensureAdminSchema, fmtDate, fmtDateTime, fmtCents, toMs, titleCase } from '../../../lib/admin';
+import { ensureAdminSchema, fmtDate, fmtDateTime, fmtCents, toMs, titleCase, can } from '../../../lib/admin';
 import { ensureReviewsTable } from '../../../lib/reviews';
 
 /**
@@ -63,7 +63,7 @@ const tempPassword = Array.from(crypto.getRandomValues(new Uint32Array(12)), (n)
   heading={acc.company || acc.name || acc.email}
   subheading={`${acc.trade ? titleCase(acc.trade) : 'Vendor'}${acc.service_area ? ` · ${acc.service_area}` : ''}${toMs(acc.created_at) ? ` · joined ${fmtDate(toMs(acc.created_at))}` : ''}`}>
   <a class="adm-back" href="/admin/vendors/?tab=accounts">&larr; Back to vendor accounts</a>
-  {created && <p class="adm-banner">Login created. Give the vendor their email ({acc.email}) and the temporary password you copied. They should change it under Settings after signing in.</p>}
+  {created && <p class="adm-banner">Login created. Give the vendor their email ({acc.email}) and the password you set. They can change it under Settings after signing in.</p>}
 
   <div class="adm-kpis" style="grid-template-columns:repeat(4,1fr)">
     <div class="adm-kpi"><p class="adm-kpi-label">Jobs completed</p><p class="adm-kpi-value">{done.length}</p><p class="adm-kpi-note">{jobs.length} offered in total</p></div>
@@ -149,18 +149,20 @@ const tempPassword = Array.from(crypto.getRandomValues(new Uint32Array(12)), (n)
         </dl>
       </div>
 
+      {can(admin.staffRole, 'team') && (
       <div class="adm-card">
         <h2>Reset password</h2>
         <form class="adm-form" data-admin-form data-endpoint={`/api/admin/accounts/${acc.id}/password`} data-method="POST"
-          data-confirm="Set this temporary password and sign the vendor out everywhere?">
+          data-confirm="Set this new password and sign the vendor out everywhere?">
           <div class="field">
-            <input type="text" name="password" value={tempPassword} minlength="10" required autocomplete="off" aria-label="Temporary password" />
-            <p class="form-note">Copy it first, then read it to the vendor by phone.</p>
+            <span class="adm-pw-field"><input type="password" name="password" minlength="10" required autocomplete="new-password" placeholder="New password (10+ characters)" aria-label="New password" /><button type="button" class="adm-pw-eye" data-toggle-password aria-label="Show password">Show</button></span>
+            <p class="form-note">Tell the vendor this password directly. Nobody can view it later.</p>
           </div>
-          <button type="submit" class="btn btn--outline btn--sm">Set temporary password</button>
+          <button type="submit" class="btn btn--outline btn--sm">Set new password</button>
           <p class="form-status" role="status" aria-live="polite" hidden></p>
         </form>
       </div>
+      )}
     </div>
   </div>
 </AdminLayout>

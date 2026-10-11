@@ -13,7 +13,7 @@ type App = {
 };
 
 /**
- * POST /api/admin/accounts - admin only. Approve a vendor application and
+ * POST /api/admin/accounts - Super Admin / Admin only (it grants a login). Approve a vendor application and
  * create its portal login in one step.
  * Body: { applicationId, password }  (temporary password, min 10 chars;
  * staff give it to the vendor by phone and the vendor changes it under
@@ -25,7 +25,7 @@ type App = {
  * credential table exactly as a normal sign-up would.
  */
 export const POST: APIRoute = async ({ request }) => {
-  const admin = await requireAdmin(request.headers, 'vendors.edit');
+  const admin = await requireAdmin(request.headers, 'team');
   if (!admin) return json({ error: 'forbidden' }, 403);
 
   let b: Record<string, unknown>;
