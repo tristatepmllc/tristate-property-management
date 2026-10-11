@@ -2,6 +2,7 @@
 import BaseLayout from '../layouts/BaseLayout.astro';
 import LeadFormExtras from '../components/LeadFormExtras.astro';
 import { SITE, SERVICE_CATEGORIES } from '../data/site';
+import { PP_SERVICES } from '../data/property-preservation';
 import { graph, breadcrumbs } from '../lib/schema';
 
 const jsonLd = graph([
@@ -12,8 +13,8 @@ const jsonLd = graph([
 ]);
 ---
 <BaseLayout
-  title="Client Registration - Register Your Property"
-  description="Register your property with Tristate Property Management. Give us the address and the service you need, then we will call to confirm scope and open the account."
+  title="Become a Client - Create Your Tristate Account"
+  description="Create your free Tristate client account in a minute. Request service, track every job and vendor, rate the work and see billing and cashback in one portal."
   path="/client-registration/"
   active="/client-registration/"
   jsonLd={jsonLd}
@@ -23,11 +24,11 @@ const jsonLd = graph([
     <div class="page-hero-bg" style="background-image:url('/images/home-site-supervisor-reviewing-building-plans-on-.webp')"></div>
     <div class="wrap">
       <p class="crumb"><a href="/">Home</a> &nbsp;/&nbsp; <span>Client registration</span></p>
-      <h1>Register your property</h1>
+      <h1>Become a client</h1>
       <p>
-        This sets up an ongoing account: your property on file, one point of contact and a
-        record of every visit. Just need a price on a single job? The
-        <a href="/contact/">quote form</a> is faster.
+        Create your free account and you're in straight away: request service, track every job
+        and vendor, rate the work and see billing in one place. Just need a price on a single
+        job? The <a href="/contact/">quote form</a> is faster.
       </p>
     </div>
   </section>
@@ -36,110 +37,136 @@ const jsonLd = graph([
   <div class="wrap">
     <div class="contact-grid">
 
-      <!-- FORM (left) -->
+      <!-- CREATE ACCOUNT (left): real portal account, signed in on success -->
       <div>
         <p class="eyebrow">New client</p>
-        <h2 style="font-size:1.9rem;text-transform:uppercase;margin-bottom:8px">Four fields to get started</h2>
-        <p style="color:var(--steel);font-size:.93rem;margin-bottom:26px">
-          Name, number, property address and what you need. Everything else we work out on the
-          call. Would rather talk now? <a href={SITE.telHref}>{SITE.phone}</a>.
+        <h2 class="reg-title">Create your client account</h2>
+        <p class="reg-lede">
+          Takes about a minute. You land in your portal as soon as you submit.
+          Already have an account? <a href="/portal/">Log in</a>.
         </p>
 
         <div class="form-card">
-          <form
-            action="/api/leads"
-            method="post"
-            data-lead-form
-            data-source="client-registration"
-            data-thanks-heading="Thank you for registering!"
-            data-success="We will call to confirm the property and the scope, usually the same business day."
-            novalidate
-          >
-            <input type="hidden" name="urgency" value="Ongoing contract enquiry" />
-
+          <form data-client-register-form novalidate>
             <div class="field-row">
               <div class="field">
-                <label for="r-name">Your name <span class="req">*</span></label>
-                <input type="text" id="r-name" name="name" autocomplete="name" placeholder="Jane Whitfield" required />
+                <label for="cr-name">Full name <span class="req">*</span></label>
+                <input type="text" id="cr-name" name="name" autocomplete="name" placeholder="Jane Whitfield" required />
               </div>
               <div class="field">
-                <label for="r-phone">Phone <span class="req">*</span></label>
-                <input type="tel" id="r-phone" name="phone" autocomplete="tel" placeholder="(203) 000-0000" required />
+                <label for="cr-phone">Phone <span class="req">*</span></label>
+                <input type="tel" id="cr-phone" name="phone" autocomplete="tel" placeholder="(203) 000-0000" required />
               </div>
-            </div>
-
-            <div class="field">
-              <label for="r-address">Property address <span class="req">*</span></label>
-              <input type="text" id="r-address" name="address" autocomplete="street-address" placeholder="Street, town, ZIP" required />
-            </div>
-
-            <div class="field">
-              <label for="r-service">Service required <span class="req">*</span></label>
-              <select id="r-service" name="service" required>
-                <option value="">Choose a service&hellip;</option>
-                <option>Full property management</option>
-                {SERVICE_CATEGORIES.map((c) => <option set:html={c.name} />)}
-                <option>Multiple services / not sure yet</option>
-              </select>
             </div>
 
             <div class="field-row">
               <div class="field">
-                <label for="r-email">Email</label>
-                <input type="email" id="r-email" name="email" autocomplete="email" placeholder="jane@company.com" />
+                <label for="cr-email">Email <span class="req">*</span></label>
+                <input type="email" id="cr-email" name="email" autocomplete="email" placeholder="jane@email.com" required />
               </div>
               <div class="field">
-                <label for="r-building">Property type</label>
-                <select id="r-building" name="building">
+                <label for="cr-password">Password <span class="req">*</span></label>
+                <input type="password" id="cr-password" name="password" autocomplete="new-password" minlength="10" required />
+                <p class="form-note">At least 10 characters.</p>
+              </div>
+            </div>
+
+            <div class="field">
+              <label for="cr-address">Property address <span class="req">*</span></label>
+              <input type="text" id="cr-address" name="address" autocomplete="street-address" placeholder="Street and town" required />
+            </div>
+
+            <div class="field-row">
+              <div class="field">
+                <label for="cr-state">State <span class="req">*</span></label>
+                <select id="cr-state" name="state" required>
                   <option value="">Choose&hellip;</option>
-                  <option>Single-family rental</option>
-                  <option>Multifamily / HOA</option>
-                  <option>Office</option>
-                  <option>Retail</option>
-                  <option>Restaurant</option>
-                  <option>Medical / dental</option>
-                  <option>Warehouse / industrial</option>
-                  <option>Mixed use</option>
-                  <option>Other</option>
+                  {SITE.areaServed.map((a) => <option value={a.abbr}>{a.state}</option>)}
+                  <option value="Other">Other</option>
+                </select>
+              </div>
+              <div class="field">
+                <label for="cr-zip">ZIP</label>
+                <input type="text" id="cr-zip" name="zip" autocomplete="postal-code" inputmode="numeric" maxlength="10" />
+              </div>
+            </div>
+
+            <div class="field-row">
+              <div class="field">
+                <label for="cr-type">Property type <span class="req">*</span></label>
+                <select id="cr-type" name="propertyType" required>
+                  <option value="">Choose&hellip;</option>
+                  <option value="single_family">Single-family home</option>
+                  <option value="multifamily">Multifamily / HOA</option>
+                  <option value="commercial">Commercial</option>
+                  <option value="mixed_use">Mixed use</option>
+                  <option value="other">Other</option>
+                </select>
+              </div>
+              <div class="field">
+                <label for="cr-service">What do you need first?</label>
+                <select id="cr-service" name="service">
+                  <option value="">Not sure yet</option>
+                  <optgroup label="Property maintenance &amp; preservation">
+                    {PP_SERVICES.map((sv) => <option>{sv.name}</option>)}
+                  </optgroup>
+                  <optgroup label="Trades &amp; building services">
+                    {SERVICE_CATEGORIES.map((c) => <option set:html={c.name} />)}
+                  </optgroup>
                 </select>
               </div>
             </div>
 
             <div class="field">
-              <label for="r-details">Anything we should know</label>
-              <textarea
-                id="r-details"
-                name="details"
-                placeholder="Example: eight units, currently self-managed, two tenants turning over in spring, boiler is fifteen years old."
-              ></textarea>
+              <label for="cr-details">Anything we should know</label>
+              <textarea id="cr-details" name="details" placeholder="Example: vacant since spring, needs a cleanout and regular lawn care. Lockbox on the back door."></textarea>
             </div>
 
-            <LeadFormExtras source="client-registration" />
-
-            <button type="submit" class="btn btn--red btn--wide">Register my property</button>
+            <button type="submit" class="btn btn--red btn--wide">Create my account</button>
+            <p class="form-status" role="status" aria-live="polite" hidden></p>
 
             <p class="form-note">
-              Registering costs nothing and commits you to nothing. Nothing is scheduled and no
-              fee applies until we have agreed the scope in writing. Your details are never passed
-              to a third party - see our <a href="/privacy-policy/">privacy policy</a>.
+              Free, no commitment. Nothing is scheduled or billed until you approve a written
+              price. Your details are never passed to a third party - see our
+              <a href="/privacy-policy/">privacy policy</a>.
             </p>
           </form>
         </div>
       </div>
 
-      <!-- INFO (right) - a hidden copy of the left heading block sits above the
-           boxes so their top edge lands at the same height as the form-card's
-           top edge on the left, not at the grid row's top. A fixed margin
-           would drift the moment the heading copy or font changes (as it just
-           did, site-wide, this same session); duplicating the real block and
-           hiding it keeps the two columns' box-tops in sync automatically. -->
+      <!-- CALL-BACK (right): for anyone not ready to set a password -->
       <div>
-        <p class="eyebrow" aria-hidden="true" style="visibility:hidden">New client</p>
-        <h2 aria-hidden="true" style="visibility:hidden;font-size:1.9rem;text-transform:uppercase;margin-bottom:8px">Four fields to get started</h2>
-        <p aria-hidden="true" style="visibility:hidden;font-size:.93rem;margin-bottom:26px">
-          Name, number, property address and what you need. Everything else we work out on the
-          call. Would rather talk now? {SITE.phone}.
-        </p>
+        <div class="reg-callback">
+          <p class="eyebrow">Prefer we call you?</p>
+          <h3>Leave your number</h3>
+          <p class="form-note">We'll call, usually the same business day, and set the account up with you.</p>
+          <form
+            action="/api/leads"
+            method="post"
+            data-lead-form
+            data-source="client-registration"
+            data-thanks-heading="Thanks - we'll call you"
+            data-success="Usually the same business day. You can also create your portal account any time on this page."
+            novalidate
+          >
+            <input type="hidden" name="urgency" value="Ongoing contract enquiry" />
+            <div class="field">
+              <label for="r-name">Your name <span class="req">*</span></label>
+              <input type="text" id="r-name" name="name" autocomplete="name" required />
+            </div>
+            <div class="field">
+              <label for="r-phone">Phone <span class="req">*</span></label>
+              <input type="tel" id="r-phone" name="phone" autocomplete="tel" required />
+            </div>
+            <div class="field">
+              <label for="r-address">Property address <span class="req">*</span></label>
+              <input type="text" id="r-address" name="address" autocomplete="street-address" required />
+            </div>
+            <input type="hidden" name="service" value="New client - call back" />
+            <LeadFormExtras source="client-registration" />
+            <button type="submit" class="btn btn--outline btn--wide">Call me back</button>
+          </form>
+        </div>
 
         <div class="info-block">
           <h3>Contact details</h3>
@@ -152,15 +179,26 @@ const jsonLd = graph([
             <span class="v"><a href={SITE.mailtoHref}>{SITE.email}</a></span>
           </div>
         </div>
-
-        <div class="info-block">
-          <h3>Hours</h3>
-          <div class="info-row"><span class="k">Mon&ndash;Fri</span><span class="v">7:00 AM &ndash; 6:00 PM</span></div>
-          <div class="info-row"><span class="k">Saturday</span><span class="v">8:00 AM &ndash; 2:00 PM</span></div>
-          <div class="info-row"><span class="k">Emergency</span><span class="v">24 / 7 / 365</span></div>
-        </div>
       </div>
 
+    </div>
+  </div>
+</section>
+
+<section class="section section--paper">
+  <div class="wrap">
+    <div class="sec-head">
+      <p class="eyebrow">Your client portal</p>
+      <h2>What you get with an account</h2>
+      <p>One login for every property job - no chasing emails or phone tag.</p>
+    </div>
+    <div class="pp-grid reg-features">
+      <div class="pp-card"><h3>Request service in seconds</h3><p>Address and contact details are already on file. Pick the service, add notes, done.</p></div>
+      <div class="pp-card"><h3>Track every job live</h3><p>See each job move from requested to vendor assigned, scheduled, in progress and completed.</p></div>
+      <div class="pp-card"><h3>Know who is on site</h3><p>See which vetted, insured vendor took your job and how many jobs they have done for you.</p></div>
+      <div class="pp-card"><h3>Rate the work</h3><p>Rate every completed job. Your ratings decide which vendors we send back to your property.</p></div>
+      <div class="pp-card"><h3>Billing in one place</h3><p>Every job amount on one record, with totals for the year - easy at tax time.</p></div>
+      <div class="pp-card"><h3>Cashback on jobs</h3><p>Eligible completed jobs earn cashback you can put toward your next one.</p></div>
     </div>
   </div>
 </section>
@@ -168,31 +206,35 @@ const jsonLd = graph([
   <section class="section section--navy">
     <div class="wrap">
       <div class="sec-head">
-        <p class="eyebrow">After you register</p>
-        <h2>What happens next</h2>
+        <p class="eyebrow">How it works</p>
+        <h2>From sign-up to finished job</h2>
       </div>
       <div class="steps">
         <div class="step">
           <div class="step-num">01</div>
-          <h3>We call you</h3>
-          <p>Usually the same business day, to confirm the property and what you actually need.</p>
+          <h3>Create your account</h3>
+          <p>One minute, free. You are in your portal straight away.</p>
         </div>
         <div class="step">
           <div class="step-num">02</div>
-          <h3>Walk-through</h3>
-          <p>We look at the building, note what is due and what is failing, and put it in writing.</p>
+          <h3>We confirm your property</h3>
+          <p>We call to confirm the property and what it needs, usually the same business day.</p>
         </div>
         <div class="step">
           <div class="step-num">03</div>
-          <h3>Scope and price</h3>
-          <p>A written scope with a flat price. Nothing starts and nothing is billed before you agree it.</p>
+          <h3>Request jobs any time</h3>
+          <p>A written price before anything starts. A vetted vendor is scheduled once you approve.</p>
         </div>
         <div class="step">
           <div class="step-num">04</div>
-          <h3>One contact</h3>
-          <p>The same coordinator for the property, with every visit and invoice on one record.</p>
+          <h3>Track and rate</h3>
+          <p>Follow progress in the portal, get photos on completion and rate the vendor.</p>
         </div>
       </div>
     </div>
   </section>
 </BaseLayout>
+
+<script>
+  import '../scripts/auth';
+</script>

@@ -110,6 +110,7 @@ function init(): void {
   // wired to each; only one is ever visible/reachable per role anyway.
   const logoutForms = document.querySelectorAll<HTMLFormElement>('[data-logout-form]');
   const profile = document.querySelector<HTMLFormElement>('[data-profile-form]');
+  const clientRegister = document.querySelector<HTMLFormElement>('[data-client-register-form]');
 
   forgotToggle?.addEventListener('click', () => {
     if (!signIn || !forgot) return;
@@ -129,6 +130,61 @@ function init(): void {
       } else {
         say(signIn, result.message ?? 'Could not sign in.');
       }
+    });
+  }
+
+  // "Become a client" (/client-registration/): create the account, save the
+  // property onto the profile, log a lead so the office sees the new client,
+  // then go straight to the dashboard. Sign-up signs the user in, so every
+  // call after it is authenticated. Only sign-up failing stops the flow - a
+  // profile or lead hiccup must not strand someone who already has an
+  // account; they can finish the profile in the portal.
+  if (clientRegister) {
+    withBusyButton(clientRegister, async () => {
+      const fd = new FormData(clientRegister);
+      const val = (k: string) => String(fd.get(k) ?? '').trim();
+
+      const created = await post('/sign-up/email', {
+        name: val('name'),
+        email: val('email'),
+        password: String(fd.get('password') ?? ''),
+        role: 'client',
+      });
+      if (!created.ok) {
+        const msg = created.message ?? 'Could not create the account.';
+        say(
+          clientRegister,
+          /exist/i.test(msg)
+            ? 'An account with this email already exists. Log in at /portal/ instead.'
+            : msg
+        );
+        return;
+      }
+
+      say(clientRegister, 'Account created - setting up your portal\u2026');
+      await patchProfile({
+        phone: val('phone'),
+        address: val('address'),
+        state: val('state'),
+        zip: val('zip'),
+        propertyType: val('propertyType'),
+      });
+      try {
+        await fetch('/api/portal/request-service', {
+          method: 'POST',
+          headers: { 'content-type': 'application/json' },
+          body: JSON.stringify({
+            phone: val('phone'),
+            service: val('service') || 'New client account',
+            address: [val('address'), val('state'), val('zip')].filter(Boolean).join(', '),
+            details: val('details'),
+            source: 'client-registration',
+          }),
+        });
+      } catch {
+        /* the account exists either way; the office also sees new accounts */
+      }
+      location.href = '/portal/';
     });
   }
 

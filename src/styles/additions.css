@@ -1850,3 +1850,11 @@ a.vdash-activity-item:hover .vdash-activity-text p:first-child{color:var(--red)}
 .jd-rate-stars input:focus-visible + label{outline:2px solid var(--navy-600);outline-offset:2px;border-radius:3px}
 .form-status.is-error{color:var(--red-dark)}
 .jd-rate-stars{border:0;padding:0;margin:6px 0 14px}
+
+/* Become a client (/client-registration/) */
+.reg-title{font-size:1.9rem;text-transform:uppercase;margin-bottom:8px}
+.reg-lede{color:var(--steel);font-size:.93rem;margin-bottom:26px}
+.reg-callback{border:1px solid var(--line);border-radius:var(--radius);padding:24px;background:var(--paper);margin-bottom:20px}
+.reg-callback h3{margin:4px 0 6px}
+.reg-callback .form-note{margin-bottom:16px}
+@media (min-width:941px){.reg-callback{margin-top:96px}}

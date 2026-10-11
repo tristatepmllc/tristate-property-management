@@ -102,7 +102,9 @@ export const POST: APIRoute = async ({ request }) => {
         service,
         urgency || null,
         message || null,
-        'portal-request-service',
+        // Only known in-portal sources are accepted; anything else is the
+        // default, so a client cannot write arbitrary values into leads.source.
+        str('source', 40) === 'client-registration' ? 'client-registration-account' : 'portal-request-service',
         request.headers.get('referer'),
         'new',
         now
