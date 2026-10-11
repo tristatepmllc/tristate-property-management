@@ -1,6 +1,7 @@
 ---
 import BaseLayout from '../layouts/BaseLayout.astro';
 import LeadFormExtras from '../components/LeadFormExtras.astro';
+import QuickQuoteForm from '../components/QuickQuoteForm.astro';
 import { SITE, SERVED_SENTENCE, SERVED_ABBR } from '../data/site';
 import Coverage from '../components/Coverage.astro';
 import { PP_STATES } from '../data/property-preservation';
@@ -27,9 +28,10 @@ const hasReviews = TESTIMONIALS.length > 0;
   preloadImage="/images/home-hero-commercial-facility-crew.webp"
 >
 <!-- ================= HERO ================= -->
-<section class="hero">
+<section class="hero hero--split">
   <div class="hero-bg" style="background-image:url('/images/home-hero-commercial-facility-crew.webp')"></div>
   <div class="wrap">
+   <div class="hero-split">
     <div class="hero-inner">
       <p class="eyebrow">Homeowners &amp; commercial properties</p>
       <h1>Property Maintenance &amp;<br>Preservation<br><span class="accent">You Can Count On.</span></h1>
@@ -39,7 +41,7 @@ const hasReviews = TESTIMONIALS.length > 0;
         running too. One local team, one phone call, one written quote.
       </p>
       <div class="hero-actions">
-        <a class="btn btn--red" href="/property-preservation/#quote">Get a Free Property Assessment</a>
+        <a class="btn btn--red" href="#hero-form">Get a Free Property Assessment</a>
         <a class="btn btn--ghost" href="/contact/">Commercial Quote</a>
       </div>
       <ul class="hero-badges">
@@ -50,6 +52,13 @@ const hasReviews = TESTIMONIALS.length > 0;
       </ul>
       <p class="hero-served">Serving {PP_STATES.map((p) => p.state).join(' \u2022 ')}</p>
     </div>
+    <div class="hero-form" id="hero-form">
+      <p class="hero-form-tag">Free quote &middot; no obligation</p>
+      <h2>Tell us what you need</h2>
+      <p class="hero-form-sub">Four quick fields. We call back with a written price, usually the same business day.</p>
+      <QuickQuoteForm source="home-hero-form" idPrefix="hh" compact submitLabel="Get my free quote" />
+    </div>
+   </div>
   </div>
 </section>
 
@@ -468,71 +477,7 @@ const hasReviews = TESTIMONIALS.length > 0;
       </div>
 
       <div class="form-card">
-        <form action="/api/leads" method="post" data-lead-form data-source="home-hero-form">
-          <div class="field-row">
-            <div class="field">
-              <label for="h-name">Your name <span class="req">*</span></label>
-              <input type="text" id="h-name" name="name" placeholder="Jane Whitfield" required>
-            </div>
-            <div class="field">
-              <label for="h-phone">Phone <span class="req">*</span></label>
-              <input type="tel" id="h-phone" name="phone" placeholder="(203) 000-0000" required>
-            </div>
-          </div>
-
-          <div class="field-row">
-            <div class="field">
-              <label for="h-email">Email <span class="req">*</span></label>
-              <input type="email" id="h-email" name="email" placeholder="jane@company.com" required>
-            </div>
-            <div class="field">
-              <label for="h-property">Property / company</label>
-              <input type="text" id="h-property" name="property" placeholder="Riverside Business Park">
-            </div>
-          </div>
-
-          <div class="field-row">
-            <div class="field">
-              <label for="h-service">Service needed <span class="req">*</span></label>
-              <select id="h-service" name="service" required>
-                <option value="">Choose a service&hellip;</option>
-                <option>Janitorial &amp; Cleaning</option>
-                <option>Plumbing &amp; Drains</option>
-                <option>Electrical &amp; Lighting</option>
-                <option>HVAC &amp; Refrigeration</option>
-                <option>Handyman &amp; Repairs</option>
-                <option>Painting &amp; Surfaces</option>
-                <option>Grounds &amp; Exterior</option>
-                <option>Restoration &amp; Projects</option>
-                <option>Multiple services / not sure</option>
-              </select>
-            </div>
-            <div class="field">
-              <label for="h-urgency">How urgent? <span class="req">*</span></label>
-              <select id="h-urgency" name="urgency" required>
-                <option value="">Choose&hellip;</option>
-                <option>Emergency - today</option>
-                <option>Within 48 hours</option>
-                <option>This week</option>
-                <option>Planning ahead</option>
-                <option>Ongoing contract enquiry</option>
-              </select>
-            </div>
-          </div>
-
-          <div class="field">
-            <label for="h-details">Describe the job <span class="req">*</span></label>
-            <textarea id="h-details" name="details" placeholder="Where in the building, what is happening, and when we can get access." required></textarea>
-          </div>
-
-          <LeadFormExtras source="home-hero-form" />
-
-          <button type="submit" class="btn btn--red btn--wide">Send request</button>
-          <p class="form-note">
-            We reply to every request. Requests sent before noon on a business day are
-            answered the same day. We never pass your details to anyone else.
-          </p>
-        </form>
+        <QuickQuoteForm source="home-quote-section" idPrefix="hq" detailsOpen />
       </div>
     </div>
   </div>

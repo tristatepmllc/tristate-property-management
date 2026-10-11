@@ -17,6 +17,7 @@ import Header from '../components/Header.astro';
 import Footer from '../components/Footer.astro';
 import ChatWidget from '../components/ChatWidget.astro';
 import QuotePopup from '../components/QuotePopup.astro';
+import StickyCta from '../components/StickyCta.astro';
 import LeadFormScript from '../components/LeadFormScript.astro';
 
 interface Props {
@@ -91,6 +92,7 @@ const ogAbsolute = new URL(ogImage, SITE.url).href;
   <Footer />
   <ChatWidget />
   {showPopup && <QuotePopup />}
+  <StickyCta />
   <script is:inline defer src="https://challenges.cloudflare.com/turnstile/v0/api.js"></script>
   <LeadFormScript />
 </body>

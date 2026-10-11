@@ -100,9 +100,10 @@ export function leadStatusTone(v: string): string {
 }
 
 const SOURCE_LABELS: Record<string, string> = {
-  'home-hero-form': 'Homepage form',
+  'home-hero-form': 'Homepage hero form',
+  'home-quote-section': 'Homepage form (bottom)',
   'contact-page-form': 'Contact page',
-  'popup-walkthrough': 'Walk-through popup',
+  'popup-walkthrough': 'Walk-through popup (desktop)',
   'chat-widget': 'Live chat',
   'client-registration': 'Become a client (call back)',
   'client-registration-account': 'New client account',

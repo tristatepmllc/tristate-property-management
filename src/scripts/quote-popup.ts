@@ -1,15 +1,15 @@
 /**
  * Quote popup.
  *
- * Desktop: centre modal after a delay, with exit-intent as a second chance.
- * Mobile:  a slim bottom bar appears instead; tapping it opens the same modal,
- *          which makes the mobile modal click-triggered and therefore outside
- *          Google's intrusive-interstitial guideline.
+ * Desktop only: centre modal after 45s on the page, or earlier on exit
+ * intent. Never on phones - the sticky Call / Get a quote bar (StickyCta)
+ * covers mobile, and a modal over a small screen costs more leads than it
+ * wins.
  *
  * Frequency: once per session, 30 days after a dismissal, never after a convert.
  */
 
-const DELAY_MS = 15_000; // inside the 6–15s band where timed popups peak
+const DELAY_MS = 45_000; // only visitors who are actually reading see it
 const DISMISS_DAYS = 30;
 const KEY_DISMISS = 'tpm_qp_dismissed_until';
 const KEY_CONVERTED = 'tpm_qp_converted';
@@ -49,7 +49,8 @@ function init(): void {
   const openBtn = root.querySelector<HTMLButtonElement>('.qp-bar-open');
   if (!backdrop || !modal) return;
 
-  const isMobile = window.matchMedia('(max-width: 720px)');
+  const isMobile = window.matchMedia('(max-width: 860px)');
+  if (isMobile.matches) return;
   let lastFocus: HTMLElement | null = null;
   let armed = true;
 

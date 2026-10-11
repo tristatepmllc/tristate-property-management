@@ -1,0 +1,97 @@
+---
+/**
+ * The one short quote form used across the site (homepage hero, homepage
+ * quote section, /contact/). Four required fields - name, phone, property
+ * address, service - because that is all dispatch needs to call back with a
+ * price. Email and details are optional and tucked behind "Add details"
+ * so the form stays short on a phone.
+ *
+ * Posts to /api/leads through lead-form.ts (honeypot + Turnstile via
+ * LeadFormExtras). `idPrefix` keeps label/input ids unique when the form
+ * appears twice on one page.
+ */
+import LeadFormExtras from './LeadFormExtras.astro';
+import { SITE, SERVICE_CATEGORIES } from '../data/site';
+import { PP_SERVICES } from '../data/property-preservation';
+
+interface Props {
+  source: string;
+  idPrefix: string;
+  submitLabel?: string;
+  compact?: boolean;
+  /** Show the optional email/details/urgency block open by default. */
+  detailsOpen?: boolean;
+}
+const { source, idPrefix: p, submitLabel = 'Get my free quote', compact = false, detailsOpen = false } = Astro.props;
+---
+<form
+  action="/api/leads"
+  method="post"
+  data-lead-form
+  data-source={source}
+  data-thanks-heading="Got it - we'll call you shortly"
+  data-success={`We call back to confirm the job and give you a written price, usually the same business day. Need us right now? Call ${SITE.phone}.`}
+  class={`qq-form${compact ? ' qq-form--compact' : ''}`}
+  novalidate
+>
+  <div class="field-row">
+    <div class="field">
+      <label for={`${p}-name`}>Your name <span class="req">*</span></label>
+      <input type="text" id={`${p}-name`} name="name" autocomplete="name" required />
+    </div>
+    <div class="field">
+      <label for={`${p}-phone`}>Phone <span class="req">*</span></label>
+      <input type="tel" id={`${p}-phone`} name="phone" autocomplete="tel" inputmode="tel" placeholder="(000) 000-0000" required />
+    </div>
+  </div>
+
+  <div class="field">
+    <label for={`${p}-address`}>Property address <span class="req">*</span></label>
+    <input type="text" id={`${p}-address`} name="address" autocomplete="street-address" placeholder="Street, town, state" required />
+  </div>
+
+  <div class="field">
+    <label for={`${p}-service`}>What do you need? <span class="req">*</span></label>
+    <select id={`${p}-service`} name="service" required>
+      <option value="">Choose a service&hellip;</option>
+      <optgroup label="Home &amp; property care">
+        {PP_SERVICES.map((s) => <option>{s.name}</option>)}
+      </optgroup>
+      <optgroup label="Trades &amp; building services">
+        {SERVICE_CATEGORIES.map((c) => <option set:html={c.name} />)}
+      </optgroup>
+      <option>Not sure - please call me</option>
+    </select>
+  </div>
+
+  <details class="qq-more" open={detailsOpen}>
+    <summary>Add details (optional)</summary>
+    <div class="field-row">
+      <div class="field">
+        <label for={`${p}-email`}>Email</label>
+        <input type="email" id={`${p}-email`} name="email" autocomplete="email" />
+      </div>
+      <div class="field">
+        <label for={`${p}-urgency`}>How soon?</label>
+        <select id={`${p}-urgency`} name="urgency">
+          <option value="">Choose&hellip;</option>
+          <option>Emergency - today</option>
+          <option>Within 48 hours</option>
+          <option>This week</option>
+          <option>Planning ahead</option>
+        </select>
+      </div>
+    </div>
+    <div class="field">
+      <label for={`${p}-details`}>Anything we should know?</label>
+      <textarea id={`${p}-details`} name="details" placeholder="What's going on, access notes, best time to call..."></textarea>
+    </div>
+  </details>
+
+  <LeadFormExtras source={source} />
+
+  <button type="submit" class="btn btn--red btn--wide">{submitLabel}</button>
+  <p class="form-note qq-note">
+    Free, no obligation. Prefer to talk? <a href={SITE.telHref}>{SITE.phone}</a>. We never share your details.
+  </p>
+</form>

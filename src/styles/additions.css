@@ -2073,3 +2073,47 @@ img.adm-avatar{object-fit:cover}
 .adm-form .adm-pw-field{display:flex;width:100%}
 .adm-form .adm-pw-field input{flex:1;width:auto;padding:10px 12px;font-size:.92rem}
 .adm-pw-eye{border:0;border-left:1px solid var(--line);background:var(--paper);padding:6px 10px;font:600 .74rem var(--body);color:var(--navy-700);cursor:pointer;align-self:stretch}
+
+/* Homepage hero with quick quote form (right on desktop, under the text on phones) */
+.hero-split{display:grid;grid-template-columns:minmax(0,1.15fr) minmax(0,.85fr);gap:48px;align-items:center}
+.hero--split .hero-inner{padding:72px 0;max-width:none}
+.hero-form{
+  background:var(--white);color:var(--navy-900);border-radius:10px;padding:24px 24px 18px;
+  box-shadow:var(--shadow-lg);border-top:4px solid var(--red);scroll-margin-top:90px;
+}
+.hero-form h2{font-family:var(--display);font-size:1.6rem;text-transform:none;letter-spacing:0;color:var(--navy-900);margin:2px 0 6px}
+.hero-form-tag{margin:0;font:700 .7rem var(--mono);letter-spacing:.1em;text-transform:uppercase;color:var(--red)}
+.hero-form-sub{margin:0 0 14px;font-size:.86rem;color:var(--steel)}
+.hero-form label{color:var(--navy-900)}
+.hero-form .field{margin-bottom:10px}
+@media (max-width:940px){
+  .hero-split{grid-template-columns:1fr;gap:0}
+  .hero--split .hero-inner{padding:56px 0 28px}
+  .hero-form{margin-bottom:40px}
+}
+
+/* Quick quote form - optional block */
+.qq-more{margin:2px 0 14px;border:1px dashed var(--line);border-radius:6px;padding:0 12px}
+.qq-more summary{cursor:pointer;padding:9px 0;font-size:.84rem;font-weight:600;color:var(--navy-700)}
+.qq-more[open]{padding-bottom:4px}
+.qq-note{margin-top:10px;text-align:center}
+
+/* Phone sticky action bar (StickyCta) */
+.sticky-cta{display:none}
+@media (max-width:860px){
+  .sticky-cta{
+    position:fixed;left:0;right:0;bottom:0;z-index:60;display:grid;grid-template-columns:1fr 1.3fr;
+    gap:8px;padding:8px 10px calc(8px + env(safe-area-inset-bottom));background:var(--white);
+    border-top:1px solid var(--line);box-shadow:0 -6px 18px rgba(8,21,46,.10);
+  }
+  .sticky-cta a{
+    display:flex;align-items:center;justify-content:center;gap:7px;height:46px;border-radius:6px;
+    font:700 .95rem var(--body);text-decoration:none;
+  }
+  .sticky-cta-call{background:var(--navy-900);color:var(--white)}
+  .sticky-cta-quote{background:var(--red);color:var(--white)}
+  body{padding-bottom:calc(66px + env(safe-area-inset-bottom))}
+  .chat-launcher{bottom:calc(76px + env(safe-area-inset-bottom)) !important}
+  .chat-panel{bottom:calc(140px + env(safe-area-inset-bottom)) !important}
+  .qp{display:none !important}
+}

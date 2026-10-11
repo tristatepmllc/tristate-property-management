@@ -1,4 +1,5 @@
 ---
+import QuickQuoteForm from '../components/QuickQuoteForm.astro';
 import BaseLayout from '../layouts/BaseLayout.astro';
 import LeadFormExtras from '../components/LeadFormExtras.astro';
 import { SITE, SERVED_SENTENCE, SERVED_ABBR } from '../data/site';
@@ -89,60 +90,11 @@ const jsonLd = graph([breadcrumbs([{ name: 'Home', path: '/' }, { name: 'Contact
 
       <!-- FORM (right, Lessen layout - fields only, no heading inside the card) -->
       <div class="form-card">
-        <form action="/api/leads" method="post" data-lead-form data-source="contact-page-form"
-          data-thanks-heading="Thank you for your submission!"
-          data-success={`We read every request and reply with a written price, usually the same business day. Need us right now? Call ${SITE.phone}.`}
-        >
-          <div class="field">
-            <label for="email">Email <span class="req">*</span></label>
-            <input type="email" id="email" name="email" placeholder="jane@company.com" required>
-          </div>
-
-          <div class="field-row">
-            <div class="field">
-              <label for="first_name">First Name <span class="req">*</span></label>
-              <input type="text" id="first_name" name="first_name" autocomplete="given-name" placeholder="Jane" required>
-            </div>
-            <div class="field">
-              <label for="last_name">Last Name <span class="req">*</span></label>
-              <input type="text" id="last_name" name="last_name" autocomplete="family-name" placeholder="Whitfield" required>
-            </div>
-          </div>
-
-          <div class="field">
-            <label for="company">Company <span class="req">*</span></label>
-            <input type="text" id="company" name="company" placeholder="Riverside Business Park" required>
-          </div>
-
-          <div class="field">
-            <label for="phone">Phone</label>
-            <input type="tel" id="phone" name="phone" placeholder="(203) 000-0000">
-          </div>
-
-          <div class="field">
-            <fieldset>
-              <legend>Which best describes you? <span class="req">*</span></legend>
-              <label><input type="radio" name="describes_you" value="Commercial property manager/owner" required /> Commercial property manager/owner</label>
-              <label><input type="radio" name="describes_you" value="Residential property manager/owner" /> Residential property manager/owner</label>
-            </fieldset>
-          </div>
-
-          <div class="field">
-            <label for="details">Is there anything you'd like us to know?</label>
-            <span style="display:block;font-size:.75rem;color:var(--steel);margin:-4px 0 7px">Optional</span>
-            <textarea id="details" name="details" placeholder="Example: Second-floor men's restroom, two of three faucets dripping constantly and one flush valve running."></textarea>
-          </div>
-
-          <LeadFormExtras source="contact-page-form" />
-
-          <button type="submit" class="btn btn--red btn--wide">Submit</button>
-
-          <p class="form-note">
-            We reply to every request. Quotes sent before noon on a business day are answered
-            the same day; anything later comes back the next morning. We never pass your
-            details to a third party.
-          </p>
-        </form>
+        <QuickQuoteForm source="contact-page-form" idPrefix="c" submitLabel="Get my free quote" detailsOpen />
+        <p class="form-note">
+          We reply to every request. Requests sent before noon on a business day are answered
+          the same day; anything later comes back the next morning.
+        </p>
       </div>
 
     </div>

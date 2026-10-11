@@ -4,18 +4,16 @@ const siteKey = import.meta.env.PUBLIC_TURNSTILE_SITE_KEY ?? '1x0000000000000000
 ---
 <!--
   Quote popup.
-  Desktop : centre modal, 15s delay, exit-intent as a second chance.
-  Mobile  : slim sticky bar (~11% of viewport, well under Google's ~30% ceiling
-            for intrusive interstitials); tapping it opens the same modal, which
-            makes the mobile modal click-triggered and therefore outside the
-            interstitial guideline entirely.
+  Desktop only: centre modal after 45s, exit-intent as a second chance.
+  Phones never see it - the sticky Call / Get a quote bar (StickyCta) is the
+  mobile path instead.
   Hidden on /contact/ (the page already is the form) and after conversion.
 -->
 <div class="qp" data-quote-popup hidden>
   <!-- mobile teaser -->
-  <div class="qp-bar" role="region" aria-label="Free building walk-through offer">
+  <div class="qp-bar" role="region" aria-label="Free property walk-through offer">
     <div class="qp-bar-text">
-      <strong>Free building walk-through</strong>
+      <strong>Free property walk-through</strong>
       <span>Written maintenance plan, no obligation</span>
     </div>
     <button type="button" class="qp-bar-open">See details</button>
@@ -31,11 +29,11 @@ const siteKey = import.meta.env.PUBLIC_TURNSTILE_SITE_KEY ?? '1x0000000000000000
 
       <div class="qp-body">
         <p class="eyebrow">No cost, no obligation</p>
-        <h2 id="qp-title">Free walk-through of your building</h2>
+        <h2 id="qp-title">Free walk-through of your property</h2>
         <p id="qp-desc" class="qp-lede">
-          A licensed technician walks your property, documents what needs attention now
-          versus what can wait, and sends you a written maintenance plan with pricing.
-          Takes about an hour. The plan is yours to keep either way.
+          We walk your home or building, note what needs attention now and what can wait,
+          and send you a written plan with prices. Vacant, rental, inherited or commercial -
+          the plan is yours to keep either way.
         </p>
 
         <ul class="qp-points">
@@ -46,7 +44,7 @@ const siteKey = import.meta.env.PUBLIC_TURNSTILE_SITE_KEY ?? '1x0000000000000000
 
         <form action="/api/leads" method="post" data-lead-form data-source="popup-walkthrough" novalidate>
           <input type="hidden" name="source" value="popup-walkthrough" />
-          <input type="hidden" name="service" value="Free building walk-through" />
+          <input type="hidden" name="service" value="Free property walk-through" />
           <div aria-hidden="true" style="position:absolute;left:-9999px;width:1px;height:1px;overflow:hidden">
             <label>Company website<input type="text" name="company_website" tabindex="-1" autocomplete="off" /></label>
           </div>
@@ -61,13 +59,13 @@ const siteKey = import.meta.env.PUBLIC_TURNSTILE_SITE_KEY ?? '1x0000000000000000
               <input type="tel" id="qp-phone" name="phone" autocomplete="tel" placeholder="(203) 000-0000" required />
             </div>
             <div class="field">
-              <label for="qp-email">Email <span class="req">*</span></label>
-              <input type="email" id="qp-email" name="email" autocomplete="email" placeholder="jane@company.com" required />
+              <label for="qp-email">Email</label>
+              <input type="email" id="qp-email" name="email" autocomplete="email" placeholder="Optional" />
             </div>
           </div>
           <div class="field">
-            <label for="qp-address">Building address <span class="req">*</span></label>
-            <input type="text" id="qp-address" name="address" autocomplete="street-address" placeholder="123 Main St, Bridgeport, CT" required />
+            <label for="qp-address">Property address <span class="req">*</span></label>
+            <input type="text" id="qp-address" name="address" autocomplete="street-address" placeholder="Street, town, state" required />
           </div>
 
           <div class="cf-turnstile" data-sitekey={siteKey} data-theme="light" data-appearance="interaction-only"></div>
