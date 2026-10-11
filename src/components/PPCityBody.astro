@@ -126,7 +126,7 @@ const { pp, heroImage } = Astro.props;
         <div class="info-block">
           <h3>More coverage</h3>
           <div class="info-row"><span class="k">{pp.state}</span><span class="v"><a href={`/${pp.stateSlug}-property-preservation/`}>All of {pp.state}</a></span></div>
-          <div class="info-row"><span class="k">All 12</span><span class="v"><a href="/property-preservation/">See every service</a></span></div>
+          <div class="info-row"><span class="k">All {PP_SERVICES.length}</span><span class="v"><a href="/property-preservation/">See every service</a></span></div>
         </div>
       </div>
 

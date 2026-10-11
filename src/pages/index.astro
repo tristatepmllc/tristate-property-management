@@ -3,6 +3,7 @@ import BaseLayout from '../layouts/BaseLayout.astro';
 import LeadFormExtras from '../components/LeadFormExtras.astro';
 import { SITE, SERVED_SENTENCE, SERVED_ABBR } from '../data/site';
 import Coverage from '../components/Coverage.astro';
+import { PP_STATES } from '../data/property-preservation';
 import { TESTIMONIALS, REVIEWS_NOTE } from '../data/testimonials';
 import Testimonials from '../components/Testimonials.astro';
 import { graph, localBusiness, organisation, website, serviceList } from '../lib/schema';
@@ -33,14 +34,13 @@ const hasReviews = TESTIMONIALS.length > 0;
       <p class="eyebrow">Homeowners &amp; commercial properties</p>
       <h1>Property Maintenance &amp;<br>Preservation<br><span class="accent">You Can Count On.</span></h1>
       <p class="hero-lede">
-        Cleaning, plumbing, electrical, HVAC, carpentry, painting and grounds - for
-        homeowners and commercial buildings alike, all handled by our own licensed
-        technicians. One number to call, one team who knows your property, and one
-        invoice at the end of the month.
+        Vacant, rental, foreclosure, inherited or investment property? We handle the
+        maintenance, cleanup, repairs and exterior care - and keep commercial buildings
+        running too. One local team, one phone call, one written quote.
       </p>
       <div class="hero-actions">
-        <a class="btn btn--red" href="/contact/">Get a Free Property Assessment</a>
-        <a class="btn btn--ghost" href="/contact/">Get a Free Quote</a>
+        <a class="btn btn--red" href="/property-preservation/#quote">Get a Free Property Assessment</a>
+        <a class="btn btn--ghost" href="/contact/">Commercial Quote</a>
       </div>
       <ul class="hero-badges">
         <li><span class="tick">&#10003;</span> Licensed, bonded &amp; insured</li>
@@ -48,6 +48,7 @@ const hasReviews = TESTIMONIALS.length > 0;
         <li><span class="tick">&#10003;</span> Flat, written pricing</li>
         <li><span class="tick">&#10003;</span> One invoice, one contact</li>
       </ul>
+      <p class="hero-served">Serving {PP_STATES.map((p) => p.state).join(' \u2022 ')}</p>
     </div>
   </div>
 </section>

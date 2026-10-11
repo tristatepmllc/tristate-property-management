@@ -1648,3 +1648,12 @@ html:has(.dash-body){height:100%}
 }
 .pp-state-card p{color:var(--steel);font-size:.92rem;margin:0;line-height:1.55;flex:1}
 .pp-state-card a.card-link{align-self:flex-start}
+
+/* Homepage hero - primary homeowner states line under the badges */
+.hero-served{
+  margin-top:16px;
+  font-size:.86rem;
+  font-weight:600;
+  letter-spacing:.02em;
+  color:#B9C9DE;
+}

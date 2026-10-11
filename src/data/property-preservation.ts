@@ -47,6 +47,12 @@ export const PP_SERVICES: PPService[] = [
     blurb: 'A scheduled walk-through with photos and a written report, so you know the condition of a property you cannot check on yourself.' },
   { slug: 'rental-turnover', name: 'Rental Turnover',
     blurb: 'Cleaning and repairs between tenants so the unit is ready to re-list with as little vacancy time as possible.' },
+  { slug: 'painting', name: 'Painting',
+    blurb: 'Interior and exterior painting to refresh a property for sale, a new tenant or simply to stop weather damage getting in.' },
+  { slug: 'pressure-washing', name: 'Pressure Washing',
+    blurb: 'Siding, driveways, decks and walkways washed down so the property looks cared for from the street.' },
+  { slug: 'exterior-maintenance', name: 'Exterior Maintenance',
+    blurb: 'Gutters, siding, steps, fencing and other outside upkeep that keeps a property sound and stops small issues spreading.' },
 ];
 
 export type PPCity = {
