@@ -1657,3 +1657,13 @@ html:has(.dash-body){height:100%}
   letter-spacing:.02em;
   color:#B9C9DE;
 }
+
+/* City property-preservation pages - local intro + conditions */
+.pp-local{display:grid;grid-template-columns:1fr 1fr;gap:40px;align-items:start}
+.pp-local h2{margin-bottom:14px}
+.pp-local-intro{color:var(--steel);line-height:1.7;margin:0 0 16px}
+.pp-nearby{color:var(--steel);font-size:.92rem;margin:0}
+.pp-local-list{display:grid;gap:16px}
+@media (max-width:940px){
+  .pp-local{grid-template-columns:1fr;gap:28px}
+}

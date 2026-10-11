@@ -1,0 +1,26 @@
+---
+import BaseLayout from "../layouts/BaseLayout.astro";
+import PPCityBody from "../components/PPCityBody.astro";
+import { PP_CITIES } from "../data/property-preservation";
+import { graph, breadcrumbs, faqPage } from "../lib/schema";
+
+const pp = PP_CITIES.find((c) => c.slug === "springfield")!;
+const jsonLd = graph([
+  breadcrumbs([
+    { name: "Home", path: "/" },
+    { name: "Property Preservation", path: "/property-preservation/" },
+    { name: `${pp.city}, ${pp.abbr}`, path: pp.path },
+  ]),
+  faqPage(pp.faq),
+]);
+---
+<BaseLayout
+  title={`${pp.city} Property Preservation Services`}
+  description={`Vacant property maintenance, cleanouts, winterization, board-up and repairs in ${pp.city}, ${pp.abbr}. Free property assessment, written report every visit.`}
+  path={pp.path}
+  active={pp.path}
+  jsonLd={jsonLd}
+  preloadImage={pp.heroImage}
+>
+  <PPCityBody pp={pp} heroImage={pp.heroImage} />
+</BaseLayout>

@@ -2,7 +2,7 @@
 import BaseLayout from "../layouts/BaseLayout.astro";
 import PPCityBody from "../components/PPCityBody.astro";
 import { PP_CITIES } from "../data/property-preservation";
-import { graph, breadcrumbs } from "../lib/schema";
+import { graph, breadcrumbs, faqPage } from "../lib/schema";
 
 const pp = PP_CITIES.find((c) => c.slug === "jacksonville")!;
 const jsonLd = graph([
@@ -11,6 +11,7 @@ const jsonLd = graph([
     { name: "Property Preservation", path: "/property-preservation/" },
     { name: `${pp.city}, ${pp.abbr}`, path: pp.path },
   ]),
+  faqPage(pp.faq),
 ]);
 ---
 <BaseLayout
@@ -19,7 +20,7 @@ const jsonLd = graph([
   path={pp.path}
   active={pp.path}
   jsonLd={jsonLd}
-  preloadImage="/images/home-cleaning.webp"
+  preloadImage={pp.heroImage}
 >
-  <PPCityBody pp={pp} heroImage="/images/home-cleaning.webp" />
+  <PPCityBody pp={pp} heroImage={pp.heroImage} />
 </BaseLayout>

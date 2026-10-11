@@ -30,6 +30,27 @@ const { pp, heroImage } = Astro.props;
 
 <section class="section section--paper">
   <div class="wrap">
+    <div class="pp-local">
+      <div>
+        <p class="eyebrow">Property preservation in {pp.city}</p>
+        <h2>Looking after an empty property in {pp.city}</h2>
+        <p class="pp-local-intro">{pp.intro}</p>
+        <p class="pp-nearby"><strong>Also covering:</strong> {pp.nearby.join(', ')}.</p>
+      </div>
+      <div class="pp-local-list">
+        {pp.local.map((l) => (
+          <div class="pp-card">
+            <h3>{l.title}</h3>
+            <p>{l.body}</p>
+          </div>
+        ))}
+      </div>
+    </div>
+  </div>
+</section>
+
+<section class="section">
+  <div class="wrap">
     <div class="sec-head">
       <p class="eyebrow">Serving {pp.city}</p>
       <h2>What we handle in {pp.city}</h2>
@@ -41,6 +62,23 @@ const { pp, heroImage } = Astro.props;
           <h3>{s.name}</h3>
           <p>{s.blurb}</p>
         </div>
+      ))}
+    </div>
+  </div>
+</section>
+
+<section class="section section--paper">
+  <div class="wrap">
+    <div class="sec-head">
+      <p class="eyebrow">Straight answers</p>
+      <h2>{pp.city} property questions</h2>
+    </div>
+    <div class="faq">
+      {pp.faq.map((f) => (
+        <details>
+          <summary>{f.q}</summary>
+          <div class="answer">{f.a}</div>
+        </details>
       ))}
     </div>
   </div>
