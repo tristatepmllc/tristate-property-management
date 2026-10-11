@@ -20,7 +20,7 @@ import '../styles/additions.css';
 import { env } from 'cloudflare:workers';
 import { ensureAdminSchema, fmtDate, TZ } from '../lib/admin';
 
-type Section = 'overview' | 'leads' | 'messages' | 'jobs' | 'vendors' | 'clients';
+type Section = 'overview' | 'leads' | 'messages' | 'jobs' | 'vendors' | 'clients' | 'account';
 
 interface Props {
   title: string;
@@ -128,10 +128,10 @@ const SOON: { label: string; icon: string }[] = [
         </div>
         <div class="adm-top-right">
           <span class="adm-chip" title="Business time zone">{today} &middot; {nowEt} ET</span>
-          <span class="adm-user">
+          <a class="adm-user" href="/admin/account/" title="My account - change password">
             <span class="adm-avatar">{initial}</span>
             <span class="adm-user-name">{displayName}</span>
-          </span>
+          </a>
         </div>
       </header>
       <div class="adm-content">
@@ -143,6 +143,7 @@ const SOON: { label: string; icon: string }[] = [
   <script>
     import '../scripts/admin';
     import '../scripts/auth';
+    import '../scripts/account-settings';
   </script>
 </body>
 </html>

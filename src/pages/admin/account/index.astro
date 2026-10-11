@@ -1,0 +1,18 @@
+---
+export const prerender = false;
+
+import AdminLayout from '../../../layouts/AdminLayout.astro';
+import AccountSettingsPanel from '../../../components/portal/AccountSettingsPanel.astro';
+import { requireAdmin } from '../../../lib/require-admin';
+
+/** The signed-in staff member's own account: email and password change. */
+const admin = await requireAdmin(Astro.request.headers);
+if (!admin) return Astro.redirect('/tspm-admin', 302);
+---
+<AdminLayout title="My account" active="account" admin={admin} heading="My account"
+  subheading="Change your password. Use something only you know - this account can see every client and lead.">
+  <div class="adm-card" style="max-width:560px">
+    <h2>Sign-in details</h2>
+    <AccountSettingsPanel email={admin.email} />
+  </div>
+</AdminLayout>

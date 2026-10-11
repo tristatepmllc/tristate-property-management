@@ -19,8 +19,15 @@ export const prerender = false;
 import '@fontsource-variable/inter';
 import '../styles/global.css';
 import '../styles/additions.css';
+import { env } from 'cloudflare:workers';
 import { getAuth } from '../lib/auth';
+import { ensureBootstrapAdmin } from '../lib/bootstrap-admin';
 
+try {
+  await ensureBootstrapAdmin(env.DB);
+} catch (e) {
+  console.error('bootstrap_admin_failed', String(e).slice(0, 300));
+}
 const session = await getAuth().api.getSession({ headers: Astro.request.headers });
 const role = (session?.user as { role?: string } | undefined)?.role;
 if (session && role === 'admin') return Astro.redirect('/admin/', 302);

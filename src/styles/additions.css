@@ -2057,3 +2057,4 @@ a.adm-kpi:hover{border-color:var(--navy-600);box-shadow:var(--shadow-sm)}
   .adl-brand ul,.adl-brand p{display:none}
   .adl-brand h1{font-size:1.8rem}
 }
+.adm-user{text-decoration:none}.adm-user:hover .adm-user-name{color:var(--red)}
