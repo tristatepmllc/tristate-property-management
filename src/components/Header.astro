@@ -119,6 +119,8 @@ const inAbout = ABOUT.some((i) => i.href === active);
         {LOGIN.map((i) => <a href={i.href}>{i.label}</a>)}
       </div>
     </nav>
+    <!-- Tap outside the open mobile menu to close it (a label for the burger checkbox). -->
+    <label for="nav-toggle" class="nav-backdrop" aria-hidden="true"></label>
   </div>
 </header>
 <NavScript />

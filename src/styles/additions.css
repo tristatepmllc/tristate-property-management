@@ -2116,3 +2116,46 @@ img.adm-avatar{object-fit:cover}
   .chat-launcher{bottom:calc(76px + env(safe-area-inset-bottom)) !important}
   .chat-panel{bottom:calc(140px + env(safe-area-inset-bottom)) !important}
 }
+
+/* ── Mobile menu as an overlay ────────────────────────────────────────────
+   The burger menu used to open inside the header's own flow (order:4,
+   width:100%), so the header grew and pushed the page down. Now it floats
+   over the page directly under the header: nothing behind it moves, the
+   page behind is dimmed and locked, and tapping the dimmed area closes it.
+   .header (position:sticky) is the containing block for the panel. */
+.nav-backdrop{display:none}
+@media (max-width:1179px){
+  .header .wrap{position:static}
+  .nav{
+    position:absolute;top:100%;left:0;right:0;z-index:70;
+    background:var(--white);
+    padding:6px 20px 18px;
+    border-top:1px solid var(--line);
+    box-shadow:0 18px 40px rgba(8,21,46,.18);
+    max-height:calc(100vh - 78px);max-height:calc(100dvh - 78px);
+    overflow-y:auto;overscroll-behavior:contain;
+  }
+  .nav-toggle:checked ~ .nav{animation:nav-drop .18s ease both}
+  .nav-toggle:checked ~ .nav-backdrop{
+    display:block;position:fixed;inset:0;z-index:55;background:rgba(8,21,46,.45);cursor:pointer;
+  }
+  body:has(.nav-toggle:checked){overflow:hidden}
+
+  /* burger -> X while open */
+  .burger span{transition:transform .18s ease,opacity .18s ease}
+  .nav-toggle:checked + .burger span:nth-child(1){transform:translateY(9px) rotate(45deg)}
+  .nav-toggle:checked + .burger span:nth-child(2){opacity:0}
+  .nav-toggle:checked + .burger span:nth-child(3){transform:translateY(-9px) rotate(-45deg)}
+
+  /* keep the logo, burger and header buttons above the dimmed backdrop */
+  .header .logo,.header .burger,.header .header-cta{position:relative;z-index:56}
+}
+@media (max-width:940px){
+  .nav-toggle:checked + .burger span:nth-child(1){transform:translateY(8px) rotate(45deg)}
+  .nav-toggle:checked + .burger span:nth-child(3){transform:translateY(-8px) rotate(-45deg)}
+}
+@keyframes nav-drop{from{opacity:0;transform:translateY(-6px)}to{opacity:1;transform:none}}
+@media (prefers-reduced-motion:reduce){
+  .nav-toggle:checked ~ .nav{animation:none}
+  .burger span{transition:none}
+}
