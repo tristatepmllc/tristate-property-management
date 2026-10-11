@@ -19,7 +19,7 @@ import {
  * posture as before - nothing reveals that an admin panel exists).
  */
 const admin = await requireAdmin(Astro.request.headers);
-if (!admin) return Astro.redirect('/portal/', 302);
+if (!admin) return Astro.redirect('/tspm-admin', 302);
 
 const DAY = 86_400_000;
 const now = Date.now();

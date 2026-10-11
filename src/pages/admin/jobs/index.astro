@@ -16,7 +16,7 @@ import { PP_SERVICES } from '../../../data/property-preservation';
  * for an existing client or a new email.
  */
 const admin = await requireAdmin(Astro.request.headers);
-if (!admin) return Astro.redirect('/portal/', 302);
+if (!admin) return Astro.redirect('/tspm-admin', 302);
 
 type Job = {
   id: string; service: string | null; description: string | null; status: string; vendor_id: string | null;

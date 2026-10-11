@@ -257,7 +257,7 @@ function init(): void {
         headers: { 'content-type': 'application/json' },
         body: '{}',
       });
-      location.href = '/portal/';
+      location.href = logout.dataset.redirect || '/portal/';
     });
   });
 

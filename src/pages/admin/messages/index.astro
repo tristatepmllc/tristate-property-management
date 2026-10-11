@@ -17,7 +17,7 @@ import { fmtDateTime, relTime, UNHANDLED } from '../../../lib/admin';
  * implied.
  */
 const admin = await requireAdmin(Astro.request.headers);
-if (!admin) return Astro.redirect('/portal/', 302);
+if (!admin) return Astro.redirect('/tspm-admin', 302);
 
 const view = Astro.url.searchParams.get('view') === 'all' ? 'all' : 'unread';
 type Msg = { id: string; name: string; email: string; phone: string; message: string | null; status: string; created_at: number };

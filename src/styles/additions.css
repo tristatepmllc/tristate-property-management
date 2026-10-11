@@ -2033,3 +2033,27 @@ a.adm-kpi:hover{border-color:var(--navy-600);box-shadow:var(--shadow-sm)}
   .adm-content{padding:16px 14px 40px}
   .adm-user-name{display:none}
 }
+
+/* Staff sign-in (/tspm-admin) */
+.adl-body{background:var(--paper);min-height:100vh;margin:0}
+.adl{display:grid;grid-template-columns:1.1fr 1fr;min-height:100vh}
+.adl-brand{background:var(--navy-900);color:#C9D5E6;padding:64px 56px;display:flex;flex-direction:column;justify-content:center;gap:16px;position:relative;overflow:hidden}
+.adl-brand::after{content:"";position:absolute;right:-120px;bottom:-120px;width:360px;height:360px;border-radius:50%;background:var(--red);opacity:.12}
+.adl-brand img{width:180px;height:auto}
+.adl-brand h1{font-family:var(--display);color:var(--white);font-size:2.4rem;margin:12px 0 0;text-transform:none;letter-spacing:0}
+.adl-brand p{margin:0;font-size:1rem;max-width:420px}
+.adl-brand ul{margin:10px 0 0;padding:0;list-style:none;display:grid;gap:10px}
+.adl-brand li{padding-left:26px;position:relative;font-size:.92rem}
+.adl-brand li::before{content:"\2713";position:absolute;left:0;top:0;width:18px;height:18px;border-radius:50%;background:var(--red);color:var(--white);font-size:.65rem;display:flex;align-items:center;justify-content:center}
+.adl-panel{display:flex;align-items:center;justify-content:center;padding:40px 20px}
+.adl-card{width:100%;max-width:400px;background:var(--white);border:1px solid var(--line);border-radius:12px;padding:34px 30px;box-shadow:var(--shadow-md)}
+.adl-card h2{font-family:var(--display);font-size:1.8rem;margin:10px 0 20px;text-transform:none;letter-spacing:0;color:var(--navy-900)}
+.adl-tag{display:inline-block;font:700 .66rem var(--mono);letter-spacing:.12em;text-transform:uppercase;color:var(--red-dark);background:var(--red-soft);padding:4px 8px;border-radius:3px}
+.adl-note{font-size:.9rem;color:var(--steel);margin:0 0 18px}
+.adl-foot{margin:22px 0 0;font-size:.82rem;color:var(--steel);text-align:center}
+@media (max-width:860px){
+  .adl{grid-template-columns:1fr}
+  .adl-brand{padding:32px 24px}
+  .adl-brand ul,.adl-brand p{display:none}
+  .adl-brand h1{font-size:1.8rem}
+}

@@ -1,0 +1,143 @@
+---
+export const prerender = false;
+
+/**
+ * Staff sign-in for the admin panel - separate from the client/vendor
+ * portal login at /portal/.
+ *
+ * - Already signed in as admin -> straight to /admin/.
+ * - Signed in as a client/vendor -> told this account has no admin access
+ *   (with a sign-out button), never shown the panel.
+ * - The form signs in through Better Auth, then checks the role via
+ *   /api/me. A non-admin account is signed straight back out, so a client
+ *   who finds this page cannot end up half-logged-in here.
+ *
+ * noindex, not linked from the public site, not in the sitemap (SSR pages
+ * are never added; astro.config.mjs filters it too). Listed in
+ * ROUTES_TO_WORKER - without that, Pages 404s it in production.
+ */
+import '@fontsource-variable/inter';
+import '../styles/global.css';
+import '../styles/additions.css';
+import { getAuth } from '../lib/auth';
+
+const session = await getAuth().api.getSession({ headers: Astro.request.headers });
+const role = (session?.user as { role?: string } | undefined)?.role;
+if (session && role === 'admin') return Astro.redirect('/admin/', 302);
+const signedInNonAdmin = session ? session.user.email : null;
+---
+<!DOCTYPE html>
+<html lang="en-US">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Staff sign in - Tristate Admin</title>
+  <meta name="robots" content="noindex,nofollow" />
+  <link rel="icon" href="/favicon.ico" sizes="48x48" />
+  <meta name="theme-color" content="#08152E" />
+</head>
+<body class="adl-body">
+  <main class="adl">
+    <section class="adl-brand" aria-hidden="true">
+      <img src="/images/logo-tristate-light.webp" alt="" width="180" height="46" />
+      <h1>Tristate Admin</h1>
+      <p>Leads, jobs, vendors and clients - one place for the whole team.</p>
+      <ul>
+        <li>See every new lead the minute it lands</li>
+        <li>Assign vendors and track jobs to completion</li>
+        <li>Verify vendors and manage client accounts</li>
+      </ul>
+    </section>
+
+    <section class="adl-panel">
+      <div class="adl-card">
+        <span class="adl-tag">Staff only</span>
+        <h2>Sign in</h2>
+
+        {signedInNonAdmin ? (
+          <>
+            <p class="adl-note">
+              You're signed in as <b>{signedInNonAdmin}</b>, which is not an admin account.
+              Sign out first to use a staff account, or go to the <a href="/portal/">client &amp; vendor portal</a>.
+            </p>
+            <form data-logout-form data-redirect="/tspm-admin">
+              <button type="submit" class="btn btn--red btn--wide">Sign out</button>
+            </form>
+          </>
+        ) : (
+          <form data-admin-login novalidate>
+            <div class="field">
+              <label for="al-email">Work email</label>
+              <input type="email" id="al-email" name="email" autocomplete="username" required autofocus />
+            </div>
+            <div class="field">
+              <label for="al-pass">Password</label>
+              <input type="password" id="al-pass" name="password" autocomplete="current-password" required />
+            </div>
+            <button type="submit" class="btn btn--red btn--wide">Sign in to admin</button>
+            <p class="form-status" role="status" aria-live="polite" hidden></p>
+          </form>
+        )}
+
+        <p class="adl-foot">Not staff? <a href="/portal/">Client &amp; vendor login</a> &middot; <a href="/">Website</a></p>
+      </div>
+    </section>
+  </main>
+
+  <script>
+    import '../scripts/auth';
+
+    const form = document.querySelector<HTMLFormElement>('[data-admin-login]');
+    if (form) {
+      const status = form.querySelector<HTMLElement>('.form-status');
+      const button = form.querySelector<HTMLButtonElement>('button[type="submit"]');
+      const say = (msg: string) => {
+        if (!status) return;
+        status.hidden = false;
+        status.classList.add('is-error');
+        status.textContent = msg;
+      };
+      const post = (url: string, body: unknown) =>
+        fetch(url, { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify(body) });
+
+      form.addEventListener('submit', async (e) => {
+        e.preventDefault();
+        if (!form.checkValidity()) {
+          form.reportValidity();
+          return;
+        }
+        const fd = new FormData(form);
+        if (button) {
+          button.disabled = true;
+          button.textContent = 'Signing in...';
+        }
+        try {
+          const res = await post('/api/auth/sign-in/email', {
+            email: String(fd.get('email') ?? '').trim(),
+            password: String(fd.get('password') ?? ''),
+          });
+          if (!res.ok) {
+            say('Email or password is incorrect.');
+            return;
+          }
+          const me = await fetch('/api/me', { headers: { accept: 'application/json' } });
+          const data = (await me.json().catch(() => ({}))) as { role?: string };
+          if (data.role === 'admin') {
+            location.href = '/admin/';
+            return;
+          }
+          await post('/api/auth/sign-out', {});
+          say('This account does not have admin access.');
+        } catch {
+          say('Network problem. Please try again.');
+        } finally {
+          if (button && !location.href.endsWith('/admin/')) {
+            button.disabled = false;
+            button.textContent = 'Sign in to admin';
+          }
+        }
+      });
+    }
+  </script>
+</body>
+</html>

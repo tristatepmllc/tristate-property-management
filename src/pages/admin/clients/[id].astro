@@ -17,7 +17,7 @@ import { PP_SERVICES } from '../../../data/property-preservation';
  * earn/redeem entry, a temporary-password reset, and a quick "new job".
  */
 const admin = await requireAdmin(Astro.request.headers);
-if (!admin) return Astro.redirect('/portal/', 302);
+if (!admin) return Astro.redirect('/tspm-admin', 302);
 
 type Acc = {
   id: string; role: string; name: string | null; company: string | null; email: string; phone: string | null;

@@ -28,7 +28,7 @@ import { writeFile } from 'node:fs/promises';
  * `export const prerender = false` - there is no build-time check that
  * catches a missing one, only this comment.
  */
-const ROUTES_TO_WORKER = ['/api/*', '/portal', '/portal/*', '/admin', '/admin/*'];
+const ROUTES_TO_WORKER = ['/api/*', '/portal', '/portal/*', '/admin', '/admin/*', '/tspm-admin', '/tspm-admin/'];
 
 function cloudflarePagesCompat() {
   return {
@@ -75,7 +75,7 @@ export default defineConfig({
   // the API and the future mobile app. Pages still build directory-style URLs
   // and every canonical tag is explicit, so nothing is lost for SEO.
   trailingSlash: 'ignore',
-  integrations: [sitemap({ filter: (page) => !page.includes('/portal/') }), cloudflarePagesCompat()],
+  integrations: [sitemap({ filter: (page) => !page.includes('/portal/') && !page.includes('/tspm-admin') }), cloudflarePagesCompat()],
   compressHTML: true,
   prefetch: { prefetchAll: true, defaultStrategy: 'hover' },
 });

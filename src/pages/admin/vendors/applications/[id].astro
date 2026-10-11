@@ -13,7 +13,7 @@ import { ensureAdminSchema, fmtDateTime, relTime, titleCase, VENDOR_APP_STATUSES
  * portal account with a temporary password staff read out over the phone.
  */
 const admin = await requireAdmin(Astro.request.headers);
-if (!admin) return Astro.redirect('/portal/', 302);
+if (!admin) return Astro.redirect('/tspm-admin', 302);
 
 type App = Record<string, string | number | null> & { id: string; name: string; email: string; phone: string; status: string; created_at: number };
 await ensureAdminSchema(env.DB);

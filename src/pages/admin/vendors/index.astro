@@ -15,7 +15,7 @@ import { ensureReviewsTable } from '../../../lib/reviews';
  *    licence / insurance / verified status, jobs done and client rating.
  */
 const admin = await requireAdmin(Astro.request.headers);
-if (!admin) return Astro.redirect('/portal/', 302);
+if (!admin) return Astro.redirect('/tspm-admin', 302);
 
 const tab = Astro.url.searchParams.get('tab') === 'accounts' ? 'accounts' : 'applications';
 const appStatus = Astro.url.searchParams.get('status') || 'open';

@@ -12,7 +12,7 @@ import { fmtDate, fmtCents, toMs, relTime } from '../../../lib/admin';
  * the property, how much work have we done for them, anything open now.
  */
 const admin = await requireAdmin(Astro.request.headers);
-if (!admin) return Astro.redirect('/portal/', 302);
+if (!admin) return Astro.redirect('/tspm-admin', 302);
 
 type Row = {
   id: string; name: string | null; company: string | null; email: string; phone: string | null;
