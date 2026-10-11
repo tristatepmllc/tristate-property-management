@@ -1,8 +1,10 @@
 /**
  * Website live chat (visitor side) - two-way with the admin inbox.
  *
- * 1. Pre-chat: three quick questions in the chat itself (message -> name ->
- *    phone or email), so the team can follow up even if the visitor leaves.
+ * 1. The very first message (or photo / voice note) opens the conversation
+ *    straight away, so it shows up in the admin inbox instantly. Name and
+ *    phone/email are then asked inside the live chat (the answers go to the
+ *    team as normal messages and are saved via /api/chat/details).
  * 2. POST /api/chat/start opens the conversation and returns {id, token};
  *    both are kept in localStorage so the chat survives page changes and
  *    return visits on this browser.
@@ -19,7 +21,8 @@ type Msg = {
   id: string; sender: 'visitor' | 'agent' | 'system'; author_name: string | null; body: string; created_at: number;
   kind?: 'text' | 'image' | 'audio'; media_type?: string | null; duration_ms?: number | null;
 };
-type Stored = { id: string; token: string };
+type Ask = 'name' | 'contact' | null;
+type Stored = { id: string; token: string; ask?: Ask };
 
 const STORE = 'tpm_chat_v2';
 const FAST_MS = 3000;
@@ -65,8 +68,7 @@ function init(): void {
 
   const phone = root.dataset.phone ?? '';
   let conv: Stored | null = load();
-  let step: 'message' | 'name' | 'contact' | 'live' = conv ? 'live' : 'message';
-  const draft = { message: '', name: '', contact: '' };
+  let starting: Promise<boolean> | null = null;
   const seen = new Set<string>();
   let lastAt = 0;
   let timer: number | undefined;
@@ -171,6 +173,7 @@ function init(): void {
   }
 
   async function upload(file: File, kind: 'image' | 'audio', durationMs?: number): Promise<void> {
+    if (!conv && !(await ensureStarted('', true))) return;
     if (!conv) return;
     const el = mediaShell('me', kind === 'image' ? 'Sending photo...' : 'Sending voice message...');
     el.classList.add('is-sending');
@@ -261,7 +264,6 @@ function init(): void {
   }
 
   function goLive(): void {
-    step = 'live';
     root!.classList.add('is-live');
     if (chips) chips.style.display = 'none';
     if (status) status.textContent = 'Live chat - we usually reply within minutes';
@@ -272,7 +274,6 @@ function init(): void {
     root!.classList.remove('is-live');
     save(null);
     conv = null;
-    step = 'message';
     if (chips) chips.style.display = '';
     if (status) status.textContent = 'Usually replies within minutes';
   }
@@ -308,25 +309,43 @@ function init(): void {
     }, isOpen() ? FAST_MS : SLOW_MS);
   }
 
-  async function start(): Promise<void> {
-    const pending = bubble('Connecting you to the team...', 'sys');
+  const ASK_TEXT: Record<'name' | 'contact', string> = {
+    name: "While you wait - what's your name?",
+    contact: 'And the best phone number or email, in case you leave before we answer?',
+  };
+  function setAsk(next: Ask): void {
+    if (!conv) return;
+    conv.ask = next;
+    save(conv);
+    if (next) ask(ASK_TEXT[next]);
+  }
+
+  /** Open the conversation (once). Resolves true when live. */
+  function ensureStarted(message: string, media = false): Promise<boolean> {
+    if (conv) return Promise.resolve(true);
+    if (!starting) starting = start(message, media).finally(() => (starting = null));
+    return starting;
+  }
+
+  async function start(message: string, media: boolean): Promise<boolean> {
+    if (chips) chips.style.display = 'none';
     const turnstile = root!.querySelector<HTMLInputElement>('input[name="cf-turnstile-response"]')?.value ?? '';
     try {
-      const r = await post<{ id?: string; token?: string; messages?: Msg[]; error?: string }>('/api/chat/start', {
-        name: draft.name, contact: draft.contact, message: draft.message,
-        page: location.pathname, 'cf-turnstile-response': turnstile,
+      const r = await post<{ id?: string; token?: string; messages?: Msg[]; needs?: { name: boolean; contact: boolean }; error?: string }>('/api/chat/start', {
+        message, media, page: location.pathname, 'cf-turnstile-response': turnstile,
       });
-      pending.remove();
       if (r.ok && r.data.id && r.data.token) {
-        conv = { id: r.data.id, token: r.data.token };
+        conv = { id: r.data.id, token: r.data.token, ask: null };
         save(conv);
         goLive();
-        // the first message is already on screen from the pre-chat step
+        // the first message is already on screen
         const first = (r.data.messages ?? []).find((m) => m.sender === 'visitor');
         if (first) seen.add(first.id);
         render(r.data.messages ?? []);
         schedule();
-        return;
+        const needs = r.data.needs ?? { name: false, contact: false };
+        setAsk(needs.name ? 'name' : needs.contact ? 'contact' : null);
+        return true;
       }
       bubble(
         r.data.error === 'rate_limited'
@@ -334,12 +353,28 @@ function init(): void {
           : `Sorry, the chat couldn't connect. Please call ${phone} - answered 24/7.`,
         'sys'
       );
-      step = 'contact';
     } catch {
-      pending.remove();
       bubble(`No connection. Please call ${phone}.`, 'sys');
-      step = 'contact';
     }
+    if (chips) chips.style.display = '';
+    return false;
+  }
+
+  /** The visitor's reply to "what's your name?" / "phone or email?". */
+  function captureDetails(text: string): void {
+    if (!conv?.ask) return;
+    const which = conv.ask;
+    if (which === 'name') {
+      if (text.length < 2 || text.length > 60) return;
+      void post('/api/chat/details', { id: conv.id, token: conv.token, name: text });
+      setAsk('contact');
+      return;
+    }
+    const digits = text.replace(/\D/g, '').length;
+    if (!text.includes('@') && digits < 7) return; // not a contact - keep waiting quietly
+    void post('/api/chat/details', { id: conv.id, token: conv.token, contact: text });
+    setAsk(null);
+    ask("Thanks - got it. We'll reply right here.");
   }
 
   async function sendLive(text: string): Promise<void> {
@@ -371,34 +406,18 @@ function init(): void {
   function handle(raw: string | undefined): void {
     const text = (raw ?? '').trim();
     if (!text) return;
-
-    if (step === 'live') {
+    if (conv) {
       void sendLive(text);
+      captureDetails(text);
       return;
     }
-    bubble(text, 'me');
-    if (step === 'message') {
-      draft.message = text;
-      step = 'name';
-      ask("Thanks! So we can reply, what's your name?");
-    } else if (step === 'name') {
-      if (text.length < 2) {
-        ask('Could you type your full name?');
-        return;
-      }
-      draft.name = text;
-      step = 'contact';
-      ask('And the best phone number or email? (In case you leave before we answer.)');
-    } else if (step === 'contact') {
-      const digits = text.replace(/\D/g, '').length;
-      if (!text.includes('@') && digits < 7) {
-        ask("That doesn't look like a phone number or email - could you check it?");
-        return;
-      }
-      draft.contact = text;
-      if (chips) chips.style.display = 'none';
-      void start();
-    }
+    if (starting) return; // first message still connecting
+    const el = bubble(text, 'me');
+    el.classList.add('is-sending');
+    void ensureStarted(text).then((ok) => {
+      el.classList.remove('is-sending');
+      if (!ok) el.classList.add('is-failed');
+    });
   }
 
   function open(): void {

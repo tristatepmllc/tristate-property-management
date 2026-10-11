@@ -2215,7 +2215,6 @@ img.adm-avatar{object-fit:cover}
 }
 
 /* Chat photos & voice notes */
-.chat-widget:not(.is-live) .chat-tool{display:none}
 .chat-tool{flex:none;width:36px;height:36px;border:0;background:none;color:var(--steel);cursor:pointer;display:flex;align-items:center;justify-content:center;border-radius:50%}
 .chat-tool:hover{color:var(--navy-800);background:var(--paper)}
 .chat-tool svg{width:20px;height:20px}

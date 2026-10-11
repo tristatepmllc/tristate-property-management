@@ -80,7 +80,6 @@ const ALL_NAV: { key: Section; href: string; label: string; badge?: number; tone
 const NAV = ALL_NAV.filter((n) => !n.perm || can(admin.staffRole, n.perm));
 const SOON: { label: string; icon: string }[] = [
   { label: 'Website content', icon: '<rect x="3" y="4" width="18" height="16" rx="2"/><path d="M3 9h18"/>' },
-  { label: 'Two-way chat', icon: '<path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/>' },
 ];
 const roleLabel = staffRoleLabel(admin.staffRole);
 ---

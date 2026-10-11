@@ -10,14 +10,14 @@ const EMAIL = /^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/;
 
 /**
  * POST /api/chat/start - public. Opens a live chat.
- * Body: { name, contact (phone or email), message, page?, cf-turnstile-response?, company_website? }
+ * Body: { message (or media:true), name?, contact? (phone or email), page?, cf-turnstile-response?, company_website? }
  * Returns { id, token, messages }. The token is the visitor's only key to
  * this conversation; only its hash is stored.
  *
  * Also writes a lead (source chat-widget) so every chat lands in the CRM
  * even if nobody answers it live. Abuse guards: honeypot, Turnstile when
  * configured (missing token -> lead quarantined as needs_review, same as
- * the forms), and max 5 new chats per IP per hour.
+ * the forms), and max 10 new chats per IP per hour.
  */
 export const POST: APIRoute = async ({ request }) => {
   let raw: Record<string, unknown>;
@@ -35,11 +35,13 @@ export const POST: APIRoute = async ({ request }) => {
   const isEmail = EMAIL.test(contact);
   const digits = contact.replace(/\D/g, '').length;
 
-  const errors: string[] = [];
-  if (name.length < 2) errors.push('name');
-  if (!isEmail && digits < 7) errors.push('contact');
-  if (!message) errors.push('message');
-  if (errors.length) return json({ error: 'validation_failed', fields: errors }, 422);
+  // Name / contact are optional now: the chat opens on the very first
+  // message (or photo / voice note) and the widget asks for them inside the
+  // live chat afterwards (saved via /api/chat/details).
+  const hasContact = isEmail || digits >= 7;
+  const media = raw.media === true;
+  if (!message && !media) return json({ error: 'validation_failed', fields: ['message'] }, 422);
+  const displayName = name.length >= 2 ? name : '';
 
   const ip = request.headers.get('cf-connecting-ip') ?? '';
   let leadStatus = 'new';
@@ -58,39 +60,48 @@ export const POST: APIRoute = async ({ request }) => {
   if (ipHash) {
     const recent = await env.DB.prepare(`SELECT COUNT(*) AS n FROM chat_conversations WHERE ip_hash = ?1 AND created_at > ?2`)
       .bind(ipHash, now - 3_600_000).first<{ n: number }>();
-    if ((recent?.n ?? 0) >= 5) return json({ error: 'rate_limited' }, 429);
+    if ((recent?.n ?? 0) >= 10) return json({ error: 'rate_limited' }, 429);
   }
 
   const id = crypto.randomUUID();
   const leadId = crypto.randomUUID();
   const visitorToken = newToken();
   const tokenHash = await sha256Hex(visitorToken);
-  const greeting = `Thanks ${name.split(' ')[0]}! You're through to the Tristate team - someone will reply right here. You can close this window; your chat is saved.`;
+  const greeting = displayName
+    ? `Thanks ${displayName.split(' ')[0]}! You're through to the Tristate team - someone will reply right here. You can close this window; your chat is saved.`
+    : `You're through to the Tristate team - someone will reply right here, usually within minutes. You can close this window; your chat is saved.`;
+  const preview = message ? message.slice(0, 140) : 'New chat';
+  const leadName = displayName || 'Website visitor';
+  const leadContact = hasContact ? contact : '';
   const firstMsgId = crypto.randomUUID();
   const sysMsgId = crypto.randomUUID();
 
-  await env.DB.batch([
+  const stmts: D1PreparedStatement[] = [
     env.DB.prepare(
       `INSERT INTO leads (id, name, email, phone, service, message, source, referrer, status, created_at)
        VALUES (?1, ?2, ?3, ?4, 'Live chat', ?5, 'chat-widget', ?6, ?7, ?8)`
-    ).bind(leadId, name, isEmail ? contact : '', isEmail ? '' : contact, message, page || null, leadStatus, now),
+    ).bind(leadId, leadName, isEmail ? leadContact : '', isEmail ? '' : leadContact, message || '(photo / voice message)', page || null, leadStatus, now),
     env.DB.prepare(
       `INSERT INTO chat_conversations (id, token_hash, lead_id, name, contact, page, ip_hash, status, unread_admin, unread_visitor,
                                        last_message_at, last_preview, created_at)
-       VALUES (?1, ?2, ?3, ?4, ?5, ?6, ?7, 'open', 1, 0, ?8, ?9, ?8)`
-    ).bind(id, tokenHash, leadId, name, contact, page || null, ipHash, now, message.slice(0, 140)),
-    env.DB.prepare(
+       VALUES (?1, ?2, ?3, ?4, ?5, ?6, ?7, 'open', ?10, 0, ?8, ?9, ?8)`
+    ).bind(id, tokenHash, leadId, displayName || null, leadContact || null, page || null, ipHash, now, preview, message ? 1 : 0),
+  ];
+  if (message) {
+    stmts.push(env.DB.prepare(
       `INSERT INTO chat_messages (id, conversation_id, sender, author_name, body, created_at) VALUES (?1, ?2, 'visitor', ?3, ?4, ?5)`
-    ).bind(firstMsgId, id, name, message, now),
-    env.DB.prepare(
+    ).bind(firstMsgId, id, displayName || null, message, now));
+  }
+  stmts.push(env.DB.prepare(
       `INSERT INTO chat_messages (id, conversation_id, sender, author_name, body, created_at) VALUES (?1, ?2, 'system', 'Tristate', ?3, ?4)`
-    ).bind(sysMsgId, id, greeting, now + 1),
-  ]);
+    ).bind(sysMsgId, id, greeting, now + 1));
+  await env.DB.batch(stmts);
 
   return json({
     ok: true, id, token: visitorToken,
+    needs: { name: !displayName, contact: !hasContact },
     messages: [
-      { id: firstMsgId, sender: 'visitor', author_name: name, body: message, created_at: now },
+      ...(message ? [{ id: firstMsgId, sender: 'visitor', author_name: displayName || null, body: message, created_at: now }] : []),
       { id: sysMsgId, sender: 'system', author_name: 'Tristate', body: greeting, created_at: now + 1 },
     ],
   }, 201);
