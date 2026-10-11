@@ -113,7 +113,7 @@ const SOURCE_LABELS: Record<string, string> = {
 };
 
 export function sourceLabel(src: string | null | undefined): string {
-  if (!src) return 'Unknown';
+  if (!src) return 'Not tracked';
   if (SOURCE_LABELS[src]) return SOURCE_LABELS[src];
   const pp = src.match(/^(.+)-property-preservation$/);
   if (pp) return `Preservation: ${titleCase(pp[1].replace(/-/g, ' '))}`;
@@ -184,6 +184,7 @@ const ADD_COLUMNS: { table: string; column: string; type: string }[] = [
   { table: 'accounts', column: 'verified_by', type: 'TEXT' },
   { table: 'vendors', column: 'admin_notes', type: 'TEXT' },
   { table: 'vendors', column: 'reviewed_at', type: 'INTEGER' },
+  { table: 'accounts', column: 'staff_role', type: 'TEXT' },
 ];
 
 let ensured = false;
@@ -242,4 +243,44 @@ export function toMs(v: unknown): number {
 /** SQL fragment: `col` is on/after a moment, whether stored as ms or ISO text. */
 export function sinceSql(col: string, msParam: string, isoParam: string): string {
   return `((typeof(${col}) IN ('integer','real') AND ${col} >= ${msParam}) OR (typeof(${col}) = 'text' AND ${col} >= ${isoParam}))`;
+}
+
+// ---------------------------------------------------------------- staff roles
+/**
+ * Every staff member is an accounts row with role = 'admin' (so the
+ * existing requireAdmin gate still applies) plus a staff_role that decides
+ * what they can see and change. NULL staff_role = owner, so admins created
+ * before roles existed keep full access.
+ */
+export const STAFF_ROLES = [
+  { value: 'owner', label: 'Owner', blurb: 'Everything, including team and roles' },
+  { value: 'manager', label: 'Manager', blurb: 'Everything except team and roles' },
+  { value: 'dispatch', label: 'Dispatch', blurb: 'Jobs and vendors; can view leads and clients' },
+  { value: 'sales', label: 'Call center / sales', blurb: 'Leads, live chat and clients; can view jobs' },
+  { value: 'viewer', label: 'View only', blurb: 'Can see everything, change nothing' },
+] as const;
+export type StaffRole = (typeof STAFF_ROLES)[number]['value'];
+export const STAFF_ROLE_VALUES: readonly string[] = STAFF_ROLES.map((r) => r.value);
+
+export type Perm =
+  | 'leads.view' | 'leads.edit' | 'messages' | 'jobs.view' | 'jobs.edit'
+  | 'vendors.view' | 'vendors.edit' | 'clients.view' | 'clients.edit' | 'team' | 'export';
+
+const ALL_VIEW: Perm[] = ['leads.view', 'messages', 'jobs.view', 'vendors.view', 'clients.view'];
+const PERMS: Record<StaffRole, Perm[]> = {
+  owner: [...ALL_VIEW, 'leads.edit', 'jobs.edit', 'vendors.edit', 'clients.edit', 'team', 'export'],
+  manager: [...ALL_VIEW, 'leads.edit', 'jobs.edit', 'vendors.edit', 'clients.edit', 'export'],
+  dispatch: [...ALL_VIEW, 'jobs.edit', 'vendors.edit'],
+  sales: [...ALL_VIEW, 'leads.edit', 'clients.edit'],
+  viewer: [...ALL_VIEW],
+};
+
+export function staffRoleOf(v: string | null | undefined): StaffRole {
+  return (STAFF_ROLE_VALUES.includes(v ?? '') ? v : 'owner') as StaffRole;
+}
+export function can(staffRole: StaffRole, perm: Perm): boolean {
+  return PERMS[staffRole].includes(perm);
+}
+export function staffRoleLabel(v: string | null | undefined): string {
+  return STAFF_ROLES.find((r) => r.value === staffRoleOf(v))?.label ?? 'Owner';
 }

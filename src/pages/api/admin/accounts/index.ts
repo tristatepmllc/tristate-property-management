@@ -25,7 +25,7 @@ type App = {
  * credential table exactly as a normal sign-up would.
  */
 export const POST: APIRoute = async ({ request }) => {
-  const admin = await requireAdmin(request.headers);
+  const admin = await requireAdmin(request.headers, 'vendors.edit');
   if (!admin) return json({ error: 'forbidden' }, 403);
 
   let b: Record<string, unknown>;

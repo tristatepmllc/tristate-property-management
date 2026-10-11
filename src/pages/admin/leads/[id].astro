@@ -18,7 +18,7 @@ import { PP_SERVICES } from '../../../data/property-preservation';
  * "Convert to job", which creates or links the client account and opens a
  * job, optionally already assigned to a vendor.
  */
-const admin = await requireAdmin(Astro.request.headers);
+const admin = await requireAdmin(Astro.request.headers, 'leads.view');
 if (!admin) return Astro.redirect('/tspm-admin', 302);
 
 type Lead = {

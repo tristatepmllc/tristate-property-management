@@ -1,10 +1,13 @@
+import { env } from 'cloudflare:workers';
 import { getAuth } from './auth';
+import { ensureAdminSchema, staffRoleOf, can, type StaffRole, type Perm } from './admin';
 
 export type AdminUser = {
   id: string;
   email: string;
   name: string;
   role: 'admin';
+  staffRole: StaffRole;
 };
 
 /**
@@ -15,16 +18,33 @@ export type AdminUser = {
  * pattern), never cached in the session token, so revoking admin access
  * takes effect on the very next request, no sign-out required.
  *
- * Callers decide what "not admin" means for them: pages redirect to
- * /portal/, API routes return 403. Kept separate from getAuth() itself so
- * that distinction stays at the call site instead of being baked in here.
+ * staffRole (owner/manager/dispatch/sales/viewer) is read from D1 here too,
+ * so a role change applies on the next request. Pass `perm` to also require
+ * a permission (APIs do; pages check `can()` for what to show).
+ *
+ * Callers decide what "not admin" means for them: pages redirect,
+ * API routes return 403.
  */
-export async function requireAdmin(headers: Headers): Promise<AdminUser | null> {
+export async function requireAdmin(headers: Headers, perm?: Perm): Promise<AdminUser | null> {
   const session = await getAuth().api.getSession({ headers });
   if (!session) return null;
 
   const user = session.user as typeof session.user & { role?: string };
   if (user.role !== 'admin') return null;
 
-  return { id: user.id, email: user.email, name: user.name, role: 'admin' };
+  let staffRole: StaffRole = 'owner';
+  try {
+    await ensureAdminSchema(env.DB);
+    const row = await env.DB.prepare(`SELECT role, staff_role FROM accounts WHERE id = ?1`)
+      .bind(user.id)
+      .first<{ role: string; staff_role: string | null }>();
+    if (!row || row.role !== 'admin') return null;
+    staffRole = staffRoleOf(row.staff_role);
+  } catch (e) {
+    console.error('require_admin_role_lookup_failed', String(e).slice(0, 200));
+    staffRole = 'viewer';
+  }
+  if (perm && !can(staffRole, perm)) return null;
+
+  return { id: user.id, email: user.email, name: user.name, role: 'admin', staffRole };
 }

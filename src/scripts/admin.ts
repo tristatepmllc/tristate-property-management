@@ -20,7 +20,7 @@
 type Reply = { ok?: boolean; error?: string; redirect?: string; fields?: string[] };
 
 const ERRORS: Record<string, string> = {
-  forbidden: 'You are signed out or not an admin. Reload and sign in again.',
+  forbidden: 'Your role does not allow this action (or you were signed out - reload to check).',
   not_found: 'That record no longer exists.',
   validation_failed: 'Please check the highlighted fields.',
   email_required: 'An email address is needed to create the client account.',

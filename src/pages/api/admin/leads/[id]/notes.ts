@@ -14,7 +14,7 @@ export const prerender = false;
  * count stays honest without a second click.
  */
 export const POST: APIRoute = async ({ request, params }) => {
-  const admin = await requireAdmin(request.headers);
+  const admin = await requireAdmin(request.headers, 'leads.edit');
   if (!admin) return json({ error: 'forbidden' }, 403);
 
   let raw: Record<string, unknown>;

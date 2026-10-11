@@ -11,7 +11,7 @@ export const prerender = false;
  * Body: { status?, notes? } for a /vendor-network/ application (vendors table).
  */
 export const PATCH: APIRoute = async ({ request, params }) => {
-  const admin = await requireAdmin(request.headers);
+  const admin = await requireAdmin(request.headers, 'vendors.edit');
   if (!admin) return json({ error: 'forbidden' }, 403);
 
   let b: Record<string, unknown>;

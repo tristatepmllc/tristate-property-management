@@ -13,7 +13,7 @@ export const prerender = false;
  * A redeem larger than the balance is refused.
  */
 export const POST: APIRoute = async ({ request }) => {
-  const admin = await requireAdmin(request.headers);
+  const admin = await requireAdmin(request.headers, 'clients.edit');
   if (!admin) return json({ error: 'forbidden' }, 403);
 
   let b: Record<string, unknown>;

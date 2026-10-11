@@ -25,7 +25,7 @@ const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/;
  * From a lead: links job.lead_id, marks the lead Won, logs it on the lead.
  */
 export const POST: APIRoute = async ({ request }) => {
-  const admin = await requireAdmin(request.headers);
+  const admin = await requireAdmin(request.headers, 'jobs.edit');
   if (!admin) return json({ error: 'forbidden' }, 403);
 
   let b: Record<string, unknown>;

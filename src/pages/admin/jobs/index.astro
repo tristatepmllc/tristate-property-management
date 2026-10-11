@@ -4,7 +4,7 @@ export const prerender = false;
 import { env } from 'cloudflare:workers';
 import AdminLayout from '../../../layouts/AdminLayout.astro';
 import { requireAdmin } from '../../../lib/require-admin';
-import { fmtDate, relTime, fmtCents, msToDateInput, JOB_STATUSES } from '../../../lib/admin';
+import { fmtDate, relTime, fmtCents, msToDateInput, JOB_STATUSES, can } from '../../../lib/admin';
 import { SERVICE_CATEGORIES } from '../../../data/site';
 import { PP_SERVICES } from '../../../data/property-preservation';
 
@@ -15,7 +15,7 @@ import { PP_SERVICES } from '../../../data/property-preservation';
  * price, date) through PATCH /api/admin/jobs/[id]; "New job" creates one
  * for an existing client or a new email.
  */
-const admin = await requireAdmin(Astro.request.headers);
+const admin = await requireAdmin(Astro.request.headers, 'jobs.view');
 if (!admin) return Astro.redirect('/tspm-admin', 302);
 
 type Job = {
@@ -146,6 +146,7 @@ const now = Date.now();
 
   <div class="adm-toolbar">
     <input type="search" placeholder="Filter by client, service, vendor..." data-table-filter="#jobs-table" aria-label="Filter jobs" />
+    {can(admin.staffRole, 'export') && <a class="btn btn--outline btn--sm" href="/api/admin/export/jobs">Export CSV</a>}
   </div>
 
   {shown.length === 0 ? (

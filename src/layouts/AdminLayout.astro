@@ -18,14 +18,14 @@ import '@fontsource/ibm-plex-mono/600.css';
 import '../styles/global.css';
 import '../styles/additions.css';
 import { env } from 'cloudflare:workers';
-import { ensureAdminSchema, fmtDate, TZ } from '../lib/admin';
+import { ensureAdminSchema, fmtDate, TZ, can, staffRoleLabel, type StaffRole, type Perm } from '../lib/admin';
 
-type Section = 'overview' | 'leads' | 'messages' | 'jobs' | 'vendors' | 'clients' | 'account';
+type Section = 'overview' | 'leads' | 'messages' | 'jobs' | 'vendors' | 'clients' | 'account' | 'team' | 'search';
 
 interface Props {
   title: string;
   active: Section;
-  admin: { id: string; name: string | null; email: string };
+  admin: { id: string; name: string | null; email: string; staffRole: StaffRole };
   heading: string;
   subheading?: string;
 }
@@ -51,24 +51,29 @@ const initial = displayName.charAt(0).toUpperCase();
 const today = fmtDate(Date.now());
 const nowEt = new Date().toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit', timeZone: TZ });
 
-const NAV: { key: Section; href: string; label: string; badge?: number; tone?: 'red' | 'grey'; icon: string }[] = [
+const ALL_NAV: { key: Section; href: string; label: string; badge?: number; tone?: 'red' | 'grey'; icon: string; perm?: Perm }[] = [
   { key: 'overview', href: '/admin/', label: 'Overview',
     icon: '<rect x="3" y="3" width="7" height="9" rx="1"/><rect x="14" y="3" width="7" height="5" rx="1"/><rect x="14" y="12" width="7" height="9" rx="1"/><rect x="3" y="16" width="7" height="5" rx="1"/>' },
-  { key: 'leads', href: '/admin/leads/', label: 'Leads', badge: badges.leads, tone: 'red',
+  { key: 'leads', perm: 'leads.view', href: '/admin/leads/', label: 'Leads', badge: badges.leads, tone: 'red',
     icon: '<path d="M22 12h-4l-3 9L9 3l-3 9H2"/>' },
-  { key: 'messages', href: '/admin/messages/', label: 'Live chat', badge: badges.messages, tone: 'red',
+  { key: 'messages', perm: 'messages', href: '/admin/messages/', label: 'Live chat', badge: badges.messages, tone: 'red',
     icon: '<path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/>' },
-  { key: 'jobs', href: '/admin/jobs/', label: 'Jobs', badge: badges.jobs, tone: 'red',
+  { key: 'jobs', perm: 'jobs.view', href: '/admin/jobs/', label: 'Jobs', badge: badges.jobs, tone: 'red',
     icon: '<rect x="3" y="7" width="18" height="14" rx="2"/><path d="M8 7V5a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/>' },
-  { key: 'vendors', href: '/admin/vendors/', label: 'Vendors', badge: badges.vendors, tone: 'grey',
+  { key: 'vendors', perm: 'vendors.view', href: '/admin/vendors/', label: 'Vendors', badge: badges.vendors, tone: 'grey',
     icon: '<path d="M14.7 6.3a1 1 0 0 0 0 1.4l1.6 1.6a1 1 0 0 0 1.4 0l3.77-3.77a6 6 0 0 1-7.94 7.94l-6.91 6.91a2.12 2.12 0 0 1-3-3l6.91-6.91a6 6 0 0 1 7.94-7.94z"/>' },
-  { key: 'clients', href: '/admin/clients/', label: 'Clients',
+  { key: 'clients', perm: 'clients.view', href: '/admin/clients/', label: 'Clients',
     icon: '<circle cx="9" cy="7" r="3"/><path d="M2 21v-2a5 5 0 0 1 5-5h4a5 5 0 0 1 5 5v2"/><path d="M17 11a3 3 0 1 0 0-6M22 21v-2a4 4 0 0 0-3-3.87"/>' },
+  { key: 'team', perm: 'team', href: '/admin/team/', label: 'Team & roles',
+    icon: '<circle cx="12" cy="8" r="4"/><path d="M4 21c0-4 3.5-7 8-7s8 3 8 7"/>' },
 ];
+const NAV = ALL_NAV.filter((n) => !n.perm || can(admin.staffRole, n.perm));
 const SOON: { label: string; icon: string }[] = [
   { label: 'Website content', icon: '<rect x="3" y="4" width="18" height="16" rx="2"/><path d="M3 9h18"/>' },
-  { label: 'Team & roles', icon: '<circle cx="12" cy="8" r="4"/><path d="M4 21c0-4 3.5-7 8-7s8 3 8 7"/>' },
+  { label: 'Two-way chat', icon: '<path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/>' },
 ];
+const roleLabel = staffRoleLabel(admin.staffRole);
+const readOnly = admin.staffRole === 'viewer';
 ---
 <!DOCTYPE html>
 <html lang="en-US">
@@ -127,14 +132,18 @@ const SOON: { label: string; icon: string }[] = [
           {subheading && <p class="adm-sub">{subheading}</p>}
         </div>
         <div class="adm-top-right">
+          <form class="adm-search" method="get" action="/admin/search/" role="search">
+            <input type="search" name="q" placeholder="Search leads, clients, vendors, jobs..." aria-label="Search everything" />
+          </form>
           <span class="adm-chip" title="Business time zone">{today} &middot; {nowEt} ET</span>
           <a class="adm-user" href="/admin/account/" title="My account - change password">
             <span class="adm-avatar">{initial}</span>
-            <span class="adm-user-name">{displayName}</span>
+            <span class="adm-user-name">{displayName}<small>{roleLabel}</small></span>
           </a>
         </div>
       </header>
       <div class="adm-content">
+        {readOnly && <p class="adm-banner">You have view-only access. Ask an owner if you need to make changes.</p>}
         <slot />
       </div>
     </div>

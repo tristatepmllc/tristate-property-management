@@ -16,7 +16,7 @@ import { PP_SERVICES } from '../../../data/property-preservation';
  * (with vendor and price), ratings they gave, cashback ledger with a manual
  * earn/redeem entry, a temporary-password reset, and a quick "new job".
  */
-const admin = await requireAdmin(Astro.request.headers);
+const admin = await requireAdmin(Astro.request.headers, 'clients.view');
 if (!admin) return Astro.redirect('/tspm-admin', 302);
 
 type Acc = {

@@ -2,6 +2,7 @@ import type { APIRoute } from 'astro';
 import { env } from 'cloudflare:workers';
 import { hashPassword } from 'better-auth/crypto';
 import { requireAdmin } from '../../../../../lib/require-admin';
+import { can } from '../../../../../lib/admin';
 import { json, methodNotAllowed } from '../../../../../lib/http';
 
 export const prerender = false;
@@ -29,6 +30,7 @@ export const POST: APIRoute = async ({ request, params }) => {
   const acc = await env.DB.prepare(`SELECT id, role FROM accounts WHERE id = ?1`).bind(params.id ?? '').first<{ id: string; role: string }>();
   if (!acc) return json({ error: 'not_found' }, 404);
   if (acc.role === 'admin') return json({ error: 'forbidden' }, 403);
+  if (!can(admin.staffRole, acc.role === 'vendor' ? 'vendors.edit' : 'clients.edit')) return json({ error: 'forbidden' }, 403);
 
   const hash = await hashPassword(password);
   const now = Date.now();

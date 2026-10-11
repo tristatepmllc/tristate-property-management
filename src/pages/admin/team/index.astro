@@ -1,0 +1,121 @@
+---
+export const prerender = false;
+
+import { env } from 'cloudflare:workers';
+import AdminLayout from '../../../layouts/AdminLayout.astro';
+import { requireAdmin } from '../../../lib/require-admin';
+import { STAFF_ROLES, staffRoleOf, staffRoleLabel, toMs, fmtDate, relTime } from '../../../lib/admin';
+
+/**
+ * Team & roles (owners only). Add staff with a role and a temporary
+ * password, change roles, reset passwords, remove access. What each role
+ * can do is listed on the page so nobody has to guess.
+ */
+const admin = await requireAdmin(Astro.request.headers, 'team');
+if (!admin) return Astro.redirect('/tspm-admin', 302);
+
+type Staff = { id: string; name: string | null; email: string; staff_role: string | null; created_at: unknown; last_seen: unknown };
+let staff: Staff[] = [];
+try {
+  const r = await env.DB.prepare(
+    `SELECT a.id, a.name, a.email, a.staff_role, a.created_at,
+            (SELECT MAX(s.updated_at) FROM session s WHERE s.account_id = a.id) AS last_seen
+     FROM accounts a WHERE a.role = 'admin' ORDER BY a.name`
+  ).all<Staff>();
+  staff = r.results ?? [];
+} catch (e) {
+  console.error('admin_team_failed', String(e).slice(0, 300));
+}
+const now = Date.now();
+const ALPHABET = 'ABCDEFGHJKMNPQRSTUVWXYZabcdefghjkmnpqrstuvwxyz23456789';
+const temp = () => Array.from(crypto.getRandomValues(new Uint32Array(12)), (n) => ALPHABET[n % ALPHABET.length]).join('');
+const newPassword = temp();
+---
+<AdminLayout title="Team & roles" active="team" admin={admin} heading="Team & roles"
+  subheading="Who can sign in to the admin panel and what each person can do.">
+  <div class="adm-grid-2">
+    <div>
+      <div class="adm-card">
+        <h2>Staff ({staff.length})</h2>
+        <div class="adm-table-wrap">
+          <table class="adm-table">
+            <thead><tr><th>Person</th><th>Role</th><th>Last active</th><th></th></tr></thead>
+            <tbody>
+              {staff.map((m) => {
+                const self = m.id === admin.id;
+                const seen = toMs(m.last_seen);
+                return (
+                  <tr>
+                    <td>
+                      <span class="adm-strong">{m.name || m.email}</span>{self && <span class="adm-pill adm-pill--blue" style="margin-left:6px">You</span>}
+                      <div class="adm-muted">{m.email}</div>
+                      {toMs(m.created_at) ? <div class="adm-muted">Added {fmtDate(toMs(m.created_at))}</div> : null}
+                    </td>
+                    <td>
+                      {self ? (
+                        <span class="adm-pill adm-pill--navy">{staffRoleLabel(m.staff_role)}</span>
+                      ) : (
+                        <form class="adm-inline-form" data-admin-form data-endpoint={`/api/admin/team/${m.id}`} data-method="PATCH">
+                          <select name="staffRole" aria-label="Role">
+                            {STAFF_ROLES.map((r) => <option value={r.value} selected={r.value === staffRoleOf(m.staff_role)}>{r.label}</option>)}
+                          </select>
+                          <button type="submit" class="btn btn--outline btn--sm">Save</button>
+                          <p class="form-status" role="status" aria-live="polite" hidden></p>
+                        </form>
+                      )}
+                    </td>
+                    <td>{seen ? relTime(seen, now) : <span class="adm-muted">Never</span>}</td>
+                    <td>
+                      <form class="adm-inline-form" data-admin-form data-endpoint={`/api/admin/team/${m.id}`} data-method="PATCH"
+                        data-confirm={`Set this temporary password for ${m.name || m.email}?${self ? '' : ' They will be signed out.'}`}>
+                        <input type="text" name="password" value={temp()} minlength="10" required autocomplete="off" aria-label="Temporary password" style="width:130px" />
+                        <button type="submit" class="btn btn--outline btn--sm">Reset password</button>
+                        <p class="form-status" role="status" aria-live="polite" hidden></p>
+                      </form>
+                      {!self && (
+                        <button type="button" class="btn btn--outline btn--sm" style="margin-top:6px" data-admin-quick data-method="PATCH"
+                          data-endpoint={`/api/admin/team/${m.id}`} data-body='{"action":"disable"}'
+                          data-confirm={`Remove admin access for ${m.name || m.email}? They are signed out immediately.`}>Remove access</button>
+                      )}
+                    </td>
+                  </tr>
+                );
+              })}
+            </tbody>
+          </table>
+        </div>
+        <p class="adm-note">Copy a temporary password before saving it, then give it to the person directly. They change it under My account.</p>
+      </div>
+    </div>
+
+    <div>
+      <div class="adm-card">
+        <h2>Add staff member</h2>
+        <form class="adm-form" data-admin-form data-endpoint="/api/admin/team" data-method="POST">
+          <div class="field"><label for="tm-name">Name <span class="req">*</span></label><input type="text" id="tm-name" name="name" required /></div>
+          <div class="field"><label for="tm-email">Work email <span class="req">*</span></label><input type="email" id="tm-email" name="email" required /></div>
+          <div class="field">
+            <label for="tm-role">Role <span class="req">*</span></label>
+            <select id="tm-role" name="staffRole" required>
+              {STAFF_ROLES.map((r) => <option value={r.value} selected={r.value === 'sales'}>{r.label}</option>)}
+            </select>
+          </div>
+          <div class="field">
+            <label for="tm-pass">Temporary password <span class="req">*</span></label>
+            <input type="text" id="tm-pass" name="password" value={newPassword} minlength="10" required autocomplete="off" />
+            <p class="form-note">Copy it first. They sign in at /tspm-admin.</p>
+          </div>
+          <button type="submit" class="btn btn--red btn--wide">Add to team</button>
+          <p class="form-status" role="status" aria-live="polite" hidden></p>
+        </form>
+      </div>
+
+      <div class="adm-card">
+        <h2>What each role can do</h2>
+        <dl class="adm-dl">
+          {STAFF_ROLES.map((r) => <><dt>{r.label}</dt><dd>{r.blurb}</dd></>)}
+        </dl>
+      </div>
+    </div>
+  </div>
+</AdminLayout>

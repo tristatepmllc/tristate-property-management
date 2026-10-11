@@ -29,7 +29,7 @@ type AccountRow = { id: string; name: string | null; email: string; role: string
  * status 'completed' stamps completed_at once.
  */
 export const PATCH: APIRoute = async ({ request, params }) => {
-  const admin = await requireAdmin(request.headers);
+  const admin = await requireAdmin(request.headers, 'jobs.edit');
   if (!admin) return json({ error: 'forbidden' }, 403);
 
   const jobId = params.id;

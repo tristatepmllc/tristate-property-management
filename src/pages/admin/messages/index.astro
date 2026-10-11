@@ -16,7 +16,7 @@ import { fmtDateTime, relTime, UNHANDLED } from '../../../lib/admin';
  * needs a real-time channel - and is flagged on this page rather than
  * implied.
  */
-const admin = await requireAdmin(Astro.request.headers);
+const admin = await requireAdmin(Astro.request.headers, 'messages');
 if (!admin) return Astro.redirect('/tspm-admin', 302);
 
 const view = Astro.url.searchParams.get('view') === 'all' ? 'all' : 'unread';

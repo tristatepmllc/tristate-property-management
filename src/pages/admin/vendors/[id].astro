@@ -12,7 +12,7 @@ import { ensureReviewsTable } from '../../../lib/reviews';
  * insurance), password reset, every job they were offered, client ratings
  * with comments, and documents they uploaded on jobs.
  */
-const admin = await requireAdmin(Astro.request.headers);
+const admin = await requireAdmin(Astro.request.headers, 'vendors.view');
 if (!admin) return Astro.redirect('/tspm-admin', 302);
 
 type Acc = {
@@ -23,7 +23,7 @@ type Acc = {
 };
 type Job = { id: string; service: string | null; status: string; vendor_response: string; amount_cents: number | null; created_at: number; client_name: string | null };
 type Review = { rating: number; comment: string | null; updated_at: number; service: string | null; client_name: string | null };
-type Doc = { filename: string; kind: string; created_at: number; job_id: string };
+type Doc = { id: string; filename: string; kind: string; created_at: number; job_id: string };
 
 await ensureAdminSchema(env.DB);
 await ensureReviewsTable(env.DB);
@@ -44,7 +44,7 @@ const [jobsR, revR, docR] = await Promise.all([
      FROM job_reviews r LEFT JOIN jobs j ON j.id = r.job_id LEFT JOIN accounts c ON c.id = r.account_id
      WHERE r.vendor_id = ?1 ORDER BY r.updated_at DESC`
   ).bind(acc.id).all<Review>(),
-  env.DB.prepare(`SELECT filename, kind, created_at, job_id FROM job_documents WHERE account_id = ?1 ORDER BY created_at DESC LIMIT 100`)
+  env.DB.prepare(`SELECT id, filename, kind, created_at, job_id FROM job_documents WHERE account_id = ?1 ORDER BY created_at DESC LIMIT 100`)
     .bind(acc.id).all<Doc>(),
 ]);
 const jobs = jobsR.results ?? [];
@@ -114,7 +114,7 @@ const tempPassword = Array.from(crypto.getRandomValues(new Uint32Array(12)), (n)
         <h2>Documents uploaded</h2>
         {docs.length === 0 ? <p class="adm-muted">No documents uploaded on jobs yet.</p> : (
           <ul class="adm-timeline">
-            {docs.map((d) => <li><div><p><b>{d.kind.toUpperCase()}</b> {d.filename}</p><small><a href={`/portal/jobs/${d.job_id}`}>On job</a> &middot; {fmtDateTime(d.created_at)}</small></div></li>)}
+            {docs.map((d) => <li><div><p><b>{d.kind.toUpperCase()}</b> <a href={`/api/documents/${d.id}`} target="_blank" rel="noopener">{d.filename}</a></p><small><a href={`/portal/jobs/${d.job_id}`}>On job</a> &middot; {fmtDateTime(d.created_at)}</small></div></li>)}
           </ul>
         )}
       </div>

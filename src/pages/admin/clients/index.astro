@@ -4,14 +4,14 @@ export const prerender = false;
 import { env } from 'cloudflare:workers';
 import AdminLayout from '../../../layouts/AdminLayout.astro';
 import { requireAdmin } from '../../../lib/require-admin';
-import { fmtDate, fmtCents, toMs, relTime } from '../../../lib/admin';
+import { fmtDate, fmtCents, toMs, relTime, can } from '../../../lib/admin';
 
 /**
  * Client accounts - everyone with a portal account as a property owner.
  * Columns answer the questions the office gets asked: who is this, where is
  * the property, how much work have we done for them, anything open now.
  */
-const admin = await requireAdmin(Astro.request.headers);
+const admin = await requireAdmin(Astro.request.headers, 'clients.view');
 if (!admin) return Astro.redirect('/tspm-admin', 302);
 
 type Row = {
@@ -44,6 +44,7 @@ const withOpen = rows.filter((r) => r.jobs_open > 0).length;
   <div class="adm-toolbar">
     <input type="search" placeholder="Filter by name, email, phone, address..." data-table-filter="#clients-table" aria-label="Filter clients" />
     <a class="btn btn--outline btn--sm" href="/admin/jobs/">+ New job</a>
+    {can(admin.staffRole, 'export') && <a class="btn btn--outline btn--sm" href="/api/admin/export/clients">Export CSV</a>}
   </div>
   {rows.length === 0 ? (
     <div class="adm-card adm-empty">No client accounts yet. They appear here when someone uses "Become a client" or a lead is converted to a job.</div>

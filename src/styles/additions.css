@@ -2058,3 +2058,8 @@ a.adm-kpi:hover{border-color:var(--navy-600);box-shadow:var(--shadow-sm)}
   .adl-brand h1{font-size:1.8rem}
 }
 .adm-user{text-decoration:none}.adm-user:hover .adm-user-name{color:var(--red)}
+.adm-search input{border:1px solid var(--line);border-radius:6px;padding:8px 12px;font:400 .84rem var(--body);width:280px;background:var(--paper)}
+.adm-search input:focus{outline:2px solid var(--navy-600);background:var(--white)}
+.adm-user-name small{display:block;font-size:.7rem;font-weight:500;color:var(--steel-light)}
+@media (max-width:1200px){.adm-search input{width:190px}}
+@media (max-width:900px){.adm-search{order:3;flex-basis:100%}.adm-search input{width:100%}.adm-chip{display:none}}

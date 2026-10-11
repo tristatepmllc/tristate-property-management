@@ -266,7 +266,7 @@ const attention = [
           {hours.map((n, h) => <div style={`height:${Math.round((n / hourMax) * 100)}%`} title={`${hourLabel(h)}: ${n}`}></div>)}
         </div>
         <div class="adm-hours-axis"><span>12 AM</span><span>6 AM</span><span>12 PM</span><span>6 PM</span></div>
-        {last30.length > 0 && <p class="adm-note">Busiest hour: <b>{hourLabel(peakHour)} ET</b>. Have someone on the phones then.</p>}
+        {last30.length >= 10 ? <p class="adm-note">Busiest hour: <b>{hourLabel(peakHour)} ET</b>. Have someone on the phones then.</p> : <p class="adm-note">The busiest hour shows once there are 10+ leads in 30 days.</p>}
       </div>
 
       <div class="adm-card">

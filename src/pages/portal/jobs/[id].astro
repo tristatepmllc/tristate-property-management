@@ -306,14 +306,13 @@ const STATUS_OPTIONS = [
                   {documents.map((d) => (
                     <tr>
                       <td>{fmtDate(d.created_at)}</td>
-                      <td>{d.filename}</td>
+                      <td><a href={`/api/documents/${d.id}`} target="_blank" rel="noopener">{d.filename}</a></td>
                       <td>{d.kind}</td>
                       <td>{fmtBytes(d.size_bytes)}</td>
                     </tr>
                   ))}
                 </tbody>
               </table>
-              <p class="form-note">No download link yet - files are stored, not yet servable back out. Ask the office if you need a copy right now.</p>
             </div>
           )}
 

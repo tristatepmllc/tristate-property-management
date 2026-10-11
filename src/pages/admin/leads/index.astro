@@ -6,7 +6,7 @@ import AdminLayout from '../../../layouts/AdminLayout.astro';
 import { requireAdmin } from '../../../lib/require-admin';
 import {
   etStartOfDay, fmtDate, fmtTime, relTime, sourceLabel, leadStatusLabel, leadStatusTone,
-  LEAD_STATUSES, LEAD_STATUS_VALUES, UNHANDLED,
+  LEAD_STATUSES, LEAD_STATUS_VALUES, UNHANDLED, can,
 } from '../../../lib/admin';
 
 /**
@@ -16,7 +16,7 @@ import {
  * Chat-widget leads are excluded by default - they live under Live chat -
  * but can be shown with ?source=chat-widget.
  */
-const admin = await requireAdmin(Astro.request.headers);
+const admin = await requireAdmin(Astro.request.headers, 'leads.view');
 if (!admin) return Astro.redirect('/tspm-admin', 302);
 
 const PAGE_SIZE = 50;
@@ -140,6 +140,7 @@ const TABS = [
     </select>
     <button type="submit" class="btn btn--outline btn--sm">Search</button>
     {(q || range !== 'all' || source) && <a class="adm-link" href={link({ q: '', range: 'all', source: '', page: 1 })}>Clear filters</a>}
+    {can(admin.staffRole, 'export') && <a class="btn btn--outline btn--sm" href="/api/admin/export/leads" style="margin-left:auto">Export CSV</a>}
   </form>
 
   {rows.length === 0 ? (

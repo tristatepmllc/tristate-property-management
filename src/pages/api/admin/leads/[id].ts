@@ -11,7 +11,7 @@ export const prerender = false;
  * Every change is written to the lead's activity log with who made it.
  */
 export const PATCH: APIRoute = async ({ request, params }) => {
-  const admin = await requireAdmin(request.headers);
+  const admin = await requireAdmin(request.headers, 'leads.edit');
   if (!admin) return json({ error: 'forbidden' }, 403);
 
   let body: Record<string, unknown>;

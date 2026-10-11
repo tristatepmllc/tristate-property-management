@@ -4,7 +4,7 @@ export const prerender = false;
 import { env } from 'cloudflare:workers';
 import AdminLayout from '../../../layouts/AdminLayout.astro';
 import { requireAdmin } from '../../../lib/require-admin';
-import { ensureAdminSchema, fmtDate, relTime, toMs, titleCase, VENDOR_APP_STATUSES } from '../../../lib/admin';
+import { ensureAdminSchema, fmtDate, relTime, toMs, titleCase, VENDOR_APP_STATUSES, can } from '../../../lib/admin';
 import { ensureReviewsTable } from '../../../lib/reviews';
 
 /**
@@ -14,7 +14,7 @@ import { ensureReviewsTable } from '../../../lib/reviews';
  *  - Vendor accounts: approved vendors who can log in and take jobs, with
  *    licence / insurance / verified status, jobs done and client rating.
  */
-const admin = await requireAdmin(Astro.request.headers);
+const admin = await requireAdmin(Astro.request.headers, 'vendors.view');
 if (!admin) return Astro.redirect('/tspm-admin', 302);
 
 const tab = Astro.url.searchParams.get('tab') === 'accounts' ? 'accounts' : 'applications';
@@ -85,7 +85,7 @@ const licenseState = (a: Acc) => {
         <a class={`adm-tab${appStatus === 'declined' ? ' is-active' : ''}`} href="/admin/vendors/?status=declined">Declined <span>{cN('declined')}</span></a>
         <a class={`adm-tab${appStatus === 'all' ? ' is-active' : ''}`} href="/admin/vendors/?status=all">All <span>{allN}</span></a>
       </div>
-      <div class="adm-toolbar"><input type="search" placeholder="Filter by name, trade, area..." data-table-filter="#apps-table" aria-label="Filter applications" /></div>
+      <div class="adm-toolbar"><input type="search" placeholder="Filter by name, trade, area..." data-table-filter="#apps-table" aria-label="Filter applications" />{can(admin.staffRole, 'export') && <a class="btn btn--outline btn--sm" href="/api/admin/export/vendors">Export CSV</a>}</div>
       {apps.length === 0 ? (
         <div class="adm-card adm-empty">No applications in this view.</div>
       ) : (

@@ -1,0 +1,138 @@
+---
+export const prerender = false;
+
+import { env } from 'cloudflare:workers';
+import AdminLayout from '../../../layouts/AdminLayout.astro';
+import { requireAdmin } from '../../../lib/require-admin';
+import { can, fmtDate, sourceLabel, leadStatusLabel, leadStatusTone, titleCase } from '../../../lib/admin';
+
+/**
+ * Search everything from the top bar: leads, clients, vendor accounts,
+ * vendor applications and jobs - by name, email, phone, address, service.
+ * Each section only appears if the staff role can view it. Bound LIKE
+ * parameters only; % and _ in the query are stripped.
+ */
+const admin = await requireAdmin(Astro.request.headers);
+if (!admin) return Astro.redirect('/tspm-admin', 302);
+
+const q = (Astro.url.searchParams.get('q') || '').trim().slice(0, 100);
+const like = `%${q.replace(/[%_]/g, '')}%`;
+const digits = q.replace(/\D/g, '');
+const phoneLike = digits.length >= 4 ? `%${digits.split('').join('%')}%` : '__no_phone_match__';
+
+type Lead = { id: string; name: string; phone: string; email: string; service: string | null; status: string; source: string | null; created_at: number };
+type Acc = { id: string; role: string; name: string | null; company: string | null; email: string; phone: string | null; address: string | null; trade: string | null };
+type App = { id: string; name: string; business: string | null; email: string; phone: string; trade: string; status: string; created_at: number };
+type Job = { id: string; service: string | null; status: string; created_at: number; client_name: string | null };
+
+let leads: Lead[] = [], accounts: Acc[] = [], apps: App[] = [], jobs: Job[] = [];
+if (q.length >= 2) {
+  try {
+    const [l, a, ap, j] = await Promise.all([
+      can(admin.staffRole, 'leads.view')
+        ? env.DB.prepare(
+            `SELECT id, name, phone, email, service, status, source, created_at FROM leads
+             WHERE name LIKE ?1 OR email LIKE ?1 OR phone LIKE ?2 OR address LIKE ?1 OR service LIKE ?1 OR message LIKE ?1
+             ORDER BY created_at DESC LIMIT 25`
+          ).bind(like, phoneLike).all<Lead>()
+        : Promise.resolve({ results: [] as Lead[] }),
+      env.DB.prepare(
+        `SELECT id, role, name, company, email, phone, address, trade FROM accounts
+         WHERE role IN ('client','vendor') AND (name LIKE ?1 OR company LIKE ?1 OR email LIKE ?1 OR phone LIKE ?2 OR address LIKE ?1)
+         ORDER BY name LIMIT 25`
+      ).bind(like, phoneLike).all<Acc>(),
+      can(admin.staffRole, 'vendors.view')
+        ? env.DB.prepare(
+            `SELECT id, name, business, email, phone, trade, status, created_at FROM vendors
+             WHERE name LIKE ?1 OR business LIKE ?1 OR email LIKE ?1 OR phone LIKE ?2 OR area LIKE ?1
+             ORDER BY created_at DESC LIMIT 15`
+          ).bind(like, phoneLike).all<App>()
+        : Promise.resolve({ results: [] as App[] }),
+      can(admin.staffRole, 'jobs.view')
+        ? env.DB.prepare(
+            `SELECT j.id, j.service, j.status, j.created_at, COALESCE(c.name, c.email) AS client_name
+             FROM jobs j LEFT JOIN accounts c ON c.id = j.account_id
+             WHERE j.service LIKE ?1 OR j.description LIKE ?1 OR c.name LIKE ?1 OR c.email LIKE ?1
+             ORDER BY j.created_at DESC LIMIT 15`
+          ).bind(like).all<Job>()
+        : Promise.resolve({ results: [] as Job[] }),
+    ]);
+    leads = l.results ?? [];
+    accounts = (a.results ?? []).filter((x) => can(admin.staffRole, x.role === 'vendor' ? 'vendors.view' : 'clients.view'));
+    apps = ap.results ?? [];
+    jobs = j.results ?? [];
+  } catch (e) {
+    console.error('admin_search_failed', String(e).slice(0, 300));
+  }
+}
+const total = leads.length + accounts.length + apps.length + jobs.length;
+---
+<AdminLayout title="Search" active="search" admin={admin} heading={q ? `Search: "${q}"` : 'Search'}
+  subheading={q.length >= 2 ? `${total} result${total === 1 ? '' : 's'}` : 'Type at least 2 characters in the search box above.'}>
+  <form class="adm-toolbar" method="get" action="/admin/search/">
+    <input type="search" name="q" value={q} placeholder="Name, phone, email, address, service..." autofocus aria-label="Search" />
+    <button type="submit" class="btn btn--red btn--sm">Search</button>
+  </form>
+
+  {q.length >= 2 && total === 0 && <div class="adm-card adm-empty">Nothing found for "{q}".</div>}
+
+  {accounts.length > 0 && (
+    <div class="adm-card">
+      <h2>Clients &amp; vendors ({accounts.length})</h2>
+      <div class="adm-table-wrap"><table class="adm-table"><tbody>
+        {accounts.map((a) => (
+          <tr data-href={a.role === 'vendor' ? `/admin/vendors/${a.id}` : `/admin/clients/${a.id}`}>
+            <td><span class={`adm-pill adm-pill--${a.role === 'vendor' ? 'navy' : 'blue'}`}>{titleCase(a.role)}</span></td>
+            <td><span class="adm-strong">{a.company || a.name || a.email}</span><div class="adm-muted">{a.email}</div></td>
+            <td>{a.phone || '-'}</td>
+            <td class="adm-muted">{a.role === 'vendor' ? (a.trade ? titleCase(a.trade) : '') : a.address || ''}</td>
+          </tr>
+        ))}
+      </tbody></table></div>
+    </div>
+  )}
+
+  {leads.length > 0 && (
+    <div class="adm-card">
+      <h2>Leads ({leads.length})</h2>
+      <div class="adm-table-wrap"><table class="adm-table"><tbody>
+        {leads.map((l) => (
+          <tr data-href={`/admin/leads/${l.id}`}>
+            <td>{fmtDate(l.created_at)}</td>
+            <td><span class="adm-strong">{l.name}</span><div class="adm-muted">{l.phone} &middot; {l.email}</div></td>
+            <td>{l.service || '-'}<div class="adm-muted">{sourceLabel(l.source)}</div></td>
+            <td><span class={`adm-pill adm-pill--${leadStatusTone(l.status)}`}>{leadStatusLabel(l.status)}</span></td>
+          </tr>
+        ))}
+      </tbody></table></div>
+    </div>
+  )}
+
+  {jobs.length > 0 && (
+    <div class="adm-card">
+      <h2>Jobs ({jobs.length})</h2>
+      <div class="adm-table-wrap"><table class="adm-table"><tbody>
+        {jobs.map((j) => (
+          <tr data-href={`/admin/jobs/?stage=all&highlight=${j.id}#job-${j.id}`}>
+            <td>{fmtDate(j.created_at)}</td><td class="adm-strong">{j.service || 'Job'}</td><td>{j.client_name || '-'}</td>
+            <td>{titleCase(j.status.replace('_', ' '))}</td>
+          </tr>
+        ))}
+      </tbody></table></div>
+    </div>
+  )}
+
+  {apps.length > 0 && (
+    <div class="adm-card">
+      <h2>Vendor applications ({apps.length})</h2>
+      <div class="adm-table-wrap"><table class="adm-table"><tbody>
+        {apps.map((a) => (
+          <tr data-href={`/admin/vendors/applications/${a.id}`}>
+            <td>{fmtDate(a.created_at)}</td><td><span class="adm-strong">{a.business || a.name}</span><div class="adm-muted">{a.phone}</div></td>
+            <td>{titleCase(a.trade)}</td><td>{titleCase(a.status.replace('_', ' '))}</td>
+          </tr>
+        ))}
+      </tbody></table></div>
+    </div>
+  )}
+</AdminLayout>
