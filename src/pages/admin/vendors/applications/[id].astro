@@ -1,0 +1,128 @@
+---
+export const prerender = false;
+
+import { env } from 'cloudflare:workers';
+import AdminLayout from '../../../../layouts/AdminLayout.astro';
+import { requireAdmin } from '../../../../lib/require-admin';
+import { ensureAdminSchema, fmtDateTime, relTime, titleCase, VENDOR_APP_STATUSES } from '../../../../lib/admin';
+
+/**
+ * One vendor application. Staff check what the vendor declared (licence,
+ * insurance, Secretary of State status), call them, leave notes, then
+ * either decline or Approve & create login - which creates the vendor's
+ * portal account with a temporary password staff read out over the phone.
+ */
+const admin = await requireAdmin(Astro.request.headers);
+if (!admin) return Astro.redirect('/portal/', 302);
+
+type App = Record<string, string | number | null> & { id: string; name: string; email: string; phone: string; status: string; created_at: number };
+await ensureAdminSchema(env.DB);
+const app = await env.DB.prepare(`SELECT * FROM vendors WHERE id = ?1`).bind(Astro.params.id ?? '').first<App>();
+if (!app) return Astro.redirect('/admin/vendors/', 302);
+
+const account = await env.DB.prepare(`SELECT id, role FROM accounts WHERE lower(email) = lower(?1)`)
+  .bind(String(app.email)).first<{ id: string; role: string }>();
+
+// Readable temporary password: no look-alike characters, 12 chars.
+const ALPHABET = 'ABCDEFGHJKMNPQRSTUVWXYZabcdefghjkmnpqrstuvwxyz23456789';
+const rnd = crypto.getRandomValues(new Uint32Array(12));
+const tempPassword = Array.from(rnd, (n) => ALPHABET[n % ALPHABET.length]).join('');
+
+const v = (k: string) => {
+  const x = app[k];
+  return x === null || x === undefined || x === '' ? '-' : String(x);
+};
+const statusLabel = VENDOR_APP_STATUSES.find((s) => s.value === app.status)?.label ?? titleCase(String(app.status));
+const now = Date.now();
+---
+<AdminLayout title={`Application - ${app.name}`} active="vendors" admin={admin}
+  heading={String(app.business || app.name)} subheading={`Vendor application · ${titleCase(v('trade'))} · applied ${fmtDateTime(app.created_at)} (${relTime(app.created_at, now)})`}>
+  <a class="adm-back" href="/admin/vendors/">&larr; Back to applications</a>
+
+  <div class="adm-card">
+    <div class="adm-card-head">
+      <span class={`adm-pill adm-pill--${app.status === 'approved' ? 'green' : app.status === 'declined' ? 'grey' : 'red'}`}>{statusLabel}</span>
+      <div class="adm-actions">
+        <a class="btn btn--red btn--sm" href={`tel:${app.phone}`}>Call {app.phone}</a>
+        <a class="btn btn--outline btn--sm" href={`mailto:${app.email}`}>Email</a>
+        {app.status !== 'reviewing' && app.status !== 'approved' && (
+          <button type="button" class="btn btn--outline btn--sm" data-admin-quick data-method="PATCH"
+            data-endpoint={`/api/admin/vendor-applications/${app.id}`} data-body='{"status":"reviewing"}'>Mark reviewing</button>
+        )}
+        {app.status !== 'declined' && (
+          <button type="button" class="btn btn--outline btn--sm" data-admin-quick data-method="PATCH"
+            data-endpoint={`/api/admin/vendor-applications/${app.id}`} data-body='{"status":"declined"}'
+            data-confirm="Decline this application?">Decline</button>
+        )}
+      </div>
+    </div>
+  </div>
+
+  <div class="adm-grid-2">
+    <div>
+      <div class="adm-card">
+        <h2>Application</h2>
+        <dl class="adm-dl">
+          <dt>Contact</dt><dd>{v('name')}</dd>
+          <dt>Business</dt><dd>{v('business')}</dd>
+          <dt>Phone</dt><dd><a href={`tel:${app.phone}`}>{v('phone')}</a></dd>
+          <dt>Email</dt><dd><a href={`mailto:${app.email}`}>{v('email')}</a></dd>
+          <dt>Address</dt><dd>{v('address')}</dd>
+          <dt>Primary trade</dt><dd>{titleCase(v('trade'))} <span class="adm-muted">licence: {v('license_number')}</span></dd>
+          <dt>Second trade</dt><dd>{v('secondary_trade')} <span class="adm-muted">licence: {v('secondary_license_number')}</span></dd>
+          <dt>Other trades</dt><dd>{v('trades_other')}</dd>
+          <dt>Area</dt><dd>{v('area')} <span class="adm-muted">radius: {v('service_radius')}</span></dd>
+          <dt>Work types</dt><dd>{v('work_types')}</dd>
+          <dt>Credentials</dt><dd>{v('credentials')}</dd>
+          <dt>Years</dt><dd>{v('years')}</dd>
+          <dt>SoS active</dt><dd>{v('sos_active')}</dd>
+          <dt>Will use portal</dt><dd>{v('uses_portal')}</dd>
+          <dt>Heard about us</dt><dd>{v('referral_source')}</dd>
+        </dl>
+        {app.notes && <><h3 style="margin-top:18px">Their notes</h3><p class="adm-message">{String(app.notes)}</p></>}
+      </div>
+    </div>
+
+    <div>
+      <div class="adm-card">
+        <h2>Approve &amp; create login</h2>
+        {account ? (
+          <p>An account already exists for this email. <a class="adm-link" href={account.role === 'vendor' ? `/admin/vendors/${account.id}` : `/admin/clients/${account.id}`}>Open {account.role} account &rarr;</a></p>
+        ) : (
+          <>
+            <p class="adm-note" style="margin-top:0">Before approving, check:</p>
+            <ul class="adm-note" style="margin:6px 0 14px;padding-left:18px">
+              <li>Licence number is real and active for this trade</li>
+              <li>Certificate of insurance received (general liability)</li>
+              <li>Business is active with the Secretary of State</li>
+              <li>Spoke with them by phone</li>
+            </ul>
+            <form class="adm-form" data-admin-form data-endpoint="/api/admin/accounts" data-method="POST"
+              data-confirm="Approve this vendor and create their login?">
+              <input type="hidden" name="applicationId" value={app.id} />
+              <div class="field">
+                <label for="va-pass">Temporary password</label>
+                <input type="text" id="va-pass" name="password" value={tempPassword} minlength="10" required autocomplete="off" />
+                <p class="form-note">Copy this before you approve. Read it to the vendor; they log in with {String(app.email)} and change it under Settings.</p>
+              </div>
+              <button type="submit" class="btn btn--red btn--wide">Approve &amp; create login</button>
+              <p class="form-status" role="status" aria-live="polite" hidden></p>
+            </form>
+          </>
+        )}
+      </div>
+
+      <div class="adm-card">
+        <h2>Internal notes</h2>
+        <form class="adm-form" data-admin-form data-endpoint={`/api/admin/vendor-applications/${app.id}`} data-method="PATCH">
+          <div class="field">
+            <textarea name="notes" aria-label="Internal notes" placeholder="Licence checked on state site, COI received, references...">{app.admin_notes ? String(app.admin_notes) : ''}</textarea>
+          </div>
+          <button type="submit" class="btn btn--navy btn--sm">Save notes</button>
+          <p class="form-status" role="status" aria-live="polite" hidden></p>
+        </form>
+        {app.reviewed_at && <p class="adm-note">Last reviewed {fmtDateTime(Number(app.reviewed_at))}</p>}
+      </div>
+    </div>
+  </div>
+</AdminLayout>

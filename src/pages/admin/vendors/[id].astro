@@ -1,0 +1,166 @@
+---
+export const prerender = false;
+
+import { env } from 'cloudflare:workers';
+import AdminLayout from '../../../layouts/AdminLayout.astro';
+import { requireAdmin } from '../../../lib/require-admin';
+import { ensureAdminSchema, fmtDate, fmtDateTime, fmtCents, toMs, titleCase } from '../../../lib/admin';
+import { ensureReviewsTable } from '../../../lib/reviews';
+
+/**
+ * One vendor account: profile, compliance (staff-verified flag, licence,
+ * insurance), password reset, every job they were offered, client ratings
+ * with comments, and documents they uploaded on jobs.
+ */
+const admin = await requireAdmin(Astro.request.headers);
+if (!admin) return Astro.redirect('/portal/', 302);
+
+type Acc = {
+  id: string; role: string; name: string | null; company: string | null; email: string; phone: string | null; address: string | null;
+  trade: string | null; trades_other: string | null; service_area: string | null; license_number: string | null;
+  license_expires: unknown; insurance_on_file: number; years_in_business: string | null; emergency_available: number;
+  verified_at: number | null; created_at: unknown;
+};
+type Job = { id: string; service: string | null; status: string; vendor_response: string; amount_cents: number | null; created_at: number; client_name: string | null };
+type Review = { rating: number; comment: string | null; updated_at: number; service: string | null; client_name: string | null };
+type Doc = { filename: string; kind: string; created_at: number; job_id: string };
+
+await ensureAdminSchema(env.DB);
+await ensureReviewsTable(env.DB);
+const acc = await env.DB.prepare(
+  `SELECT id, role, name, company, email, phone, address, trade, trades_other, service_area, license_number, license_expires,
+          insurance_on_file, years_in_business, emergency_available, verified_at, created_at
+   FROM accounts WHERE id = ?1`
+).bind(Astro.params.id ?? '').first<Acc>();
+if (!acc || acc.role !== 'vendor') return Astro.redirect('/admin/vendors/?tab=accounts', 302);
+
+const [jobsR, revR, docR] = await Promise.all([
+  env.DB.prepare(
+    `SELECT j.id, j.service, j.status, j.vendor_response, j.amount_cents, j.created_at, COALESCE(c.name, c.email) AS client_name
+     FROM jobs j LEFT JOIN accounts c ON c.id = j.account_id WHERE j.vendor_id = ?1 ORDER BY j.created_at DESC LIMIT 200`
+  ).bind(acc.id).all<Job>(),
+  env.DB.prepare(
+    `SELECT r.rating, r.comment, r.updated_at, j.service, COALESCE(c.name, c.email) AS client_name
+     FROM job_reviews r LEFT JOIN jobs j ON j.id = r.job_id LEFT JOIN accounts c ON c.id = r.account_id
+     WHERE r.vendor_id = ?1 ORDER BY r.updated_at DESC`
+  ).bind(acc.id).all<Review>(),
+  env.DB.prepare(`SELECT filename, kind, created_at, job_id FROM job_documents WHERE account_id = ?1 ORDER BY created_at DESC LIMIT 100`)
+    .bind(acc.id).all<Doc>(),
+]);
+const jobs = jobsR.results ?? [];
+const reviews = revR.results ?? [];
+const docs = docR.results ?? [];
+const avg = reviews.length ? reviews.reduce((t, r) => t + r.rating, 0) / reviews.length : null;
+const done = jobs.filter((j) => j.status === 'completed');
+const declined = jobs.filter((j) => j.vendor_response === 'declined').length;
+const acceptRate = jobs.length ? Math.round(((jobs.length - declined) / jobs.length) * 100) : null;
+const licExp = acc.license_expires ? toMs(acc.license_expires) : 0;
+const created = Astro.url.searchParams.get('created') === '1';
+const ALPHABET = 'ABCDEFGHJKMNPQRSTUVWXYZabcdefghjkmnpqrstuvwxyz23456789';
+const tempPassword = Array.from(crypto.getRandomValues(new Uint32Array(12)), (n) => ALPHABET[n % ALPHABET.length]).join('');
+---
+<AdminLayout title={`Vendor - ${acc.company || acc.name || acc.email}`} active="vendors" admin={admin}
+  heading={acc.company || acc.name || acc.email}
+  subheading={`${acc.trade ? titleCase(acc.trade) : 'Vendor'}${acc.service_area ? ` · ${acc.service_area}` : ''}${toMs(acc.created_at) ? ` · joined ${fmtDate(toMs(acc.created_at))}` : ''}`}>
+  <a class="adm-back" href="/admin/vendors/?tab=accounts">&larr; Back to vendor accounts</a>
+  {created && <p class="adm-banner">Login created. Give the vendor their email ({acc.email}) and the temporary password you copied. They should change it under Settings after signing in.</p>}
+
+  <div class="adm-kpis" style="grid-template-columns:repeat(4,1fr)">
+    <div class="adm-kpi"><p class="adm-kpi-label">Jobs completed</p><p class="adm-kpi-value">{done.length}</p><p class="adm-kpi-note">{jobs.length} offered in total</p></div>
+    <div class="adm-kpi"><p class="adm-kpi-label">Client rating</p><p class="adm-kpi-value">{avg != null ? avg.toFixed(1) : '-'}</p><p class="adm-kpi-note">{reviews.length} rating{reviews.length === 1 ? '' : 's'}</p></div>
+    <div class="adm-kpi"><p class="adm-kpi-label">Acceptance</p><p class="adm-kpi-value">{acceptRate != null ? `${acceptRate}%` : '-'}</p><p class="adm-kpi-note">{declined} declined</p></div>
+    <div class="adm-kpi"><p class="adm-kpi-label">Billed via jobs</p><p class="adm-kpi-value" style="font-size:1.5rem">{fmtCents(done.reduce((t, j) => t + (j.amount_cents ?? 0), 0))}</p><p class="adm-kpi-note">completed jobs</p></div>
+  </div>
+
+  <div class="adm-grid-2">
+    <div>
+      <div class="adm-card">
+        <h2>Jobs</h2>
+        {jobs.length === 0 ? <p class="adm-muted">No jobs offered yet.</p> : (
+          <div class="adm-table-wrap">
+            <table class="adm-table">
+              <thead><tr><th>Date</th><th>Job</th><th>Client</th><th>Response</th><th>Status</th><th class="num">Price</th></tr></thead>
+              <tbody>
+                {jobs.map((j) => (
+                  <tr data-href={`/portal/jobs/${j.id}`}>
+                    <td>{fmtDate(j.created_at)}</td><td class="adm-strong">{j.service || 'Job'}</td><td>{j.client_name || '-'}</td>
+                    <td>{titleCase(j.vendor_response)}</td><td>{titleCase(j.status.replace('_', ' '))}</td>
+                    <td class="num">{j.amount_cents != null ? fmtCents(j.amount_cents) : '-'}</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        )}
+      </div>
+
+      <div class="adm-card">
+        <h2>Client ratings</h2>
+        {reviews.length === 0 ? <p class="adm-muted">No ratings yet.</p> : (
+          <ul class="adm-timeline">
+            {reviews.map((r) => (
+              <li>
+                <div>
+                  <p><span class="adm-stars">{'★'.repeat(r.rating)}{'☆'.repeat(5 - r.rating)}</span> {r.service || 'Job'}{r.comment ? ` - "${r.comment}"` : ''}</p>
+                  <small>{r.client_name || 'Client'} &middot; {fmtDateTime(r.updated_at)}</small>
+                </div>
+              </li>
+            ))}
+          </ul>
+        )}
+      </div>
+
+      <div class="adm-card">
+        <h2>Documents uploaded</h2>
+        {docs.length === 0 ? <p class="adm-muted">No documents uploaded on jobs yet.</p> : (
+          <ul class="adm-timeline">
+            {docs.map((d) => <li><div><p><b>{d.kind.toUpperCase()}</b> {d.filename}</p><small><a href={`/portal/jobs/${d.job_id}`}>On job</a> &middot; {fmtDateTime(d.created_at)}</small></div></li>)}
+          </ul>
+        )}
+      </div>
+    </div>
+
+    <div>
+      <div class="adm-card">
+        <h2>Compliance</h2>
+        <form class="adm-form" data-admin-form data-endpoint={`/api/admin/accounts/${acc.id}`} data-method="PATCH">
+          <label class="adm-inline-form" style="margin-bottom:10px"><input type="checkbox" name="verified" checked={!!acc.verified_at} /> <b>Verified by staff</b> (licence, insurance and ID checked)</label>
+          <label class="adm-inline-form" style="margin-bottom:12px"><input type="checkbox" name="insuranceOnFile" checked={!!acc.insurance_on_file} /> Certificate of insurance on file</label>
+          <button type="submit" class="btn btn--navy btn--sm">Save</button>
+          <p class="form-status" role="status" aria-live="polite" hidden></p>
+        </form>
+        {acc.verified_at && <p class="adm-note">Verified {fmtDateTime(acc.verified_at)}</p>}
+        <dl class="adm-dl" style="margin-top:14px">
+          <dt>Licence</dt><dd>{acc.license_number || '-'}{licExp ? <span class={licExp < Date.now() ? 'adm-delta--down' : 'adm-muted'}> &middot; expires {fmtDate(licExp)}</span> : null}</dd>
+          <dt>Emergency</dt><dd>{acc.emergency_available ? 'Available after hours' : 'No'}</dd>
+          <dt>Years</dt><dd>{acc.years_in_business || '-'}</dd>
+        </dl>
+      </div>
+
+      <div class="adm-card">
+        <h2>Contact &amp; profile</h2>
+        <dl class="adm-dl">
+          <dt>Name</dt><dd>{acc.name || '-'}</dd>
+          <dt>Phone</dt><dd>{acc.phone ? <a href={`tel:${acc.phone}`}>{acc.phone}</a> : '-'}</dd>
+          <dt>Email</dt><dd><a href={`mailto:${acc.email}`}>{acc.email}</a></dd>
+          <dt>Address</dt><dd>{acc.address || '-'}</dd>
+          <dt>Trades</dt><dd>{acc.trade ? titleCase(acc.trade) : '-'}{acc.trades_other ? `, ${acc.trades_other}` : ''}</dd>
+          <dt>Service area</dt><dd>{acc.service_area || '-'}</dd>
+        </dl>
+      </div>
+
+      <div class="adm-card">
+        <h2>Reset password</h2>
+        <form class="adm-form" data-admin-form data-endpoint={`/api/admin/accounts/${acc.id}/password`} data-method="POST"
+          data-confirm="Set this temporary password and sign the vendor out everywhere?">
+          <div class="field">
+            <input type="text" name="password" value={tempPassword} minlength="10" required autocomplete="off" aria-label="Temporary password" />
+            <p class="form-note">Copy it first, then read it to the vendor by phone.</p>
+          </div>
+          <button type="submit" class="btn btn--outline btn--sm">Set temporary password</button>
+          <p class="form-status" role="status" aria-live="polite" hidden></p>
+        </form>
+      </div>
+    </div>
+  </div>
+</AdminLayout>

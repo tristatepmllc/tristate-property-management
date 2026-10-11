@@ -119,9 +119,10 @@ const toRate = completed.filter((j) => j.vendor_id && !reviewByJob.has(j.id));
 
 // Requests (leads) - client-facing words for the admin pipeline statuses.
 const REQUEST_LABEL: Record<string, string> = {
-  new: 'Received', contacted: 'In review', quoted: 'Quote sent', won: 'Scheduled', lost: 'Closed',
+  needs_review: 'Received', new: 'Received', contacted: 'In review', quoted: 'Quote sent',
+  won: 'Scheduled', lost: 'Closed', spam: 'Closed',
 };
-const openRequests = requests.filter((r) => r.status === 'new' || r.status === 'contacted' || r.status === 'quoted');
+const openRequests = requests.filter((r) => ['needs_review', 'new', 'contacted', 'quoted'].includes(r.status));
 
 // Vendors who have worked (or are working) on this client's jobs.
 type VendorSummary = {

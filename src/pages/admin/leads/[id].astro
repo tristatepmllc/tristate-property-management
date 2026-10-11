@@ -1,0 +1,227 @@
+---
+export const prerender = false;
+
+import { env } from 'cloudflare:workers';
+import AdminLayout from '../../../layouts/AdminLayout.astro';
+import { requireAdmin } from '../../../lib/require-admin';
+import {
+  ensureAdminSchema, fmtDateTime, relTime, sourceLabel, leadStatusLabel, leadStatusTone,
+  LEAD_STATUSES, fmtCents, titleCase,
+} from '../../../lib/admin';
+import { SERVICE_CATEGORIES } from '../../../data/site';
+import { PP_SERVICES } from '../../../data/property-preservation';
+
+/**
+ * One lead: everything we know, one-click Call / Text / Email, status
+ * buttons, a call log and notes (lead_notes - every status change is also
+ * written there, so the history shows who did what and when), and
+ * "Convert to job", which creates or links the client account and opens a
+ * job, optionally already assigned to a vendor.
+ */
+const admin = await requireAdmin(Astro.request.headers);
+if (!admin) return Astro.redirect('/portal/', 302);
+
+type Lead = {
+  id: string; account_id: string | null; name: string; email: string; phone: string; company: string | null;
+  address: string | null; service: string | null; urgency: string | null; building: string | null;
+  describes_you: string | null; message: string | null; source: string | null; utm_source: string | null;
+  utm_medium: string | null; utm_campaign: string | null; referrer: string | null; status: string; created_at: number;
+};
+type Note = { id: string; author_name: string | null; kind: string; body: string; created_at: number };
+type JobRow = { id: string; service: string | null; status: string; vendor_response: string; amount_cents: number | null; created_at: number };
+type VendorOpt = { id: string; name: string | null; company: string | null; email: string; trade: string | null };
+type Account = { id: string; name: string | null; email: string; role: string };
+
+await ensureAdminSchema(env.DB);
+const lead = await env.DB.prepare(
+  `SELECT id, account_id, name, email, phone, company, address, service, urgency, building, describes_you,
+          message, source, utm_source, utm_medium, utm_campaign, referrer, status, created_at
+   FROM leads WHERE id = ?1`
+).bind(Astro.params.id ?? '').first<Lead>();
+if (!lead) return Astro.redirect('/admin/leads/', 302);
+
+const [notesRes, jobsRes, vendorsRes, account] = await Promise.all([
+  env.DB.prepare(`SELECT id, author_name, kind, body, created_at FROM lead_notes WHERE lead_id = ?1 ORDER BY created_at DESC`)
+    .bind(lead.id).all<Note>(),
+  env.DB.prepare(`SELECT id, service, status, vendor_response, amount_cents, created_at FROM jobs WHERE lead_id = ?1 ORDER BY created_at DESC`)
+    .bind(lead.id).all<JobRow>(),
+  env.DB.prepare(`SELECT id, name, company, email, trade FROM accounts WHERE role = 'vendor' ORDER BY COALESCE(company, name)`)
+    .all<VendorOpt>(),
+  lead.account_id
+    ? env.DB.prepare(`SELECT id, name, email, role FROM accounts WHERE id = ?1`).bind(lead.account_id).first<Account>()
+    : lead.email
+    ? env.DB.prepare(`SELECT id, name, email, role FROM accounts WHERE lower(email) = lower(?1)`).bind(lead.email).first<Account>()
+    : Promise.resolve(null),
+]);
+const notes = notesRes.results ?? [];
+const jobs = jobsRes.results ?? [];
+const vendors = vendorsRes.results ?? [];
+const now = Date.now();
+const smsHref = `sms:${lead.phone.replace(/[^\d+]/g, '')}`;
+const QUICK = LEAD_STATUSES.filter((s) => s.value !== lead.status && s.value !== 'needs_review');
+const KIND_LABEL: Record<string, string> = { note: 'Note', status: 'Status', call: 'Call', system: 'System' };
+---
+<AdminLayout title={`Lead - ${lead.name}`} active={lead.source === 'chat-widget' ? 'messages' : 'leads'} admin={admin}
+  heading={lead.name} subheading={`${sourceLabel(lead.source)} · received ${fmtDateTime(lead.created_at)} (${relTime(lead.created_at, now)})`}>
+  <a class="adm-back" href={lead.source === 'chat-widget' ? '/admin/messages/' : '/admin/leads/'}>&larr; Back to {lead.source === 'chat-widget' ? 'live chat' : 'leads'}</a>
+
+  <div class="adm-card">
+    <div class="adm-card-head">
+      <div class="adm-actions">
+        <span class={`adm-pill adm-pill--${leadStatusTone(lead.status)}`}>{leadStatusLabel(lead.status)}</span>
+        {account && <a class="adm-pill adm-pill--blue" href={account.role === 'client' ? `/admin/clients/${account.id}` : `/admin/vendors/${account.id}`}>{titleCase(account.role)} account</a>}
+      </div>
+      <div class="adm-actions">
+        <a class="btn btn--red btn--sm" href={`tel:${lead.phone}`}>Call {lead.phone}</a>
+        <a class="btn btn--outline btn--sm" href={smsHref}>Text</a>
+        {lead.email && <a class="btn btn--outline btn--sm" href={`mailto:${lead.email}?subject=${encodeURIComponent('Your request with Tristate Property Management')}`}>Email</a>}
+      </div>
+    </div>
+    <p class="adm-muted" style="margin:0 0 8px">Move to:</p>
+    <div class="adm-actions">
+      {QUICK.map((s) => (
+        <button type="button" class="btn btn--outline btn--sm" data-admin-quick data-method="PATCH"
+          data-endpoint={`/api/admin/leads/${lead.id}`} data-body={JSON.stringify({ status: s.value })}
+          data-confirm={s.value === 'spam' ? 'Mark this lead as spam?' : undefined}>{s.label}</button>
+      ))}
+    </div>
+  </div>
+
+  <div class="adm-grid-2">
+    <div>
+      <div class="adm-card">
+        <h2>Request</h2>
+        <dl class="adm-dl">
+          <dt>Service</dt><dd>{lead.service || '-'}</dd>
+          <dt>Urgency</dt><dd>{lead.urgency || '-'}</dd>
+          <dt>Property</dt><dd>{lead.address || '-'}{lead.building ? ` (${lead.building})` : ''}</dd>
+          <dt>Phone</dt><dd><a href={`tel:${lead.phone}`}>{lead.phone}</a></dd>
+          <dt>Email</dt><dd>{lead.email ? <a href={`mailto:${lead.email}`}>{lead.email}</a> : '-'}</dd>
+          {lead.company && <><dt>Company</dt><dd>{lead.company}</dd></>}
+          {lead.describes_you && <><dt>Describes as</dt><dd>{lead.describes_you}</dd></>}
+        </dl>
+        {lead.message && <><h3 style="margin-top:18px">Message</h3><p class="adm-message">{lead.message}</p></>}
+      </div>
+
+      <div class="adm-card">
+        <h2>Activity</h2>
+        <form class="adm-form" data-admin-form data-endpoint={`/api/admin/leads/${lead.id}/notes`} data-method="POST">
+          <div class="field-row">
+            <div class="field">
+              <label for="ln-kind">Type</label>
+              <select id="ln-kind" name="kind">
+                <option value="call">Call</option>
+                <option value="note">Note</option>
+              </select>
+            </div>
+            <div class="field">
+              <label for="ln-outcome">Call outcome</label>
+              <select id="ln-outcome" name="outcome">
+                <option value="">-</option>
+                <option>Spoke with them</option>
+                <option>No answer - left voicemail</option>
+                <option>No answer</option>
+                <option>Wrong number</option>
+                <option>Call back requested</option>
+              </select>
+            </div>
+          </div>
+          <div class="field">
+            <label for="ln-body">Notes</label>
+            <textarea id="ln-body" name="body" placeholder="What was discussed, next step, best time to call..."></textarea>
+          </div>
+          <button type="submit" class="btn btn--navy btn--sm">Add to activity</button>
+          <p class="form-status" role="status" aria-live="polite" hidden></p>
+        </form>
+
+        {notes.length === 0 ? (
+          <p class="adm-note">No activity yet. Log your first call above.</p>
+        ) : (
+          <ul class="adm-timeline" style="margin-top:18px">
+            {notes.map((n) => (
+              <li class={n.kind === 'status' ? 'is-status' : ''}>
+                <div>
+                  <p><b>{KIND_LABEL[n.kind] ?? n.kind}:</b> {n.body}</p>
+                  <small>{n.author_name || 'Someone'} &middot; {fmtDateTime(n.created_at)} ({relTime(n.created_at, now)})</small>
+                </div>
+              </li>
+            ))}
+          </ul>
+        )}
+      </div>
+    </div>
+
+    <div>
+      <div class="adm-card">
+        <h2>Convert to job</h2>
+        {jobs.length > 0 && (
+          <div class="adm-funnel" style="margin-bottom:14px">
+            {jobs.map((j) => (
+              <a href={`/admin/jobs/?highlight=${j.id}`}>
+                <span>{j.service || 'Job'} &middot; {j.status.replace('_', ' ')}</span>
+                <span class="adm-muted">{j.amount_cents != null ? fmtCents(j.amount_cents) : ''}</span>
+              </a>
+            ))}
+          </div>
+        )}
+        <form class="adm-form" data-admin-form data-endpoint="/api/admin/jobs" data-method="POST">
+          <input type="hidden" name="leadId" value={lead.id} />
+          <div class="field">
+            <label for="cj-email">Client email <span class="req">*</span></label>
+            <input type="email" id="cj-email" name="email" value={account?.email || lead.email || ''} required />
+            <p class="form-note">{account ? 'Linked to the existing account.' : 'A client account is created for this email if none exists.'}</p>
+          </div>
+          <div class="field">
+            <label for="cj-service">Service <span class="req">*</span></label>
+            <select id="cj-service" name="service" required>
+              <option value="">Choose&hellip;</option>
+              <optgroup label="Property maintenance &amp; preservation">
+                {PP_SERVICES.map((s) => <option selected={s.name === lead.service}>{s.name}</option>)}
+              </optgroup>
+              <optgroup label="Trades &amp; building services">
+                {SERVICE_CATEGORIES.map((c) => <option selected={c.name === lead.service} set:html={c.name} />)}
+              </optgroup>
+              {lead.service && !PP_SERVICES.some((s) => s.name === lead.service) && !SERVICE_CATEGORIES.some((c) => c.name === lead.service) && (
+                <option selected>{lead.service}</option>
+              )}
+            </select>
+          </div>
+          <div class="field">
+            <label for="cj-desc">Job description</label>
+            <textarea id="cj-desc" name="description">{[lead.message, lead.address ? `Property: ${lead.address}` : ''].filter(Boolean).join('\n\n')}</textarea>
+          </div>
+          <div class="field-row">
+            <div class="field">
+              <label for="cj-amount">Price ($)</label>
+              <input type="text" id="cj-amount" name="amount" inputmode="decimal" placeholder="250.00" />
+            </div>
+            <div class="field">
+              <label for="cj-date">Scheduled date</label>
+              <input type="date" id="cj-date" name="scheduledDate" />
+            </div>
+          </div>
+          <div class="field">
+            <label for="cj-vendor">Assign vendor (optional)</label>
+            <select id="cj-vendor" name="vendorId">
+              <option value="">Assign later</option>
+              {vendors.map((v) => <option value={v.id}>{v.company || v.name || v.email}{v.trade ? ` - ${v.trade}` : ''}</option>)}
+            </select>
+          </div>
+          <button type="submit" class="btn btn--red btn--wide">Create job</button>
+          <p class="form-status" role="status" aria-live="polite" hidden></p>
+          <p class="adm-note">The lead is marked Won and the job appears in the client's portal.</p>
+        </form>
+      </div>
+
+      <div class="adm-card">
+        <h2>Tracking</h2>
+        <dl class="adm-dl">
+          <dt>Source</dt><dd>{sourceLabel(lead.source)} <span class="adm-muted">({lead.source || 'none'})</span></dd>
+          <dt>Campaign</dt><dd>{[lead.utm_source, lead.utm_medium, lead.utm_campaign].filter(Boolean).join(' / ') || '-'}</dd>
+          <dt>Page</dt><dd class="adm-muted">{lead.referrer || '-'}</dd>
+          <dt>Lead ID</dt><dd class="adm-muted">{lead.id}</dd>
+        </dl>
+      </div>
+    </div>
+  </div>
+</AdminLayout>

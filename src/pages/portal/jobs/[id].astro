@@ -127,7 +127,7 @@ const STATUS_OPTIONS = [
 <DashboardLayout title={`Job - ${job.service || 'Detail'} - Tristate Property Management`} user={user}>
   <div class="dash-content">
     <div class="wrap">
-      <p class="crumb"><a href={isClientOnThisJob ? '/portal/#jobs' : '/portal/'}>{isClientOnThisJob ? 'My jobs' : 'Portal'}</a> &nbsp;/&nbsp; <span>Job</span></p>
+      <p class="crumb"><a href={isClientOnThisJob ? '/portal/#jobs' : isAdminViewer ? `/admin/jobs/?stage=all&highlight=${job.id}` : '/portal/'}>{isClientOnThisJob ? 'My jobs' : isAdminViewer ? 'Admin jobs' : 'Portal'}</a> &nbsp;/&nbsp; <span>Job</span></p>
 
       {isClientOnThisJob && job.status !== 'cancelled' ? (
         <div class="form-card form-card--wide">

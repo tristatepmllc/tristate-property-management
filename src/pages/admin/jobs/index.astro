@@ -1,0 +1,204 @@
+---
+export const prerender = false;
+
+import { env } from 'cloudflare:workers';
+import AdminLayout from '../../../layouts/AdminLayout.astro';
+import { requireAdmin } from '../../../lib/require-admin';
+import { fmtDate, relTime, fmtCents, msToDateInput, JOB_STATUSES } from '../../../lib/admin';
+import { SERVICE_CATEGORIES } from '../../../data/site';
+import { PP_SERVICES } from '../../../data/property-preservation';
+
+/**
+ * Jobs board. Stage tabs match how dispatch actually works: no vendor yet
+ * -> offered (waiting on vendor) -> declined (reassign) -> active ->
+ * invoice to review -> done. Each row edits in place (vendor, status,
+ * price, date) through PATCH /api/admin/jobs/[id]; "New job" creates one
+ * for an existing client or a new email.
+ */
+const admin = await requireAdmin(Astro.request.headers);
+if (!admin) return Astro.redirect('/portal/', 302);
+
+type Job = {
+  id: string; service: string | null; description: string | null; status: string; vendor_id: string | null;
+  vendor_response: string; decline_reason: string | null; scheduled_at: number | null; completed_at: number | null;
+  amount_cents: number | null; invoice_status: string; invoice_amount_cents: number | null; created_at: number;
+  account_id: string; client_name: string | null; client_email: string | null; client_phone: string | null;
+  client_address: string | null; vendor_name: string | null;
+};
+type Opt = { id: string; name: string | null; company: string | null; email: string; trade?: string | null };
+
+const STAGES = [
+  { key: 'open', label: 'All open' },
+  { key: 'unassigned', label: 'No vendor' },
+  { key: 'pending', label: 'Waiting on vendor' },
+  { key: 'declined', label: 'Declined - reassign' },
+  { key: 'active', label: 'Active' },
+  { key: 'invoice', label: 'Invoice to review' },
+  { key: 'completed', label: 'Completed' },
+  { key: 'cancelled', label: 'Cancelled' },
+  { key: 'all', label: 'All' },
+] as const;
+type StageKey = (typeof STAGES)[number]['key'];
+const stageParam = Astro.url.searchParams.get('stage') || 'open';
+const stage: StageKey = (STAGES.find((s) => s.key === stageParam)?.key ?? 'open') as StageKey;
+const highlight = Astro.url.searchParams.get('highlight') || '';
+
+let jobs: Job[] = [];
+let vendors: Opt[] = [];
+let clients: Opt[] = [];
+try {
+  const [j, v, c] = await Promise.all([
+    env.DB.prepare(
+      `SELECT j.id, j.service, j.description, j.status, j.vendor_id, j.vendor_response, j.decline_reason,
+              j.scheduled_at, j.completed_at, j.amount_cents, j.invoice_status, j.invoice_amount_cents, j.created_at,
+              j.account_id, c.name AS client_name, c.email AS client_email, c.phone AS client_phone,
+              c.address AS client_address, COALESCE(v.company, v.name, v.email) AS vendor_name
+       FROM jobs j
+       LEFT JOIN accounts c ON c.id = j.account_id
+       LEFT JOIN accounts v ON v.id = j.vendor_id
+       ORDER BY j.created_at DESC LIMIT 500`
+    ).all<Job>(),
+    env.DB.prepare(`SELECT id, name, company, email, trade FROM accounts WHERE role = 'vendor' ORDER BY COALESCE(company, name)`).all<Opt>(),
+    env.DB.prepare(`SELECT id, name, company, email FROM accounts WHERE role = 'client' ORDER BY COALESCE(name, email) LIMIT 2000`).all<Opt>(),
+  ]);
+  jobs = j.results ?? [];
+  vendors = v.results ?? [];
+  clients = c.results ?? [];
+} catch (e) {
+  console.error('admin_jobs_failed', String(e).slice(0, 300));
+}
+
+const isOpen = (x: Job) => x.status !== 'completed' && x.status !== 'cancelled';
+const inStage = (x: Job, k: StageKey): boolean =>
+  k === 'all' ? true
+  : k === 'open' ? isOpen(x)
+  : k === 'unassigned' ? isOpen(x) && x.vendor_response === 'unassigned'
+  : k === 'pending' ? isOpen(x) && x.vendor_response === 'pending'
+  : k === 'declined' ? isOpen(x) && x.vendor_response === 'declined'
+  : k === 'active' ? isOpen(x) && x.vendor_response === 'accepted'
+  : k === 'invoice' ? x.invoice_status === 'submitted'
+  : x.status === k;
+const counts = Object.fromEntries(STAGES.map((s) => [s.key, jobs.filter((x) => inStage(x, s.key)).length])) as Record<StageKey, number>;
+const shown = jobs.filter((x) => inStage(x, stage) || x.id === highlight);
+
+const VR_LABEL: Record<string, { text: string; tone: string }> = {
+  unassigned: { text: 'No vendor', tone: 'red' },
+  pending: { text: 'Offered', tone: 'blue' },
+  accepted: { text: 'Accepted', tone: 'green' },
+  declined: { text: 'Declined', tone: 'red' },
+};
+const now = Date.now();
+---
+<AdminLayout title="Jobs" active="jobs" admin={admin} heading="Jobs"
+  subheading="Assign vendors, update status and price. Changes save per row and show in the client and vendor portals.">
+
+  <details class="adm-card" open={jobs.length === 0}>
+    <summary class="adm-link" style="cursor:pointer;font-size:.95rem">+ New job</summary>
+    <form class="adm-form" style="margin-top:16px" data-admin-form data-endpoint="/api/admin/jobs" data-method="POST">
+      <div class="field-row">
+        <div class="field">
+          <label for="nj-client">Existing client</label>
+          <select id="nj-client" name="accountId">
+            <option value="">- or enter an email below -</option>
+            {clients.map((c) => <option value={c.id}>{c.name || c.email}{c.company ? ` (${c.company})` : ''} - {c.email}</option>)}
+          </select>
+        </div>
+        <div class="field">
+          <label for="nj-email">New client email</label>
+          <input type="email" id="nj-email" name="email" placeholder="Creates a client account" />
+        </div>
+      </div>
+      <div class="field-row">
+        <div class="field">
+          <label for="nj-service">Service <span class="req">*</span></label>
+          <select id="nj-service" name="service" required>
+            <option value="">Choose&hellip;</option>
+            <optgroup label="Property maintenance &amp; preservation">{PP_SERVICES.map((s) => <option>{s.name}</option>)}</optgroup>
+            <optgroup label="Trades &amp; building services">{SERVICE_CATEGORIES.map((c) => <option set:html={c.name} />)}</optgroup>
+          </select>
+        </div>
+        <div class="field">
+          <label for="nj-vendor">Vendor</label>
+          <select id="nj-vendor" name="vendorId">
+            <option value="">Assign later</option>
+            {vendors.map((v) => <option value={v.id}>{v.company || v.name || v.email}{v.trade ? ` - ${v.trade}` : ''}</option>)}
+          </select>
+        </div>
+      </div>
+      <div class="field">
+        <label for="nj-desc">Description</label>
+        <textarea id="nj-desc" name="description" placeholder="What needs doing, property address, access notes"></textarea>
+      </div>
+      <div class="field-row">
+        <div class="field"><label for="nj-amount">Price ($)</label><input type="text" id="nj-amount" name="amount" inputmode="decimal" /></div>
+        <div class="field"><label for="nj-date">Scheduled date</label><input type="date" id="nj-date" name="scheduledDate" /></div>
+      </div>
+      <button type="submit" class="btn btn--red">Create job</button>
+      <p class="form-status" role="status" aria-live="polite" hidden></p>
+    </form>
+  </details>
+
+  <div class="adm-tabs">
+    {STAGES.map((s) => (
+      <a class={`adm-tab${stage === s.key ? ' is-active' : ''}`} href={`/admin/jobs/?stage=${s.key}`}>{s.label} <span>{counts[s.key]}</span></a>
+    ))}
+  </div>
+
+  <div class="adm-toolbar">
+    <input type="search" placeholder="Filter by client, service, vendor..." data-table-filter="#jobs-table" aria-label="Filter jobs" />
+  </div>
+
+  {shown.length === 0 ? (
+    <div class="adm-card adm-empty">No jobs in this view.</div>
+  ) : (
+    <div class="adm-table-wrap">
+      <table class="adm-table" id="jobs-table">
+        <thead><tr><th>Job</th><th>Client</th><th>Vendor</th><th>Status &amp; price</th><th></th></tr></thead>
+        <tbody>
+          {shown.map((x) => {
+            const vr = VR_LABEL[x.vendor_response] ?? { text: x.vendor_response, tone: 'grey' };
+            return (
+              <tr id={`job-${x.id}`} style={x.id === highlight ? 'background:#FFF8E6' : undefined}>
+                <td>
+                  <span class="adm-strong">{x.service || 'Job'}</span>
+                  {x.description && <div class="adm-muted adm-clip">{x.description}</div>}
+                  <div class="adm-muted">Created {fmtDate(x.created_at)} ({relTime(x.created_at, now)})</div>
+                  {x.invoice_status === 'submitted' && <span class="adm-pill adm-pill--red">Invoice {fmtCents(x.invoice_amount_cents)}</span>}
+                </td>
+                <td>
+                  <a class="adm-strong" href={`/admin/clients/${x.account_id}`}>{x.client_name || x.client_email || 'Client'}</a>
+                  {x.client_phone && <><br /><a href={`tel:${x.client_phone}`}>{x.client_phone}</a></>}
+                  {x.client_address && <div class="adm-muted">{x.client_address}</div>}
+                </td>
+                <td>
+                  <span class={`adm-pill adm-pill--${vr.tone}`}>{vr.text}</span>
+                  {x.vendor_name && <div class="adm-strong" style="margin-top:4px">{x.vendor_name}</div>}
+                  {x.vendor_response === 'declined' && x.decline_reason && <div class="adm-muted">"{x.decline_reason}"</div>}
+                </td>
+                <td>
+                  <form class="adm-inline-form" data-admin-form data-endpoint={`/api/admin/jobs/${x.id}`} data-method="PATCH">
+                    <select name="vendorId" aria-label="Vendor">
+                      <option value="">No vendor</option>
+                      {vendors.map((v) => <option value={v.id} selected={v.id === x.vendor_id}>{v.company || v.name || v.email}</option>)}
+                    </select>
+                    <select name="status" aria-label="Status">
+                      {JOB_STATUSES.map((s) => <option value={s.value} selected={s.value === x.status}>{s.label}</option>)}
+                    </select>
+                    <input type="text" name="amount" inputmode="decimal" placeholder="$ price" aria-label="Price"
+                      value={x.amount_cents != null ? (x.amount_cents / 100).toFixed(2) : ''} style="width:90px" />
+                    <input type="date" name="scheduledDate" aria-label="Scheduled date" value={msToDateInput(x.scheduled_at)} />
+                    <button type="submit" class="btn btn--navy btn--sm">Save</button>
+                    <p class="form-status" role="status" aria-live="polite" hidden></p>
+                  </form>
+                </td>
+                <td><a class="adm-link" href={`/portal/jobs/${x.id}`}>Details &rarr;</a></td>
+              </tr>
+            );
+          })}
+        </tbody>
+      </table>
+    </div>
+  )}
+  <p class="adm-note">"Details" opens the full job page (documents, invoice approve / mark paid).
+    {vendors.length === 0 && ' No vendor accounts exist yet - approve a vendor first under Vendors.'}</p>
+</AdminLayout>

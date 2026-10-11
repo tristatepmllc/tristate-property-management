@@ -1,0 +1,74 @@
+---
+export const prerender = false;
+
+import { env } from 'cloudflare:workers';
+import AdminLayout from '../../../layouts/AdminLayout.astro';
+import { requireAdmin } from '../../../lib/require-admin';
+import { fmtDate, fmtCents, toMs, relTime } from '../../../lib/admin';
+
+/**
+ * Client accounts - everyone with a portal account as a property owner.
+ * Columns answer the questions the office gets asked: who is this, where is
+ * the property, how much work have we done for them, anything open now.
+ */
+const admin = await requireAdmin(Astro.request.headers);
+if (!admin) return Astro.redirect('/portal/', 302);
+
+type Row = {
+  id: string; name: string | null; company: string | null; email: string; phone: string | null;
+  address: string | null; city: string | null; state: string | null; property_type: string | null; created_at: unknown;
+  jobs_total: number; jobs_open: number; requests: number; billed: number | null; cashback: number | null; last_request: number | null;
+};
+let rows: Row[] = [];
+try {
+  const r = await env.DB.prepare(
+    `SELECT a.id, a.name, a.company, a.email, a.phone, a.address, a.city, a.state, a.property_type, a.created_at,
+            (SELECT COUNT(*) FROM jobs j WHERE j.account_id = a.id) AS jobs_total,
+            (SELECT COUNT(*) FROM jobs j WHERE j.account_id = a.id AND j.status NOT IN ('completed','cancelled')) AS jobs_open,
+            (SELECT COUNT(*) FROM leads l WHERE l.account_id = a.id) AS requests,
+            (SELECT SUM(amount_cents) FROM jobs j WHERE j.account_id = a.id AND j.status = 'completed') AS billed,
+            (SELECT SUM(amount_cents) FROM cashback_ledger c WHERE c.account_id = a.id) AS cashback,
+            (SELECT MAX(created_at) FROM leads l WHERE l.account_id = a.id) AS last_request
+     FROM accounts a WHERE a.role = 'client' ORDER BY a.rowid DESC LIMIT 2000`
+  ).all<Row>();
+  rows = r.results ?? [];
+} catch (e) {
+  console.error('admin_clients_failed', String(e).slice(0, 300));
+}
+const now = Date.now();
+const PT: Record<string, string> = { single_family: 'Single-family', multifamily: 'Multifamily', commercial: 'Commercial', mixed_use: 'Mixed use', other: 'Other' };
+const withOpen = rows.filter((r) => r.jobs_open > 0).length;
+---
+<AdminLayout title="Clients" active="clients" admin={admin} heading="Clients"
+  subheading={`${rows.length} client account${rows.length === 1 ? '' : 's'} · ${withOpen} with open jobs. Newest first.`}>
+  <div class="adm-toolbar">
+    <input type="search" placeholder="Filter by name, email, phone, address..." data-table-filter="#clients-table" aria-label="Filter clients" />
+    <a class="btn btn--outline btn--sm" href="/admin/jobs/">+ New job</a>
+  </div>
+  {rows.length === 0 ? (
+    <div class="adm-card adm-empty">No client accounts yet. They appear here when someone uses "Become a client" or a lead is converted to a job.</div>
+  ) : (
+    <div class="adm-table-wrap">
+      <table class="adm-table" id="clients-table">
+        <thead><tr><th>Client</th><th>Property</th><th>Jobs</th><th>Requests</th><th class="num">Billed</th><th class="num">Cashback</th><th>Joined</th></tr></thead>
+        <tbody>
+          {rows.map((c) => (
+            <tr data-href={`/admin/clients/${c.id}`}>
+              <td>
+                <span class="adm-strong">{c.name || c.email}</span>
+                {c.company && <div class="adm-muted">{c.company}</div>}
+                <div>{c.phone ? <a href={`tel:${c.phone}`}>{c.phone}</a> : <span class="adm-muted">{c.email}</span>}</div>
+              </td>
+              <td>{[c.address, c.city, c.state].filter(Boolean).join(', ') || <span class="adm-muted">Not set</span>}{c.property_type && <div class="adm-muted">{PT[c.property_type] ?? c.property_type}</div>}</td>
+              <td>{c.jobs_total}{c.jobs_open > 0 && <div><span class="adm-pill adm-pill--red">{c.jobs_open} open</span></div>}</td>
+              <td>{c.requests}{c.last_request && <div class="adm-muted">last {relTime(c.last_request, now)}</div>}</td>
+              <td class="num">{fmtCents(c.billed)}</td>
+              <td class="num">{fmtCents(c.cashback)}</td>
+              <td>{toMs(c.created_at) ? fmtDate(toMs(c.created_at)) : '-'}</td>
+            </tr>
+          ))}
+        </tbody>
+      </table>
+    </div>
+  )}
+</AdminLayout>

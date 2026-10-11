@@ -2,211 +2,293 @@
 export const prerender = false;
 
 import { env } from 'cloudflare:workers';
-import BaseLayout from '../../layouts/BaseLayout.astro';
+import AdminLayout from '../../layouts/AdminLayout.astro';
 import { requireAdmin } from '../../lib/require-admin';
+import {
+  etStartOfDay, etDayKey, etHour, fmtShortDay, fmtDateTime, fmtTime, relTime,
+  sourceLabel, leadStatusLabel, leadStatusTone, LEAD_STATUSES, UNHANDLED, sinceSql,
+} from '../../lib/admin';
 
 /**
- * Admin dashboard. First feature: read-only leads list.
+ * Admin overview - what anyone signing in needs to know in ten seconds:
+ * how many leads came in (today / 7 days / 30 days, against the period
+ * before), how many are still unhandled, chat messages, jobs with no
+ * vendor, and where and when leads arrive. All times are US Eastern.
  *
- * Role-gate: no session, or session with role client/vendor, both redirect
- * to /portal/ with no distinguishing message - a vendor probing for an
- * admin panel should see the same thing as someone not signed in at all.
- * There is no admin sign-up; the only way to become admin is a hand-run
- * SQL UPDATE against D1 (see docs/ops-context.md), by design.
- *
- * Route note: /admin and /admin/* must stay in astro.config.mjs's
- * ROUTES_TO_WORKER - see that file's comment for why a missing entry
- * 404s in production while looking fine in every local test (this bit
- * /portal/ once already).
+ * Role-gate: non-admins are redirected to /portal/ with no message (same
+ * posture as before - nothing reveals that an admin panel exists).
  */
 const admin = await requireAdmin(Astro.request.headers);
 if (!admin) return Astro.redirect('/portal/', 302);
 
-type Lead = {
-  id: string;
-  name: string;
-  email: string;
-  phone: string;
-  company: string | null;
-  service: string | null;
-  urgency: string | null;
-  status: string;
-  source: string | null;
-  message: string | null;
-  created_at: number;
+const DAY = 86_400_000;
+const now = Date.now();
+const todayStart = etStartOfDay(now);
+const yesterdayStart = etStartOfDay(todayStart - DAY / 2);
+
+type LeadRow = {
+  id: string; name: string; email: string; phone: string; service: string | null;
+  source: string | null; status: string; created_at: number;
+};
+type Counts = {
+  unhandled: number; chat_unread: number; jobs_open: number; jobs_no_vendor: number;
+  jobs_pending: number; jobs_declined: number; invoices: number; vendor_apps: number;
+  clients_new: number; clients_total: number; vendors_total: number;
 };
 
-type Job = {
-  id: string;
-  service: string | null;
-  description: string | null;
-  status: string;
-  vendor_id: string | null;
-  vendor_response: string;
-  created_at: number;
-  client_name: string | null;
-  client_email: string | null;
-  vendor_name: string | null;
+let leads: LeadRow[] = [];
+let counts: Counts = {
+  unhandled: 0, chat_unread: 0, jobs_open: 0, jobs_no_vendor: 0, jobs_pending: 0, jobs_declined: 0,
+  invoices: 0, vendor_apps: 0, clients_new: 0, clients_total: 0, vendors_total: 0,
 };
+let statusCounts: { status: string; n: number }[] = [];
+let loadError = false;
 
-type VendorOption = { id: string; name: string | null; email: string; trade: string | null };
+try {
+  const [l, c, s] = await Promise.all([
+    env.DB.prepare(
+      `SELECT id, name, email, phone, service, source, status, created_at
+       FROM leads WHERE created_at >= ?1 ORDER BY created_at DESC LIMIT 5000`
+    ).bind(now - 61 * DAY).all<LeadRow>(),
+    env.DB.prepare(
+      `SELECT
+        (SELECT COUNT(*) FROM leads WHERE status IN ('needs_review','new') AND COALESCE(source,'') <> 'chat-widget') AS unhandled,
+        (SELECT COUNT(*) FROM leads WHERE status IN ('needs_review','new') AND source = 'chat-widget') AS chat_unread,
+        (SELECT COUNT(*) FROM jobs WHERE status NOT IN ('completed','cancelled')) AS jobs_open,
+        (SELECT COUNT(*) FROM jobs WHERE status NOT IN ('completed','cancelled') AND vendor_response = 'unassigned') AS jobs_no_vendor,
+        (SELECT COUNT(*) FROM jobs WHERE status NOT IN ('completed','cancelled') AND vendor_response = 'pending') AS jobs_pending,
+        (SELECT COUNT(*) FROM jobs WHERE status NOT IN ('completed','cancelled') AND vendor_response = 'declined') AS jobs_declined,
+        (SELECT COUNT(*) FROM jobs WHERE invoice_status = 'submitted') AS invoices,
+        (SELECT COUNT(*) FROM vendors WHERE status IN ('needs_review','new','reviewing')) AS vendor_apps,
+        (SELECT COUNT(*) FROM accounts WHERE role = 'client' AND ${sinceSql('created_at', '?1', '?2')}) AS clients_new,
+        (SELECT COUNT(*) FROM accounts WHERE role = 'client') AS clients_total,
+        (SELECT COUNT(*) FROM accounts WHERE role = 'vendor') AS vendors_total`
+    ).bind(now - 7 * DAY, new Date(now - 7 * DAY).toISOString()).first<Counts>(),
+    env.DB.prepare(`SELECT status, COUNT(*) AS n FROM leads GROUP BY status`).all<{ status: string; n: number }>(),
+  ]);
+  leads = l.results ?? [];
+  if (c) counts = c;
+  statusCounts = s.results ?? [];
+} catch (e) {
+  loadError = true;
+  console.error('admin_overview_failed', String(e).slice(0, 300));
+}
 
-// No pagination yet - fine at current volume (single digits as of
-// 2026-09-06). Revisit once this list is long enough to scroll past a
-// screen; LIMIT below is a guardrail, not a feature.
-const LEADS_LIMIT = 200;
-const { results: leads } = await env.DB.prepare(
-  `SELECT id, name, email, phone, company, service, urgency, status, source, message, created_at
-   FROM leads ORDER BY created_at DESC LIMIT ?1`
-)
-  .bind(LEADS_LIMIT)
-  .all<Lead>();
+// ------------------------------------------------------------ aggregates
+const inRange = (from: number, to = Infinity) => leads.filter((x) => x.created_at >= from && x.created_at < to);
+const nonChat = (rows: LeadRow[]) => rows.filter((x) => x.source !== 'chat-widget');
 
-// Jobs list + vendor-assign, first admin job action. Same "no pagination
-// yet, LIMIT is a guardrail not a feature" posture as leads above - there
-// is no job-creation flow either, so this is 0 rows on a fresh install and
-// stays honest about that rather than fabricating rows.
-const JOBS_LIMIT = 200;
-const { results: jobs } = await env.DB.prepare(
-  `SELECT j.id, j.service, j.description, j.status, j.vendor_id, j.vendor_response, j.created_at,
-          c.name AS client_name, c.email AS client_email, v.name AS vendor_name
-   FROM jobs j
-   LEFT JOIN accounts c ON c.id = j.account_id
-   LEFT JOIN accounts v ON v.id = j.vendor_id
-   ORDER BY j.created_at DESC LIMIT ?1`
-)
-  .bind(JOBS_LIMIT)
-  .all<Job>();
+const today = inRange(todayStart);
+const yesterday = inRange(yesterdayStart, todayStart);
+const last7 = inRange(now - 7 * DAY);
+const prev7 = inRange(now - 14 * DAY, now - 7 * DAY);
+const last30 = inRange(now - 30 * DAY);
+const prev30 = inRange(now - 60 * DAY, now - 30 * DAY);
+const chatToday = today.filter((x) => x.source === 'chat-widget');
 
-const { results: vendorOptions } = await env.DB.prepare(
-  `SELECT id, name, email, trade FROM accounts WHERE role = 'vendor' ORDER BY name`
-).all<VendorOption>();
+const delta = (cur: number, prev: number) => {
+  if (prev === 0) return cur === 0 ? { text: 'same as before', dir: '' } : { text: `+${cur} vs 0`, dir: 'up' };
+  const pct = Math.round(((cur - prev) / prev) * 100);
+  return { text: `${pct > 0 ? '+' : ''}${pct}% vs previous`, dir: pct > 0 ? 'up' : pct < 0 ? 'down' : '' };
+};
+const d1 = delta(nonChat(today).length, nonChat(yesterday).length);
+const d7 = delta(nonChat(last7).length, nonChat(prev7).length);
+const d30 = delta(nonChat(last30).length, nonChat(prev30).length);
 
-const fmtDate = (ms: number) =>
-  new Date(ms).toLocaleString('en-US', {
-    dateStyle: 'medium',
-    timeStyle: 'short',
-    timeZone: 'America/New_York',
-  });
+// 30-day chart, one bar per ET day, oldest first.
+const days = Array.from({ length: 30 }, (_, i) => {
+  const ms = now - (29 - i) * DAY;
+  return { key: etDayKey(ms), label: fmtShortDay(ms), n: 0 };
+});
+const dayIndex = new Map(days.map((d, i) => [d.key, i]));
+for (const x of last30) {
+  const i = dayIndex.get(etDayKey(x.created_at));
+  if (i !== undefined) days[i].n++;
+}
+const dayMax = Math.max(1, ...days.map((d) => d.n));
+
+// By source (30d)
+const bySourceMap = new Map<string, number>();
+for (const x of last30) {
+  const k = sourceLabel(x.source);
+  bySourceMap.set(k, (bySourceMap.get(k) ?? 0) + 1);
+}
+const bySource = [...bySourceMap.entries()].sort((a, b) => b[1] - a[1]).slice(0, 8);
+const sourceMax = Math.max(1, ...bySource.map((s) => s[1]));
+
+// By hour of day (30d, ET)
+const hours = Array.from({ length: 24 }, () => 0);
+for (const x of last30) hours[etHour(x.created_at)]++;
+const hourMax = Math.max(1, ...hours);
+const peakHour = hours.indexOf(Math.max(...hours));
+const hourLabel = (h: number) => `${h % 12 === 0 ? 12 : h % 12} ${h < 12 ? 'AM' : 'PM'}`;
+
+// Pipeline
+const statusN = (v: string) => statusCounts.find((s) => s.status === v)?.n ?? 0;
+
+const latest = leads.slice(0, 10);
+
+const attention = [
+  { n: counts.unhandled, text: 'Leads not yet contacted', href: '/admin/leads/?status=open', tone: 'red' },
+  { n: counts.chat_unread, text: 'Unread chat messages', href: '/admin/messages/', tone: 'red' },
+  { n: counts.jobs_no_vendor, text: 'Jobs with no vendor assigned', href: '/admin/jobs/?stage=unassigned', tone: 'red' },
+  { n: counts.jobs_declined, text: 'Jobs declined by a vendor - reassign', href: '/admin/jobs/?stage=declined', tone: 'red' },
+  { n: counts.jobs_pending, text: 'Jobs waiting for the vendor to accept', href: '/admin/jobs/?stage=pending', tone: 'blue' },
+  { n: counts.invoices, text: 'Vendor invoices to review', href: '/admin/jobs/?stage=invoice', tone: 'blue' },
+  { n: counts.vendor_apps, text: 'Vendor applications to review', href: '/admin/vendors/', tone: 'blue' },
+].filter((a) => a.n > 0);
 ---
-<BaseLayout
-  title="Admin - Tristate Property Management"
-  description="Internal admin dashboard."
-  path="/admin/"
-  noindex={true}
-  showPopup={false}
+<AdminLayout
+  title="Overview"
+  active="overview"
+  admin={admin}
+  heading={`Welcome back, ${(admin.name || admin.email).split(' ')[0]}`}
+  subheading="Today at a glance. All times are US Eastern (ET)."
 >
-  <section class="page-hero">
-    <div class="wrap">
-      <p class="crumb"><a href="/portal/">Portal</a> &nbsp;/&nbsp; <span>Admin</span></p>
-      <h1>Admin</h1>
-      <p>Signed in as {admin.name || admin.email}.</p>
-    </div>
-  </section>
+  {loadError && <p class="adm-banner">Some numbers could not load. Refresh in a moment; if it keeps happening, check the Cloudflare logs.</p>}
 
-  <section class="section">
-    <div class="wrap">
-      <div class="sec-head sec-head--form">
-        <p class="eyebrow">Leads</p>
-        <h2>{leads.length} total</h2>
-        <p>Newest first. Read-only for now - status changes and vendor/job actions are next.</p>
+  <div class="adm-kpis">
+    <a class="adm-kpi" href="/admin/leads/?range=today">
+      <p class="adm-kpi-label">Leads today</p>
+      <p class="adm-kpi-value">{nonChat(today).length}</p>
+      <p class="adm-kpi-note"><span class={`adm-delta--${d1.dir}`}>{d1.text}</span></p>
+    </a>
+    <a class="adm-kpi" href="/admin/leads/?range=7d">
+      <p class="adm-kpi-label">Last 7 days</p>
+      <p class="adm-kpi-value">{nonChat(last7).length}</p>
+      <p class="adm-kpi-note"><span class={`adm-delta--${d7.dir}`}>{d7.text}</span></p>
+    </a>
+    <a class="adm-kpi" href="/admin/leads/?range=30d">
+      <p class="adm-kpi-label">Last 30 days</p>
+      <p class="adm-kpi-value">{nonChat(last30).length}</p>
+      <p class="adm-kpi-note"><span class={`adm-delta--${d30.dir}`}>{d30.text}</span></p>
+    </a>
+    <a class={`adm-kpi${counts.unhandled > 0 ? ' adm-kpi--alert' : ''}`} href="/admin/leads/?status=open">
+      <p class="adm-kpi-label">Not contacted</p>
+      <p class="adm-kpi-value">{counts.unhandled}</p>
+      <p class="adm-kpi-note">{counts.unhandled > 0 ? 'Call these first' : 'All leads handled'}</p>
+    </a>
+    <a class={`adm-kpi${counts.chat_unread > 0 ? ' adm-kpi--alert' : ''}`} href="/admin/messages/">
+      <p class="adm-kpi-label">Chat messages</p>
+      <p class="adm-kpi-value">{chatToday.length}</p>
+      <p class="adm-kpi-note">today &middot; {counts.chat_unread} unread</p>
+    </a>
+    <a class={`adm-kpi${counts.jobs_no_vendor + counts.jobs_declined > 0 ? ' adm-kpi--alert' : ''}`} href="/admin/jobs/">
+      <p class="adm-kpi-label">Open jobs</p>
+      <p class="adm-kpi-value">{counts.jobs_open}</p>
+      <p class="adm-kpi-note">{counts.jobs_no_vendor + counts.jobs_declined} need a vendor</p>
+    </a>
+  </div>
+
+  <div class="adm-grid-2">
+    <div>
+      <div class="adm-card">
+        <div class="adm-card-head">
+          <h2>Leads per day - last 30 days</h2>
+          <span class="adm-muted">{last30.length} total incl. chat</span>
+        </div>
+        <div class="adm-bars" role="img" aria-label="Leads per day for the last 30 days">
+          {days.map((d, i) => (
+            <div class={`adm-bar${i === days.length - 1 ? ' is-today' : ''}`} title={`${d.label}: ${d.n} lead${d.n === 1 ? '' : 's'}`}>
+              <em>{d.n}</em>
+              <span style={`height:${Math.round((d.n / dayMax) * 100)}%`}></span>
+            </div>
+          ))}
+        </div>
+        <div class="adm-bars-axis"><span>{days[0].label}</span><span>{days[14].label}</span><span>Today</span></div>
       </div>
 
-      {leads.length === 0 ? (
-        <p class="form-note">No leads yet.</p>
-      ) : (
-        <div class="admin-table-wrap">
-          <table class="admin-table">
-            <thead>
-              <tr>
-                <th>Received</th>
-                <th>Name</th>
-                <th>Contact</th>
-                <th>Service</th>
-                <th>Status</th>
-                <th>Message</th>
-              </tr>
-            </thead>
-            <tbody>
-              {leads.map((lead) => (
-                <tr>
-                  <td>{fmtDate(lead.created_at)}</td>
-                  <td>{lead.name}{lead.company ? <><br /><span class="admin-muted">{lead.company}</span></> : null}</td>
-                  <td><a href={`mailto:${lead.email}`}>{lead.email}</a><br /><a href={`tel:${lead.phone}`}>{lead.phone}</a></td>
-                  <td>{lead.service || '—'}{lead.urgency ? <><br /><span class="admin-muted">{lead.urgency}</span></> : null}</td>
-                  <td><span class={`admin-status admin-status--${lead.status}`}>{lead.status}</span></td>
-                  <td class="admin-message">{lead.message || '—'}</td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
+      <div class="adm-card">
+        <div class="adm-card-head">
+          <h2>Latest leads</h2>
+          <a class="adm-link" href="/admin/leads/">All leads &rarr;</a>
         </div>
-      )}
+        {latest.length === 0 ? (
+          <p class="adm-empty">No leads in the last 60 days.</p>
+        ) : (
+          <div class="adm-table-wrap">
+            <table class="adm-table">
+              <thead><tr><th>Received</th><th>Name</th><th>Service</th><th>Source</th><th>Status</th></tr></thead>
+              <tbody>
+                {latest.map((x) => (
+                  <tr data-href={`/admin/leads/${x.id}`} class={UNHANDLED.includes(x.status) ? 'is-unread' : ''}>
+                    <td class="adm-when"><b>{fmtTime(x.created_at)}</b><span>{relTime(x.created_at, now)}</span></td>
+                    <td><span class="adm-strong">{x.name}</span><br /><a href={`tel:${x.phone}`}>{x.phone}</a></td>
+                    <td>{x.service || <span class="adm-muted">-</span>}</td>
+                    <td>{sourceLabel(x.source)}</td>
+                    <td><span class={`adm-pill adm-pill--${leadStatusTone(x.status)}`}>{leadStatusLabel(x.status)}</span></td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        )}
+      </div>
     </div>
-  </section>
 
-  <section class="section">
-    <div class="wrap">
-      <div class="sec-head sec-head--form">
-        <p class="eyebrow">Jobs</p>
-        <h2>{jobs.length} total</h2>
-        <p>
-          Assign a vendor to a job. Basic on purpose - no status override, no job
-          creation here yet (see the handoff doc for what's still open on this).
-          {vendorOptions.length === 0 ? ' No vendor accounts exist yet, so there is nothing to assign to.' : ''}
-        </p>
+    <div>
+      <div class="adm-card">
+        <h2>Needs attention</h2>
+        {attention.length === 0 ? (
+          <p class="adm-muted">Nothing waiting. Nice.</p>
+        ) : (
+          <div class="adm-funnel">
+            {attention.map((a) => (
+              <a href={a.href}>
+                <span>{a.text}</span>
+                <span class={`adm-pill adm-pill--${a.tone}`}>{a.n}</span>
+              </a>
+            ))}
+          </div>
+        )}
       </div>
 
-      {jobs.length === 0 ? (
-        <p class="form-note">No jobs yet. Nothing converts a lead into a job row yet either - this list will stay empty until that exists.</p>
-      ) : (
-        <div class="admin-table-wrap">
-          <table class="admin-table">
-            <thead>
-              <tr>
-                <th>Received</th>
-                <th>Client</th>
-                <th>Service</th>
-                <th>Status</th>
-                <th>Assignment</th>
-                <th>Assign vendor</th>
-              </tr>
-            </thead>
-            <tbody>
-              {jobs.map((job) => (
-                <tr>
-                  <td>{fmtDate(job.created_at)}</td>
-                  <td>{job.client_name || job.client_email || '—'}</td>
-                  <td>{job.service || job.description || '—'}</td>
-                  <td><span class={`admin-status admin-status--job-${job.status}`}>{job.status.replace('_', ' ')}</span></td>
-                  <td>
-                    <span class={`admin-status admin-status--vr-${job.vendor_response}`}>{job.vendor_response.replace('_', ' ')}</span>
-                    {job.vendor_name ? <><br /><span class="admin-muted">{job.vendor_name}</span></> : null}
-                  </td>
-                  <td>
-                    <form data-job-assign-form data-job-id={job.id}>
-                      <select name="vendorId" disabled={vendorOptions.length === 0}>
-                        <option value="">Unassign</option>
-                        {vendorOptions.map((v) => (
-                          <option value={v.id} selected={v.id === job.vendor_id}>
-                            {(v.name || v.email)}{v.trade ? ` (${v.trade})` : ''}
-                          </option>
-                        ))}
-                      </select>
-                      <button type="submit" class="btn btn--outline" disabled={vendorOptions.length === 0}>Assign</button>
-                      <div class="form-status" role="status" aria-live="polite" hidden></div>
-                    </form>
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
-      )}
-    </div>
-  </section>
-</BaseLayout>
+      <div class="adm-card">
+        <h2>Where leads come from <span class="adm-muted">(30 days)</span></h2>
+        {bySource.length === 0 ? (
+          <p class="adm-muted">No leads yet.</p>
+        ) : (
+          <div class="adm-hbars">
+            {bySource.map(([label, n]) => (
+              <div class="adm-hbar">
+                <span>{label}</span>
+                <span class="adm-hbar-track"><span style={`width:${Math.round((n / sourceMax) * 100)}%`}></span></span>
+                <b>{n}</b>
+              </div>
+            ))}
+          </div>
+        )}
+      </div>
 
-<script>
-  import '../../scripts/admin-jobs';
-</script>
+      <div class="adm-card">
+        <h2>When leads arrive <span class="adm-muted">(ET, 30 days)</span></h2>
+        <div class="adm-hours" role="img" aria-label="Leads by hour of day">
+          {hours.map((n, h) => <div style={`height:${Math.round((n / hourMax) * 100)}%`} title={`${hourLabel(h)}: ${n}`}></div>)}
+        </div>
+        <div class="adm-hours-axis"><span>12 AM</span><span>6 AM</span><span>12 PM</span><span>6 PM</span></div>
+        {last30.length > 0 && <p class="adm-note">Busiest hour: <b>{hourLabel(peakHour)} ET</b>. Have someone on the phones then.</p>}
+      </div>
+
+      <div class="adm-card">
+        <h2>Lead pipeline <span class="adm-muted">(all time)</span></h2>
+        <div class="adm-funnel">
+          {LEAD_STATUSES.map((s) => (
+            <a href={`/admin/leads/?status=${s.value}`}>
+              <span>{s.label}</span>
+              <span class={`adm-pill adm-pill--${s.tone}`}>{statusN(s.value)}</span>
+            </a>
+          ))}
+        </div>
+      </div>
+
+      <div class="adm-card">
+        <h2>Accounts</h2>
+        <dl class="adm-dl">
+          <dt>Clients</dt><dd><a href="/admin/clients/">{counts.clients_total}</a> <span class="adm-muted">({counts.clients_new} new this week)</span></dd>
+          <dt>Vendors</dt><dd><a href="/admin/vendors/?tab=accounts">{counts.vendors_total}</a></dd>
+        </dl>
+        <p class="adm-note">Updated {fmtDateTime(now)}</p>
+      </div>
+    </div>
+  </div>
+</AdminLayout>

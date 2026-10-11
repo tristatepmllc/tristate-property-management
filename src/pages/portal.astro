@@ -32,6 +32,11 @@ import AccountSettingsPanel from '../components/portal/AccountSettingsPanel.astr
 const session = await getAuth().api.getSession({ headers: Astro.request.headers });
 const resetToken = Astro.url.searchParams.get('reset');
 
+// Admins have their own panel; signing in at /portal/ takes them there.
+if (session && (session.user as { role?: string }).role === 'admin') {
+  return Astro.redirect('/admin/', 302);
+}
+
 type Role = 'client' | 'vendor' | 'admin';
 const user = session?.user as (typeof session extends null ? never : NonNullable<typeof session>['user']) & {
   role?: Role;

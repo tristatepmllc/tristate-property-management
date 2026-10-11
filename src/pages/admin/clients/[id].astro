@@ -1,0 +1,233 @@
+---
+export const prerender = false;
+
+import { env } from 'cloudflare:workers';
+import AdminLayout from '../../../layouts/AdminLayout.astro';
+import { requireAdmin } from '../../../lib/require-admin';
+import {
+  fmtDate, fmtDateTime, fmtCents, toMs, titleCase, sourceLabel, leadStatusLabel, leadStatusTone,
+} from '../../../lib/admin';
+import { ensureReviewsTable } from '../../../lib/reviews';
+import { SERVICE_CATEGORIES } from '../../../data/site';
+import { PP_SERVICES } from '../../../data/property-preservation';
+
+/**
+ * One client: profile and property, every request they sent, every job
+ * (with vendor and price), ratings they gave, cashback ledger with a manual
+ * earn/redeem entry, a temporary-password reset, and a quick "new job".
+ */
+const admin = await requireAdmin(Astro.request.headers);
+if (!admin) return Astro.redirect('/portal/', 302);
+
+type Acc = {
+  id: string; role: string; name: string | null; company: string | null; email: string; phone: string | null;
+  address: string | null; city: string | null; state: string | null; zip: string | null; property_type: string | null;
+  preferred_contact: string | null; notes: string | null; created_at: unknown;
+};
+type Lead = { id: string; service: string | null; status: string; source: string | null; created_at: number };
+type Job = { id: string; service: string | null; status: string; vendor_response: string; amount_cents: number | null; created_at: number; vendor_name: string | null };
+type Review = { rating: number; comment: string | null; updated_at: number; service: string | null; vendor_name: string | null };
+type Ledger = { id: string; amount_cents: number; reason: string; created_at: number };
+type VendorOpt = { id: string; name: string | null; company: string | null; trade: string | null };
+
+const acc = await env.DB.prepare(
+  `SELECT id, role, name, company, email, phone, address, city, state, zip, property_type, preferred_contact, notes, created_at
+   FROM accounts WHERE id = ?1`
+).bind(Astro.params.id ?? '').first<Acc>();
+if (!acc || acc.role !== 'client') return Astro.redirect('/admin/clients/', 302);
+
+await ensureReviewsTable(env.DB);
+const [leadsR, jobsR, revR, ledR, vendR, credR] = await Promise.all([
+  env.DB.prepare(`SELECT id, service, status, source, created_at FROM leads WHERE account_id = ?1 OR lower(email) = lower(?2) ORDER BY created_at DESC LIMIT 100`)
+    .bind(acc.id, acc.email).all<Lead>(),
+  env.DB.prepare(
+    `SELECT j.id, j.service, j.status, j.vendor_response, j.amount_cents, j.created_at, COALESCE(v.company, v.name, v.email) AS vendor_name
+     FROM jobs j LEFT JOIN accounts v ON v.id = j.vendor_id WHERE j.account_id = ?1 ORDER BY j.created_at DESC`
+  ).bind(acc.id).all<Job>(),
+  env.DB.prepare(
+    `SELECT r.rating, r.comment, r.updated_at, j.service, COALESCE(v.company, v.name) AS vendor_name
+     FROM job_reviews r LEFT JOIN jobs j ON j.id = r.job_id LEFT JOIN accounts v ON v.id = r.vendor_id
+     WHERE r.account_id = ?1 ORDER BY r.updated_at DESC`
+  ).bind(acc.id).all<Review>(),
+  env.DB.prepare(`SELECT id, amount_cents, reason, created_at FROM cashback_ledger WHERE account_id = ?1 ORDER BY created_at DESC`).bind(acc.id).all<Ledger>(),
+  env.DB.prepare(`SELECT id, name, company, trade FROM accounts WHERE role = 'vendor' ORDER BY COALESCE(company, name)`).all<VendorOpt>(),
+  env.DB.prepare(`SELECT COUNT(*) AS n FROM auth_credentials WHERE account_id = ?1`).bind(acc.id).first<{ n: number }>(),
+]);
+const leads = leadsR.results ?? [];
+const jobs = jobsR.results ?? [];
+const reviews = revR.results ?? [];
+const ledger = ledR.results ?? [];
+const vendors = vendR.results ?? [];
+const hasLogin = (credR?.n ?? 0) > 0;
+const balance = ledger.reduce((t, l) => t + l.amount_cents, 0);
+const billed = jobs.filter((j) => j.status === 'completed').reduce((t, j) => t + (j.amount_cents ?? 0), 0);
+const openJobs = jobs.filter((j) => j.status !== 'completed' && j.status !== 'cancelled').length;
+const PT: Record<string, string> = { single_family: 'Single-family', multifamily: 'Multifamily', commercial: 'Commercial', mixed_use: 'Mixed use', other: 'Other' };
+const ALPHABET = 'ABCDEFGHJKMNPQRSTUVWXYZabcdefghjkmnpqrstuvwxyz23456789';
+const tempPassword = Array.from(crypto.getRandomValues(new Uint32Array(12)), (n) => ALPHABET[n % ALPHABET.length]).join('');
+const property = [acc.address, acc.city, acc.state, acc.zip].filter(Boolean).join(', ');
+---
+<AdminLayout title={`Client - ${acc.name || acc.email}`} active="clients" admin={admin}
+  heading={acc.name || acc.email} subheading={`${acc.company ? `${acc.company} · ` : ''}Client${toMs(acc.created_at) ? ` since ${fmtDate(toMs(acc.created_at))}` : ''}`}>
+  <a class="adm-back" href="/admin/clients/">&larr; Back to clients</a>
+
+  <div class="adm-card">
+    <div class="adm-card-head">
+      <div class="adm-actions">
+        {!hasLogin && <span class="adm-pill adm-pill--red">No login yet</span>}
+        {openJobs > 0 && <span class="adm-pill adm-pill--blue">{openJobs} open job{openJobs === 1 ? '' : 's'}</span>}
+      </div>
+      <div class="adm-actions">
+        {acc.phone && <a class="btn btn--red btn--sm" href={`tel:${acc.phone}`}>Call {acc.phone}</a>}
+        {acc.phone && <a class="btn btn--outline btn--sm" href={`sms:${acc.phone.replace(/[^\d+]/g, '')}`}>Text</a>}
+        <a class="btn btn--outline btn--sm" href={`mailto:${acc.email}`}>Email</a>
+      </div>
+    </div>
+  </div>
+
+  <div class="adm-kpis" style="grid-template-columns:repeat(4,1fr)">
+    <div class="adm-kpi"><p class="adm-kpi-label">Jobs</p><p class="adm-kpi-value">{jobs.length}</p><p class="adm-kpi-note">{openJobs} open</p></div>
+    <div class="adm-kpi"><p class="adm-kpi-label">Requests</p><p class="adm-kpi-value">{leads.length}</p><p class="adm-kpi-note">from website &amp; portal</p></div>
+    <div class="adm-kpi"><p class="adm-kpi-label">Billed</p><p class="adm-kpi-value" style="font-size:1.5rem">{fmtCents(billed)}</p><p class="adm-kpi-note">completed jobs</p></div>
+    <div class="adm-kpi"><p class="adm-kpi-label">Cashback</p><p class="adm-kpi-value" style="font-size:1.5rem">{fmtCents(balance)}</p><p class="adm-kpi-note">current balance</p></div>
+  </div>
+
+  <div class="adm-grid-2">
+    <div>
+      <div class="adm-card">
+        <h2>Jobs</h2>
+        {jobs.length === 0 ? <p class="adm-muted">No jobs yet.</p> : (
+          <div class="adm-table-wrap">
+            <table class="adm-table">
+              <thead><tr><th>Date</th><th>Job</th><th>Vendor</th><th>Status</th><th class="num">Price</th></tr></thead>
+              <tbody>
+                {jobs.map((j) => (
+                  <tr data-href={`/admin/jobs/?stage=all&highlight=${j.id}#job-${j.id}`}>
+                    <td>{fmtDate(j.created_at)}</td><td class="adm-strong">{j.service || 'Job'}</td>
+                    <td>{j.vendor_name || <span class="adm-muted">Not assigned</span>}{j.vendor_response === 'declined' && <div class="adm-muted">declined</div>}</td>
+                    <td>{titleCase(j.status.replace('_', ' '))}</td>
+                    <td class="num">{j.amount_cents != null ? fmtCents(j.amount_cents) : '-'}</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        )}
+      </div>
+
+      <div class="adm-card">
+        <h2>Requests &amp; enquiries</h2>
+        {leads.length === 0 ? <p class="adm-muted">No requests on record.</p> : (
+          <div class="adm-table-wrap">
+            <table class="adm-table">
+              <thead><tr><th>Date</th><th>Service</th><th>Source</th><th>Status</th></tr></thead>
+              <tbody>
+                {leads.map((l) => (
+                  <tr data-href={`/admin/leads/${l.id}`}>
+                    <td>{fmtDateTime(l.created_at)}</td><td>{l.service || '-'}</td><td>{sourceLabel(l.source)}</td>
+                    <td><span class={`adm-pill adm-pill--${leadStatusTone(l.status)}`}>{leadStatusLabel(l.status)}</span></td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        )}
+      </div>
+
+      <div class="adm-card">
+        <h2>Ratings given</h2>
+        {reviews.length === 0 ? <p class="adm-muted">No ratings yet.</p> : (
+          <ul class="adm-timeline">
+            {reviews.map((r) => (
+              <li><div>
+                <p><span class="adm-stars">{'★'.repeat(r.rating)}{'☆'.repeat(5 - r.rating)}</span> {r.vendor_name || 'Vendor'} - {r.service || 'Job'}{r.comment ? `: "${r.comment}"` : ''}</p>
+                <small>{fmtDateTime(r.updated_at)}</small>
+              </div></li>
+            ))}
+          </ul>
+        )}
+      </div>
+
+      <div class="adm-card">
+        <h2>Cashback</h2>
+        <form class="adm-form" data-admin-form data-endpoint="/api/admin/cashback" data-method="POST">
+          <input type="hidden" name="accountId" value={acc.id} />
+          <div class="field-row">
+            <div class="field">
+              <label for="cb-dir">Type</label>
+              <select id="cb-dir" name="direction"><option value="earn">Add (earned)</option><option value="redeem">Redeem (used)</option></select>
+            </div>
+            <div class="field"><label for="cb-amt">Amount ($)</label><input type="text" id="cb-amt" name="amount" inputmode="decimal" required /></div>
+          </div>
+          <div class="field-row">
+            <div class="field"><label for="cb-reason">Reason</label><input type="text" id="cb-reason" name="reason" required placeholder="5% on lawn care job" /></div>
+            <div class="field">
+              <label for="cb-job">Job (optional)</label>
+              <select id="cb-job" name="jobId"><option value="">-</option>{jobs.map((j) => <option value={j.id}>{j.service || 'Job'} - {fmtDate(j.created_at)}</option>)}</select>
+            </div>
+          </div>
+          <button type="submit" class="btn btn--navy btn--sm">Add entry</button>
+          <p class="form-status" role="status" aria-live="polite" hidden></p>
+        </form>
+        {ledger.length > 0 && (
+          <ul class="adm-timeline" style="margin-top:16px">
+            {ledger.map((l) => <li><div><p><b class={l.amount_cents < 0 ? 'adm-delta--down' : 'adm-delta--up'}>{l.amount_cents < 0 ? '-' : '+'}{fmtCents(Math.abs(l.amount_cents))}</b> {l.reason}</p><small>{fmtDateTime(l.created_at)}</small></div></li>)}
+          </ul>
+        )}
+      </div>
+    </div>
+
+    <div>
+      <div class="adm-card">
+        <h2>Profile &amp; property</h2>
+        <dl class="adm-dl">
+          <dt>Email</dt><dd><a href={`mailto:${acc.email}`}>{acc.email}</a></dd>
+          <dt>Phone</dt><dd>{acc.phone ? <a href={`tel:${acc.phone}`}>{acc.phone}</a> : '-'}</dd>
+          <dt>Property</dt><dd>{property || '-'}</dd>
+          <dt>Type</dt><dd>{acc.property_type ? PT[acc.property_type] ?? acc.property_type : '-'}</dd>
+          <dt>Prefers</dt><dd>{acc.preferred_contact ? titleCase(acc.preferred_contact) : '-'}</dd>
+          <dt>Access notes</dt><dd>{acc.notes || '-'}</dd>
+        </dl>
+      </div>
+
+      <div class="adm-card">
+        <h2>New job for this client</h2>
+        <form class="adm-form" data-admin-form data-endpoint="/api/admin/jobs" data-method="POST">
+          <input type="hidden" name="accountId" value={acc.id} />
+          <div class="field">
+            <label for="cn-service">Service <span class="req">*</span></label>
+            <select id="cn-service" name="service" required>
+              <option value="">Choose&hellip;</option>
+              <optgroup label="Property maintenance &amp; preservation">{PP_SERVICES.map((s) => <option>{s.name}</option>)}</optgroup>
+              <optgroup label="Trades &amp; building services">{SERVICE_CATEGORIES.map((c) => <option set:html={c.name} />)}</optgroup>
+            </select>
+          </div>
+          <div class="field"><label for="cn-desc">Description</label><textarea id="cn-desc" name="description">{property ? `Property: ${property}` : ''}</textarea></div>
+          <div class="field-row">
+            <div class="field"><label for="cn-amt">Price ($)</label><input type="text" id="cn-amt" name="amount" inputmode="decimal" /></div>
+            <div class="field"><label for="cn-date">Date</label><input type="date" id="cn-date" name="scheduledDate" /></div>
+          </div>
+          <div class="field">
+            <label for="cn-vendor">Vendor</label>
+            <select id="cn-vendor" name="vendorId"><option value="">Assign later</option>{vendors.map((v) => <option value={v.id}>{v.company || v.name}{v.trade ? ` - ${v.trade}` : ''}</option>)}</select>
+          </div>
+          <button type="submit" class="btn btn--red btn--sm">Create job</button>
+          <p class="form-status" role="status" aria-live="polite" hidden></p>
+        </form>
+      </div>
+
+      <div class="adm-card">
+        <h2>{hasLogin ? 'Reset password' : 'Create login'}</h2>
+        <form class="adm-form" data-admin-form data-endpoint={`/api/admin/accounts/${acc.id}/password`} data-method="POST"
+          data-confirm={hasLogin ? 'Set this temporary password and sign the client out everywhere?' : 'Create a login for this client with this password?'}>
+          <div class="field">
+            <input type="text" name="password" value={tempPassword} minlength="10" required autocomplete="off" aria-label="Temporary password" />
+            <p class="form-note">Copy it first. The client signs in at /portal/ with {acc.email} and changes it under Settings.</p>
+          </div>
+          <button type="submit" class="btn btn--outline btn--sm">{hasLogin ? 'Set temporary password' : 'Create login'}</button>
+          <p class="form-status" role="status" aria-live="polite" hidden></p>
+        </form>
+      </div>
+    </div>
+  </div>
+</AdminLayout>

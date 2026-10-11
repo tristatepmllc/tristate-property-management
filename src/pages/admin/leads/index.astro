@@ -1,0 +1,186 @@
+---
+export const prerender = false;
+
+import { env } from 'cloudflare:workers';
+import AdminLayout from '../../../layouts/AdminLayout.astro';
+import { requireAdmin } from '../../../lib/require-admin';
+import {
+  etStartOfDay, fmtDate, fmtTime, relTime, sourceLabel, leadStatusLabel, leadStatusTone,
+  LEAD_STATUSES, LEAD_STATUS_VALUES, UNHANDLED,
+} from '../../../lib/admin';
+
+/**
+ * Leads list. Server-side filters (all via bound parameters, never string
+ * concatenation of user input): status, date range, source, free-text
+ * search on name/email/phone/service/message. 50 per page.
+ * Chat-widget leads are excluded by default - they live under Live chat -
+ * but can be shown with ?source=chat-widget.
+ */
+const admin = await requireAdmin(Astro.request.headers);
+if (!admin) return Astro.redirect('/portal/', 302);
+
+const PAGE_SIZE = 50;
+const DAY = 86_400_000;
+const qs = Astro.url.searchParams;
+const status = qs.get('status') || 'all';
+const range = qs.get('range') || 'all';
+const source = qs.get('source') || '';
+const q = (qs.get('q') || '').trim().slice(0, 100);
+const page = Math.min(10000, Math.max(1, Math.floor(Number(qs.get('page')) || 1)));
+
+const where: string[] = [];
+const binds: unknown[] = [];
+const bind = (v: unknown) => {
+  binds.push(v);
+  return `?${binds.length}`;
+};
+
+if (status === 'open') where.push(`status IN ('needs_review','new')`);
+else if (LEAD_STATUS_VALUES.includes(status)) where.push(`status = ${bind(status)}`);
+
+const now = Date.now();
+const rangeFrom =
+  range === 'today' ? etStartOfDay(now)
+  : range === '7d' ? now - 7 * DAY
+  : range === '30d' ? now - 30 * DAY
+  : range === '90d' ? now - 90 * DAY
+  : null;
+if (rangeFrom) where.push(`created_at >= ${bind(rangeFrom)}`);
+
+if (source) where.push(`source = ${bind(source)}`);
+else where.push(`COALESCE(source,'') <> 'chat-widget'`);
+
+if (q) {
+  const like = `%${q.replace(/[%_]/g, '')}%`;
+  const p = bind(like);
+  where.push(`(name LIKE ${p} OR email LIKE ${p} OR phone LIKE ${p} OR service LIKE ${p} OR message LIKE ${p} OR address LIKE ${p})`);
+}
+const whereSql = where.length ? `WHERE ${where.join(' AND ')}` : '';
+
+type Lead = {
+  id: string; name: string; email: string; phone: string; company: string | null; address: string | null;
+  service: string | null; urgency: string | null; status: string; source: string | null;
+  message: string | null; created_at: number; account_id: string | null;
+};
+
+let rows: Lead[] = [];
+let total = 0;
+let sources: { source: string | null; n: number }[] = [];
+let statusTotals: { status: string; n: number }[] = [];
+let loadError = false;
+try {
+  const [list, count, src, st] = await Promise.all([
+    env.DB.prepare(
+      `SELECT id, name, email, phone, company, address, service, urgency, status, source, message, created_at, account_id
+       FROM leads ${whereSql} ORDER BY created_at DESC LIMIT ${PAGE_SIZE} OFFSET ${(page - 1) * PAGE_SIZE}`
+    ).bind(...binds).all<Lead>(),
+    env.DB.prepare(`SELECT COUNT(*) AS n FROM leads ${whereSql}`).bind(...binds).first<{ n: number }>(),
+    env.DB.prepare(`SELECT source, COUNT(*) AS n FROM leads GROUP BY source ORDER BY n DESC`).all<{ source: string | null; n: number }>(),
+    env.DB.prepare(
+      `SELECT status, COUNT(*) AS n FROM leads WHERE COALESCE(source,'') <> 'chat-widget' GROUP BY status`
+    ).all<{ status: string; n: number }>(),
+  ]);
+  rows = list.results ?? [];
+  total = count?.n ?? 0;
+  sources = src.results ?? [];
+  statusTotals = st.results ?? [];
+} catch (e) {
+  loadError = true;
+  console.error('admin_leads_failed', String(e).slice(0, 300));
+}
+
+const stN = (v: string) => statusTotals.find((s) => s.status === v)?.n ?? 0;
+const openN = stN('needs_review') + stN('new');
+const allN = statusTotals.reduce((t, s) => t + s.n, 0);
+const pages = Math.max(1, Math.ceil(total / PAGE_SIZE));
+
+const link = (over: Record<string, string | number | null>) => {
+  const p = new URLSearchParams();
+  const merged: Record<string, string | number | null> = { status, range, source, q, ...over };
+  for (const [k, v] of Object.entries(merged)) {
+    if (v !== null && v !== '' && !(k === 'status' && v === 'all') && !(k === 'range' && v === 'all') && !(k === 'page' && v === 1)) {
+      p.set(k, String(v));
+    }
+  }
+  const s = p.toString();
+  return `/admin/leads/${s ? `?${s}` : ''}`;
+};
+
+const TABS = [
+  { value: 'open', label: 'Not contacted', n: openN },
+  { value: 'all', label: 'All', n: allN },
+  ...LEAD_STATUSES.filter((s) => !UNHANDLED.includes(s.value)).map((s) => ({ value: s.value as string, label: s.label as string, n: stN(s.value) })),
+];
+---
+<AdminLayout title="Leads" active="leads" admin={admin} heading="Leads"
+  subheading="Every enquiry from the website. Newest first. Click a row to open it, call, add notes or turn it into a job.">
+  {loadError && <p class="adm-banner">Leads could not load. Refresh in a moment.</p>}
+
+  <div class="adm-tabs">
+    {TABS.map((t) => (
+      <a class={`adm-tab${status === t.value ? ' is-active' : ''}`} href={link({ status: t.value, page: 1 })}>{t.label} <span>{t.n}</span></a>
+    ))}
+  </div>
+
+  <form class="adm-toolbar" method="get" action="/admin/leads/">
+    {status !== 'all' && <input type="hidden" name="status" value={status} />}
+    <input type="search" name="q" value={q} placeholder="Search name, phone, email, service, message..." aria-label="Search leads" />
+    <select name="range" data-autosubmit aria-label="Date range">
+      <option value="all" selected={range === 'all'}>Any time</option>
+      <option value="today" selected={range === 'today'}>Today</option>
+      <option value="7d" selected={range === '7d'}>Last 7 days</option>
+      <option value="30d" selected={range === '30d'}>Last 30 days</option>
+      <option value="90d" selected={range === '90d'}>Last 90 days</option>
+    </select>
+    <select name="source" data-autosubmit aria-label="Source">
+      <option value="">All sources</option>
+      {sources.filter((s) => s.source).map((s) => (
+        <option value={s.source ?? ''} selected={source === s.source}>{sourceLabel(s.source)} ({s.n})</option>
+      ))}
+    </select>
+    <button type="submit" class="btn btn--outline btn--sm">Search</button>
+    {(q || range !== 'all' || source) && <a class="adm-link" href={link({ q: '', range: 'all', source: '', page: 1 })}>Clear filters</a>}
+  </form>
+
+  {rows.length === 0 ? (
+    <div class="adm-card adm-empty">No leads match these filters.</div>
+  ) : (
+    <div class="adm-table-wrap">
+      <table class="adm-table">
+        <thead>
+          <tr><th>Received</th><th>Name</th><th>Contact</th><th>Service</th><th>Source</th><th>Status</th></tr>
+        </thead>
+        <tbody>
+          {rows.map((x) => (
+            <tr data-href={`/admin/leads/${x.id}`} class={UNHANDLED.includes(x.status) ? 'is-unread' : ''}>
+              <td class="adm-when"><b>{fmtDate(x.created_at)}</b><span>{fmtTime(x.created_at)} &middot; {relTime(x.created_at, now)}</span></td>
+              <td>
+                <span class="adm-strong">{x.name}</span>
+                {x.company && <><br /><span class="adm-muted">{x.company}</span></>}
+                {x.account_id && <><br /><span class="adm-pill adm-pill--blue">Client account</span></>}
+              </td>
+              <td>
+                <a href={`tel:${x.phone}`}>{x.phone}</a>
+                {x.email && <><br /><a href={`mailto:${x.email}`} class="adm-muted">{x.email}</a></>}
+              </td>
+              <td>
+                {x.service || <span class="adm-muted">-</span>}
+                {x.urgency && <><br /><span class="adm-muted">{x.urgency}</span></>}
+              </td>
+              <td>{sourceLabel(x.source)}</td>
+              <td><span class={`adm-pill adm-pill--${leadStatusTone(x.status)}`}>{leadStatusLabel(x.status)}</span></td>
+            </tr>
+          ))}
+        </tbody>
+      </table>
+    </div>
+  )}
+
+  <div class="adm-pager">
+    <span>{total} lead{total === 1 ? '' : 's'}{pages > 1 ? ` · page ${page} of ${pages}` : ''}</span>
+    <span class="adm-actions">
+      {page > 1 && <a class="btn btn--outline btn--sm" href={link({ page: page - 1 })}>&larr; Newer</a>}
+      {page < pages && <a class="btn btn--outline btn--sm" href={link({ page: page + 1 })}>Older &rarr;</a>}
+    </span>
+  </div>
+</AdminLayout>

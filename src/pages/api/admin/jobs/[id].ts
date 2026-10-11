@@ -4,6 +4,7 @@ import { requireAdmin } from '../../../../lib/require-admin';
 import { sendEmail, escapeHtml } from '../../../../lib/email';
 import { json, methodNotAllowed } from '../../../../lib/http';
 import { SITE } from '../../../../data/site';
+import { dollarsToCents, dateInputToMs, JOB_STATUS_VALUES } from '../../../../lib/admin';
 
 export const prerender = false;
 
@@ -17,19 +18,15 @@ type JobRow = {
 type AccountRow = { id: string; name: string | null; email: string; role: string };
 
 /**
- * PATCH /api/admin/jobs/[id] - admin-only. Body: { vendorId: string | null }.
+ * PATCH /api/admin/jobs/[id] - admin-only. Body (every field optional):
+ *   { vendorId?: string | null, status?, amount?: "$", scheduledDate?: "YYYY-MM-DD" }
  *
- * Assigning (or reassigning) always resets vendor_response to 'pending' and
- * clears vendor_responded_at/decline_reason - a fresh assignment is a fresh
- * question to that vendor, even if the same job was previously declined by
- * someone else, or by this same vendor and is being re-offered. Passing
- * vendorId: null unassigns and returns the job to 'unassigned', with the
- * same clearing.
- *
- * Deliberately the only admin job action built right now - no status
- * override, no job creation. Scaffolding for the vendor-assignment piece
- * specifically; the rest of the admin job surface (lead-to-job conversion,
- * manual status edits) is unbuilt on purpose, not an oversight.
+ * Assigning (or reassigning) a vendor always resets vendor_response to
+ * 'pending' and clears vendor_responded_at/decline_reason - a fresh
+ * assignment is a fresh question to that vendor. vendorId "" / null
+ * unassigns. Sending the same vendor again changes nothing (so editing a
+ * price from the jobs table never re-asks an accepted vendor).
+ * status 'completed' stamps completed_at once.
  */
 export const PATCH: APIRoute = async ({ request, params }) => {
   const admin = await requireAdmin(request.headers);
@@ -45,31 +42,61 @@ export const PATCH: APIRoute = async ({ request, params }) => {
     return json({ error: 'invalid_json' }, 400);
   }
 
-  const vendorId = body.vendorId;
-  if (vendorId !== null && typeof vendorId !== 'string') {
-    return json({ error: 'invalid_vendor_id' }, 400);
-  }
+  // Each field is optional; only what is present in the body changes.
+  // vendorId: string assigns (resets the response to pending), "" or null
+  // unassigns. Status/amount/date edits never touch the assignment.
+  const has = (k: string) => Object.prototype.hasOwnProperty.call(body, k);
 
   const job = await env.DB.prepare(
     `SELECT id, account_id, vendor_id, service, description FROM jobs WHERE id = ?1`
   ).bind(jobId).first<JobRow>();
   if (!job) return json({ error: 'not_found' }, 404);
 
+  const sets: string[] = [];
+  const binds: unknown[] = [];
+  const set = (col: string, v: unknown) => {
+    binds.push(v);
+    sets.push(`${col} = ?${binds.length}`);
+  };
+
+  if (has('status')) {
+    const st = body.status;
+    if (typeof st !== 'string' || !JOB_STATUS_VALUES.includes(st)) return json({ error: 'invalid_status' }, 422);
+    set('status', st);
+    if (st === 'completed') sets.push('completed_at = COALESCE(completed_at, ' + Date.now() + ')');
+  }
+  if (has('amount')) {
+    const raw = body.amount;
+    const cents = dollarsToCents(raw);
+    if (cents === null && typeof raw === 'string' && raw.trim() !== '') {
+      return json({ error: 'validation_failed', fields: ['price'] }, 422);
+    }
+    set('amount_cents', cents);
+  }
+  if (has('scheduledDate')) set('scheduled_at', dateInputToMs(body.scheduledDate));
+
   let vendor: AccountRow | null = null;
-  if (vendorId) {
-    vendor = await env.DB.prepare(`SELECT id, name, email, role FROM accounts WHERE id = ?1`)
-      .bind(vendorId)
-      .first<AccountRow>();
-    if (!vendor || vendor.role !== 'vendor') return json({ error: 'not_a_vendor' }, 422);
+  const vendorRaw = has('vendorId') ? body.vendorId : undefined;
+  const vendorId = typeof vendorRaw === 'string' && vendorRaw ? vendorRaw : null;
+  const vendorChanged = has('vendorId') && vendorId !== job.vendor_id;
+  if (has('vendorId') && vendorRaw !== null && typeof vendorRaw !== 'string') {
+    return json({ error: 'invalid_vendor_id' }, 400);
+  }
+  if (vendorChanged) {
+    if (vendorId) {
+      vendor = await env.DB.prepare(`SELECT id, name, email, role FROM accounts WHERE id = ?1`)
+        .bind(vendorId)
+        .first<AccountRow>();
+      if (!vendor || vendor.role !== 'vendor') return json({ error: 'not_a_vendor' }, 422);
+    }
+    set('vendor_id', vendorId);
+    set('vendor_response', vendorId ? 'pending' : 'unassigned');
+    sets.push('vendor_responded_at = NULL', 'decline_reason = NULL');
   }
 
-  await env.DB.prepare(
-    `UPDATE jobs
-     SET vendor_id = ?1, vendor_response = ?2, vendor_responded_at = NULL, decline_reason = NULL
-     WHERE id = ?3`
-  )
-    .bind(vendorId ?? null, vendorId ? 'pending' : 'unassigned', jobId)
-    .run();
+  if (sets.length === 0) return json({ ok: true, jobId, unchanged: true });
+  binds.push(jobId);
+  await env.DB.prepare(`UPDATE jobs SET ${sets.join(', ')} WHERE id = ?${binds.length}`).bind(...binds).run();
 
   // Best-effort notify, same posture as every other Resend call in this repo:
   // the assignment already happened and must not fail because email did not
@@ -91,7 +118,7 @@ export const PATCH: APIRoute = async ({ request, params }) => {
     console.warn('job_assign_notify_skipped', { jobId, vendorId, reason: 'RESEND_API_KEY or LEAD_NOTIFY_FROM not set' });
   }
 
-  return json({ ok: true, jobId, vendorId: vendorId ?? null });
+  return json({ ok: true, jobId });
 };
 
 export const ALL: APIRoute = () => methodNotAllowed('PATCH');

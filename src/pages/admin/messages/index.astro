@@ -1,0 +1,92 @@
+---
+export const prerender = false;
+
+import { env } from 'cloudflare:workers';
+import AdminLayout from '../../../layouts/AdminLayout.astro';
+import { requireAdmin } from '../../../lib/require-admin';
+import { fmtDateTime, relTime, UNHANDLED } from '../../../lib/admin';
+
+/**
+ * Live chat inbox - messages left in the website chat widget
+ * (leads.source = 'chat-widget'). Unread = status new/needs_review.
+ *
+ * Honest scope: the widget today collects a message + name + contact and
+ * the team replies by phone/text/email. Two-way real-time chat (typing in
+ * here and the visitor seeing it on the site) is a separate build - it
+ * needs a real-time channel - and is flagged on this page rather than
+ * implied.
+ */
+const admin = await requireAdmin(Astro.request.headers);
+if (!admin) return Astro.redirect('/portal/', 302);
+
+const view = Astro.url.searchParams.get('view') === 'all' ? 'all' : 'unread';
+type Msg = { id: string; name: string; email: string; phone: string; message: string | null; status: string; created_at: number };
+
+let rows: Msg[] = [];
+let unread = 0;
+let total = 0;
+try {
+  const [list, c] = await Promise.all([
+    env.DB.prepare(
+      `SELECT id, name, email, phone, message, status, created_at FROM leads
+       WHERE source = 'chat-widget' ${view === 'unread' ? `AND status IN ('needs_review','new')` : ''}
+       ORDER BY created_at DESC LIMIT 200`
+    ).all<Msg>(),
+    env.DB.prepare(
+      `SELECT SUM(CASE WHEN status IN ('needs_review','new') THEN 1 ELSE 0 END) AS unread, COUNT(*) AS total
+       FROM leads WHERE source = 'chat-widget'`
+    ).first<{ unread: number | null; total: number }>(),
+  ]);
+  rows = list.results ?? [];
+  unread = c?.unread ?? 0;
+  total = c?.total ?? 0;
+} catch (e) {
+  console.error('admin_messages_failed', String(e).slice(0, 300));
+}
+const now = Date.now();
+---
+<AdminLayout title="Live chat" active="messages" admin={admin} heading="Live chat"
+  subheading="Messages left in the website chat. Reply by call, text or email, then mark it handled.">
+  <div class="adm-tabs">
+    <a class={`adm-tab${view === 'unread' ? ' is-active' : ''}`} href="/admin/messages/">Unread <span>{unread}</span></a>
+    <a class={`adm-tab${view === 'all' ? ' is-active' : ''}`} href="/admin/messages/?view=all">All <span>{total}</span></a>
+  </div>
+
+  {rows.length === 0 ? (
+    <div class="adm-card adm-empty">{view === 'unread' ? 'No unread messages. All caught up.' : 'No chat messages yet.'}</div>
+  ) : (
+    <div class="adm-inbox">
+      {rows.map((m) => {
+        const isUnread = UNHANDLED.includes(m.status);
+        const sms = `sms:${m.phone.replace(/[^\d+]/g, '')}`;
+        return (
+          <div class={`adm-msg${isUnread ? ' is-unread' : ''}`} id={`m-${m.id}`} data-href={`/admin/leads/${m.id}`} style="cursor:pointer">
+            <span class="adm-msg-avatar">{(m.name || '?').charAt(0).toUpperCase()}</span>
+            <div>
+              <p class="adm-msg-name">{m.name} {isUnread && <span class="adm-pill adm-pill--red">Unread</span>}</p>
+              <p class="adm-msg-text">{m.message || <span class="adm-muted">(no message)</span>}</p>
+              <div class="adm-actions" style="margin-top:10px">
+                {m.phone && <a class="btn btn--red btn--sm" href={`tel:${m.phone}`}>Call</a>}
+                {m.phone && <a class="btn btn--outline btn--sm" href={sms}>Text</a>}
+                {m.email && <a class="btn btn--outline btn--sm" href={`mailto:${m.email}`}>Email</a>}
+                {isUnread && (
+                  <button type="button" class="btn btn--outline btn--sm" data-admin-quick data-method="PATCH"
+                    data-endpoint={`/api/admin/leads/${m.id}`} data-body='{"status":"contacted"}'>Mark handled</button>
+                )}
+              </div>
+            </div>
+            <div class="adm-msg-meta">
+              {fmtDateTime(m.created_at)}<br />{relTime(m.created_at, now)}
+              <br />{m.phone || m.email}
+            </div>
+          </div>
+        );
+      })}
+    </div>
+  )}
+
+  <p class="adm-note">
+    Two-way real-time chat (typing a reply here that the visitor sees on the website) is a separate
+    feature and is planned next. Until then, reply by call, text or email.
+  </p>
+</AdminLayout>

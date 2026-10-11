@@ -1,0 +1,148 @@
+---
+/**
+ * Admin panel shell - every /admin/* page renders inside this.
+ *
+ * Own layout (not BaseLayout's marketing chrome, not the client/vendor
+ * DashboardLayout): a dark left sidebar with live counts on each section,
+ * so anyone who signs in - owner or front desk - sees at a glance what is
+ * waiting: unhandled leads, unread chat, jobs with no vendor, vendor
+ * applications to review.
+ *
+ * Badge counts are one cheap query per page load. If it fails the badges
+ * just don't render; the page itself still works.
+ */
+import '@fontsource-variable/inter';
+import '@fontsource/ibm-plex-mono/400.css';
+import '@fontsource/ibm-plex-mono/500.css';
+import '@fontsource/ibm-plex-mono/600.css';
+import '../styles/global.css';
+import '../styles/additions.css';
+import { env } from 'cloudflare:workers';
+import { ensureAdminSchema, fmtDate, TZ } from '../lib/admin';
+
+type Section = 'overview' | 'leads' | 'messages' | 'jobs' | 'vendors' | 'clients';
+
+interface Props {
+  title: string;
+  active: Section;
+  admin: { id: string; name: string | null; email: string };
+  heading: string;
+  subheading?: string;
+}
+const { title, active, admin, heading, subheading } = Astro.props;
+
+let badges = { leads: 0, messages: 0, jobs: 0, vendors: 0 };
+try {
+  await ensureAdminSchema(env.DB);
+  const row = await env.DB.prepare(
+    `SELECT
+       (SELECT COUNT(*) FROM leads WHERE status IN ('needs_review','new') AND COALESCE(source,'') <> 'chat-widget') AS leads,
+       (SELECT COUNT(*) FROM leads WHERE status IN ('needs_review','new') AND source = 'chat-widget') AS messages,
+       (SELECT COUNT(*) FROM jobs WHERE status NOT IN ('completed','cancelled') AND vendor_response IN ('unassigned','declined')) AS jobs,
+       (SELECT COUNT(*) FROM vendors WHERE status IN ('needs_review','new','reviewing')) AS vendors`
+  ).first<{ leads: number; messages: number; jobs: number; vendors: number }>();
+  if (row) badges = row;
+} catch (e) {
+  console.error('admin_badges_failed', String(e).slice(0, 300));
+}
+
+const displayName = admin.name || admin.email;
+const initial = displayName.charAt(0).toUpperCase();
+const today = fmtDate(Date.now());
+const nowEt = new Date().toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit', timeZone: TZ });
+
+const NAV: { key: Section; href: string; label: string; badge?: number; tone?: 'red' | 'grey'; icon: string }[] = [
+  { key: 'overview', href: '/admin/', label: 'Overview',
+    icon: '<rect x="3" y="3" width="7" height="9" rx="1"/><rect x="14" y="3" width="7" height="5" rx="1"/><rect x="14" y="12" width="7" height="9" rx="1"/><rect x="3" y="16" width="7" height="5" rx="1"/>' },
+  { key: 'leads', href: '/admin/leads/', label: 'Leads', badge: badges.leads, tone: 'red',
+    icon: '<path d="M22 12h-4l-3 9L9 3l-3 9H2"/>' },
+  { key: 'messages', href: '/admin/messages/', label: 'Live chat', badge: badges.messages, tone: 'red',
+    icon: '<path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/>' },
+  { key: 'jobs', href: '/admin/jobs/', label: 'Jobs', badge: badges.jobs, tone: 'red',
+    icon: '<rect x="3" y="7" width="18" height="14" rx="2"/><path d="M8 7V5a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/>' },
+  { key: 'vendors', href: '/admin/vendors/', label: 'Vendors', badge: badges.vendors, tone: 'grey',
+    icon: '<path d="M14.7 6.3a1 1 0 0 0 0 1.4l1.6 1.6a1 1 0 0 0 1.4 0l3.77-3.77a6 6 0 0 1-7.94 7.94l-6.91 6.91a2.12 2.12 0 0 1-3-3l6.91-6.91a6 6 0 0 1 7.94-7.94z"/>' },
+  { key: 'clients', href: '/admin/clients/', label: 'Clients',
+    icon: '<circle cx="9" cy="7" r="3"/><path d="M2 21v-2a5 5 0 0 1 5-5h4a5 5 0 0 1 5 5v2"/><path d="M17 11a3 3 0 1 0 0-6M22 21v-2a4 4 0 0 0-3-3.87"/>' },
+];
+const SOON: { label: string; icon: string }[] = [
+  { label: 'Website content', icon: '<rect x="3" y="4" width="18" height="16" rx="2"/><path d="M3 9h18"/>' },
+  { label: 'Team & roles', icon: '<circle cx="12" cy="8" r="4"/><path d="M4 21c0-4 3.5-7 8-7s8 3 8 7"/>' },
+];
+---
+<!DOCTYPE html>
+<html lang="en-US">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>{title} - Tristate Admin</title>
+  <meta name="robots" content="noindex,nofollow" />
+  <link rel="icon" href="/favicon.ico" sizes="48x48" />
+  <link rel="icon" href="/favicon-32.png" sizes="32x32" type="image/png" />
+  <meta name="theme-color" content="#08152E" />
+</head>
+<body class="adm-body">
+  <a class="skip-link" href="#adm-main">Skip to content</a>
+  <div class="adm">
+    <aside class="adm-side" aria-label="Admin navigation">
+      <a class="adm-brand" href="/admin/">
+        <img src="/images/logo-tristate-light.webp" alt="Tristate" width="120" height="31" />
+        <span>Admin</span>
+      </a>
+      <nav class="adm-nav">
+        {NAV.map((n) => (
+          <a class={`adm-nav-item${n.key === active ? ' is-active' : ''}`} href={n.href} aria-current={n.key === active ? 'page' : undefined}>
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" set:html={n.icon}></svg>
+            <span class="adm-nav-label">{n.label}</span>
+            {n.badge ? <span class={`adm-badge adm-badge--${n.tone}`}>{n.badge > 99 ? '99+' : n.badge}</span> : null}
+          </a>
+        ))}
+        <p class="adm-nav-group">Coming next</p>
+        {SOON.map((n) => (
+          <span class="adm-nav-item is-soon">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" set:html={n.icon}></svg>
+            <span class="adm-nav-label">{n.label}</span>
+            <span class="adm-soon">Soon</span>
+          </span>
+        ))}
+      </nav>
+      <div class="adm-side-foot">
+        <a class="adm-nav-item" href="/" target="_blank" rel="noopener">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6M15 3h6v6M10 14L21 3"/></svg>
+          <span class="adm-nav-label">View website</span>
+        </a>
+        <form data-logout-form>
+          <button type="submit" class="adm-nav-item">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><path d="M16 17l5-5-5-5"/><path d="M21 12H9"/></svg>
+            <span class="adm-nav-label">Sign out</span>
+          </button>
+        </form>
+      </div>
+    </aside>
+
+    <div class="adm-main" id="adm-main">
+      <header class="adm-top">
+        <div>
+          <h1 class="adm-h1">{heading}</h1>
+          {subheading && <p class="adm-sub">{subheading}</p>}
+        </div>
+        <div class="adm-top-right">
+          <span class="adm-chip" title="Business time zone">{today} &middot; {nowEt} ET</span>
+          <span class="adm-user">
+            <span class="adm-avatar">{initial}</span>
+            <span class="adm-user-name">{displayName}</span>
+          </span>
+        </div>
+      </header>
+      <div class="adm-content">
+        <slot />
+      </div>
+    </div>
+  </div>
+
+  <script>
+    import '../scripts/admin';
+    import '../scripts/auth';
+  </script>
+</body>
+</html>

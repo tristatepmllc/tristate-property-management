@@ -1,0 +1,144 @@
+---
+export const prerender = false;
+
+import { env } from 'cloudflare:workers';
+import AdminLayout from '../../../layouts/AdminLayout.astro';
+import { requireAdmin } from '../../../lib/require-admin';
+import { ensureAdminSchema, fmtDate, relTime, toMs, titleCase, VENDOR_APP_STATUSES } from '../../../lib/admin';
+import { ensureReviewsTable } from '../../../lib/reviews';
+
+/**
+ * Vendors, two tabs:
+ *  - Applications: /vendor-network/ submissions (vendors table) to review.
+ *    Approving one creates the vendor's login (see the application page).
+ *  - Vendor accounts: approved vendors who can log in and take jobs, with
+ *    licence / insurance / verified status, jobs done and client rating.
+ */
+const admin = await requireAdmin(Astro.request.headers);
+if (!admin) return Astro.redirect('/portal/', 302);
+
+const tab = Astro.url.searchParams.get('tab') === 'accounts' ? 'accounts' : 'applications';
+const appStatus = Astro.url.searchParams.get('status') || 'open';
+
+type App = { id: string; name: string; business: string | null; email: string; phone: string; trade: string; area: string | null; credentials: string | null; years: string | null; status: string; created_at: number };
+type Acc = {
+  id: string; name: string | null; company: string | null; email: string; phone: string | null; trade: string | null;
+  service_area: string | null; license_number: string | null; license_expires: unknown; insurance_on_file: number;
+  verified_at: number | null; created_at: unknown; jobs_done: number; jobs_open: number; avg_rating: number | null; n_ratings: number;
+};
+
+await ensureAdminSchema(env.DB);
+let apps: App[] = [];
+let accs: Acc[] = [];
+let appCounts: { status: string; n: number }[] = [];
+try {
+  await ensureReviewsTable(env.DB);
+  const [a, c, ac] = await Promise.all([
+    env.DB.prepare(
+      `SELECT id, name, business, email, phone, trade, area, credentials, years, status, created_at FROM vendors
+       ${appStatus === 'open' ? `WHERE status IN ('needs_review','new','reviewing')` : appStatus === 'all' ? '' : 'WHERE status = ?1'}
+       ORDER BY created_at DESC LIMIT 500`
+    ).bind(...(appStatus === 'open' || appStatus === 'all' ? [] : [appStatus])).all<App>(),
+    env.DB.prepare(`SELECT status, COUNT(*) AS n FROM vendors GROUP BY status`).all<{ status: string; n: number }>(),
+    env.DB.prepare(
+      `SELECT a.id, a.name, a.company, a.email, a.phone, a.trade, a.service_area, a.license_number, a.license_expires,
+              a.insurance_on_file, a.verified_at, a.created_at,
+              (SELECT COUNT(*) FROM jobs j WHERE j.vendor_id = a.id AND j.status = 'completed') AS jobs_done,
+              (SELECT COUNT(*) FROM jobs j WHERE j.vendor_id = a.id AND j.status NOT IN ('completed','cancelled') AND j.vendor_response IN ('pending','accepted')) AS jobs_open,
+              (SELECT AVG(rating) FROM job_reviews r WHERE r.vendor_id = a.id) AS avg_rating,
+              (SELECT COUNT(*) FROM job_reviews r WHERE r.vendor_id = a.id) AS n_ratings
+       FROM accounts a WHERE a.role = 'vendor' ORDER BY COALESCE(a.company, a.name)`
+    ).all<Acc>(),
+  ]);
+  apps = a.results ?? [];
+  appCounts = c.results ?? [];
+  accs = ac.results ?? [];
+} catch (e) {
+  console.error('admin_vendors_failed', String(e).slice(0, 300));
+}
+const cN = (v: string) => appCounts.find((x) => x.status === v)?.n ?? 0;
+const openN = cN('needs_review') + cN('new') + cN('reviewing');
+const allN = appCounts.reduce((t, x) => t + x.n, 0);
+const now = Date.now();
+const appTone: Record<string, string> = { needs_review: 'red', new: 'red', reviewing: 'blue', approved: 'green', declined: 'grey' };
+const appLabel = (v: string) => VENDOR_APP_STATUSES.find((s) => s.value === v)?.label ?? titleCase(v);
+const licenseState = (a: Acc) => {
+  const exp = a.license_expires ? toMs(a.license_expires) : 0;
+  return !a.license_number ? { t: 'No licence', tone: 'grey' }
+    : exp && exp < now ? { t: 'Licence expired', tone: 'red' }
+    : exp && exp < now + 30 * 86_400_000 ? { t: 'Expiring soon', tone: 'red' }
+    : { t: 'Licence on file', tone: 'green' };
+};
+---
+<AdminLayout title="Vendors" active="vendors" admin={admin} heading="Vendors"
+  subheading="Review applications, approve vendors and check licence, insurance and client ratings.">
+  <div class="adm-tabs">
+    <a class={`adm-tab${tab === 'applications' ? ' is-active' : ''}`} href="/admin/vendors/">Applications <span>{openN}</span></a>
+    <a class={`adm-tab${tab === 'accounts' ? ' is-active' : ''}`} href="/admin/vendors/?tab=accounts">Vendor accounts <span>{accs.length}</span></a>
+  </div>
+
+  {tab === 'applications' ? (
+    <>
+      <div class="adm-tabs">
+        <a class={`adm-tab${appStatus === 'open' ? ' is-active' : ''}`} href="/admin/vendors/?status=open">To review <span>{openN}</span></a>
+        <a class={`adm-tab${appStatus === 'approved' ? ' is-active' : ''}`} href="/admin/vendors/?status=approved">Approved <span>{cN('approved')}</span></a>
+        <a class={`adm-tab${appStatus === 'declined' ? ' is-active' : ''}`} href="/admin/vendors/?status=declined">Declined <span>{cN('declined')}</span></a>
+        <a class={`adm-tab${appStatus === 'all' ? ' is-active' : ''}`} href="/admin/vendors/?status=all">All <span>{allN}</span></a>
+      </div>
+      <div class="adm-toolbar"><input type="search" placeholder="Filter by name, trade, area..." data-table-filter="#apps-table" aria-label="Filter applications" /></div>
+      {apps.length === 0 ? (
+        <div class="adm-card adm-empty">No applications in this view.</div>
+      ) : (
+        <div class="adm-table-wrap">
+          <table class="adm-table" id="apps-table">
+            <thead><tr><th>Applied</th><th>Vendor</th><th>Trade</th><th>Area</th><th>Credentials</th><th>Status</th></tr></thead>
+            <tbody>
+              {apps.map((a) => (
+                <tr data-href={`/admin/vendors/applications/${a.id}`} class={a.status === 'new' || a.status === 'needs_review' ? 'is-unread' : ''}>
+                  <td class="adm-when"><b>{fmtDate(a.created_at)}</b><span>{relTime(a.created_at, now)}</span></td>
+                  <td><span class="adm-strong">{a.business || a.name}</span>{a.business && <div class="adm-muted">{a.name}</div>}<div><a href={`tel:${a.phone}`}>{a.phone}</a></div></td>
+                  <td>{titleCase(a.trade)}</td>
+                  <td>{a.area || '-'}</td>
+                  <td>{a.credentials || '-'}{a.years && <div class="adm-muted">{a.years} yrs</div>}</td>
+                  <td><span class={`adm-pill adm-pill--${appTone[a.status] ?? 'grey'}`}>{appLabel(a.status)}</span></td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      )}
+    </>
+  ) : (
+    <>
+      <div class="adm-toolbar"><input type="search" placeholder="Filter by name, trade, area..." data-table-filter="#accs-table" aria-label="Filter vendors" /></div>
+      {accs.length === 0 ? (
+        <div class="adm-card adm-empty">No vendor accounts yet. Approve an application to create one.</div>
+      ) : (
+        <div class="adm-table-wrap">
+          <table class="adm-table" id="accs-table">
+            <thead><tr><th>Vendor</th><th>Trade / area</th><th>Compliance</th><th>Jobs</th><th>Client rating</th></tr></thead>
+            <tbody>
+              {accs.map((a) => {
+                const lic = licenseState(a);
+                return (
+                  <tr data-href={`/admin/vendors/${a.id}`}>
+                    <td><span class="adm-strong">{a.company || a.name || a.email}</span>{a.company && a.name && <div class="adm-muted">{a.name}</div>}{a.phone && <div><a href={`tel:${a.phone}`}>{a.phone}</a></div>}</td>
+                    <td>{a.trade ? titleCase(a.trade) : '-'}<div class="adm-muted">{a.service_area || ''}</div></td>
+                    <td>
+                      <span class={`adm-pill adm-pill--${a.verified_at ? 'green' : 'red'}`}>{a.verified_at ? 'Verified' : 'Not verified'}</span>
+                      <div style="margin-top:4px"><span class={`adm-pill adm-pill--${lic.tone}`}>{lic.t}</span></div>
+                      <div style="margin-top:4px"><span class={`adm-pill adm-pill--${a.insurance_on_file ? 'green' : 'grey'}`}>{a.insurance_on_file ? 'Insured' : 'No insurance on file'}</span></div>
+                    </td>
+                    <td>{a.jobs_done} done<div class="adm-muted">{a.jobs_open} open</div></td>
+                    <td>{a.avg_rating != null ? <><span class="adm-stars">{'★'.repeat(Math.round(a.avg_rating))}</span> {Number(a.avg_rating).toFixed(1)}<div class="adm-muted">{a.n_ratings} rating{a.n_ratings === 1 ? '' : 's'}</div></> : <span class="adm-muted">Not rated</span>}</td>
+                  </tr>
+                );
+              })}
+            </tbody>
+          </table>
+        </div>
+      )}
+      <p class="adm-note">Joined dates and full profiles are on each vendor's page. {accs.filter((a) => !a.verified_at).length} vendor(s) not yet verified.</p>
+    </>
+  )}
+</AdminLayout>
